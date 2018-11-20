@@ -1,0 +1,32 @@
+{
+	"zones": [{
+		"path": "~/go-git-in-sync-example",
+		"bundles": [{
+				"user": "jychri",
+				"remote": "github",
+				"division": "google-apps-script",
+				"repositories": [
+					"crunchy-calendar",
+					"daily-sign-up",
+					"data-flipper",
+					"easy-csv",
+					"frequency-responder",
+					"google-apps-script-cheat-sheet",
+					"mega-merge",
+					"missing-homework"
+				]
+			}, {
+				"user": "jychri",
+				"remote": "github",
+				"division": "main",
+				"repositories": [
+					"tmp1",
+					"tmp2",
+					"tmp3",
+					"tmp4",
+					"tmp5"
+        ]
+      }
+		]
+	}]
+}

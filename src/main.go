@@ -401,8 +401,6 @@ func initRepo(d *Div, rn string, bu string, br string, bd string) *Repo {
 
 	b.Reset()
 	switch r.Remote {
-	case "bitbucket":
-		b.WriteString("https://bitbucket.org/")
 	case "github":
 		b.WriteString("https://github.com/")
 	case "gitlab":
@@ -411,6 +409,12 @@ func initRepo(d *Div, rn string, bu string, br string, bd string) *Repo {
 	b.WriteString(r.User)
 	b.WriteString("/")
 	b.WriteString(r.Name)
+
+	switch r.Remote {
+	case "gitlab":
+		b.WriteString(".git")
+	}
+
 	r.URL = b.String()
 
 	return r
@@ -502,7 +506,10 @@ func (r *Repo) verify(e Emoji, f Flags, w *Workspace) {
 		w.VerifiedRepos = append(w.VerifiedRepos, r)
 		targetPrint(f, "%v %v (%v/%v)", e.Checkmark, r.Name, r.Div.Name, r.Remote)
 	} else {
-		fmt.Println(r.Phase)
+		// fmt.Println("DEBUG:")
+		// fmt.Println(r)
+		fmt.Printf("DEBUG: Phase = %v\n", r.Phase)
+
 		targetPrint(f, "%v %v (%v/%v)", e.Warning, r.Name, r.Div.Name, r.Remote)
 	}
 }
@@ -692,6 +699,8 @@ func (r *Repo) gitRevParseUpstream() {
 		cmd.Run()
 		if str := out.String(); str != "" {
 			r.UpstreamBranch = trim(out.String())
+		} else {
+			fmt.Printf("can't get upstream for %v\n ", r.Name)
 		}
 	}
 }

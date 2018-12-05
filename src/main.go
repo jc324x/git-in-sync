@@ -21,104 +21,53 @@ import (
 	"time"
 )
 
-// --- Timer ---
+// --> Moment: a moment in time
+
+type Moment struct {
+	Name  string
+	Time  time.Time
+	Start time.Duration // duration since start
+	Split time.Duration // duration since last moment
+}
+
+// --> Timer: tracking moments in time
+
+type Timer struct {
+	Moments []Moment
+}
 
 func initTimer() *Timer {
 	t := new(Timer)
-	t.Start = time.Now()
+	st := Moment{Name: "Start", Time: time.Now()} // (st)art
+	t.Moments = append(t.Moments, st)
 	return t
 }
 
-type Timer struct {
-	Start  time.Time
-	Points []time.Duration
-	Splits []time.Duration
-}
-
-func (t *Timer) markSplit() {
-	// (l)ast (s)plit
-	var ls time.Duration
-
-	// (c)urrent (s)plit
-	var cs time.Duration
-
-	// time (s)ince (s)tart
-	ss := time.Since(t.Start).Truncate(1000)
-
-	// (s)plit (l)ength
-	if sl := len(t.Splits); sl >= 1 {
-		ls = t.Splits[len(t.Splits)-1]
-		cs = ss - ls
-	} else {
-		cs = ss
-	}
-
-	// append t.Splits = []time.Duration
-	t.Splits = append(t.Splits, cs)
-}
-
-func (t *Timer) getSplit() time.Duration {
-	// (l)ast (s)plit
-	return t.Splits[len(t.Splits)-1]
+func (t *Timer) markMoment(s string) {
+	sm := t.Moments[0]                           // (s)tarting (m)oment
+	lm := t.Moments[len(t.Moments)-1]            // (l)ast (m)oment
+	m := Moment{Name: s, Time: time.Now()}       // name and time
+	m.Start = time.Since(sm.Time).Truncate(1000) // duration since start
+	m.Split = m.Start - lm.Start                 // duration since last moment
+	t.Moments = append(t.Moments, m)             // append Moment
 }
 
 func (t *Timer) getTime() time.Duration {
-	// time (s)ince (s)tart
-	return time.Since(t.Start).Truncate(1000)
+	lm := t.Moments[len(t.Moments)-1] // (l)ast (m)oment
+	return lm.Start
 }
 
-func initEmoji(f Flags, t *Timer) (e Emoji) {
-	e.AlarmClock = printEmoji(9200)
-	e.Book = printEmoji(128214)
-	e.Books = printEmoji(128218)
-	e.Box = printEmoji(128230)
-	e.BuildingConstruction = printEmoji(127959)
-	e.Bunny = printEmoji(128048)
-	e.Checkmark = printEmoji(9989)
-	e.Clapper = printEmoji(127916)
-	e.Clipboard = printEmoji(128203)
-	e.CrystalBall = printEmoji(128302)
-	e.DirectHit = printEmoji(127919)
-	e.Desert = printEmoji(127964)
-	e.FaxMachine = printEmoji(128224)
-	e.Finger = printEmoji(128073)
-	e.FileCabinet = printEmoji(128452)
-	e.Flag = printEmoji(127937)
-	e.FlagInHole = printEmoji(9971)
-	e.Fire = printEmoji(128293)
-	e.Folder = printEmoji(128193)
-	e.Glasses = printEmoji(128083)
-	e.Hole = printEmoji(128371)
-	e.Hourglass = printEmoji(9203)
-	e.Inbox = printEmoji(128229)
-	e.Microscope = printEmoji(128300)
-	e.Memo = printEmoji(128221)
-	e.Outbox = printEmoji(128228)
-	e.Pager = printEmoji(128223)
-	e.Parents = printEmoji(128106)
-	e.Pen = printEmoji(128394)
-	e.Pig = printEmoji(128055)
-	e.Popcorn = printEmoji(127871)
-	e.Rocket = printEmoji(128640)
-	e.Run = printEmoji(127939)
-	e.Satellite = printEmoji(128752)
-	e.SatelliteDish = printEmoji(128225)
-	e.Slash = printEmoji(128683)
-	e.Ship = printEmoji(128674)
-	e.Squirrel = printEmoji(128063)
-	e.Telescope = printEmoji(128301)
-	e.Text = printEmoji(128172)
-	e.ThumbsUp = printEmoji(128077)
-	e.TimerClock = printEmoji(9202)
-	e.Traffic = printEmoji(128678)
-	e.Truck = printEmoji(128666)
-	e.Turtle = printEmoji(128034)
-	e.Unicorn = printEmoji(129412)
-	e.Warning = printEmoji(128679)
-	e.Count = reflect.ValueOf(e).NumField() - 1
-	t.markSplit()
-	return e
+func (t *Timer) getSplit() time.Duration {
+	lm := t.Moments[len(t.Moments)-1] // (l)ast (m)oment
+	return lm.Split
 }
+
+func (t *Timer) dubs() (st time.Duration, sp time.Duration) {
+	lm := t.Moments[len(t.Moments)-1] // (l)ast (m)oment
+	return lm.Start, lm.Split
+}
+
+// --> Emoji: struct collecting emojis
 
 type Emoji struct {
 	AlarmClock           string
@@ -172,12 +121,76 @@ type Emoji struct {
 	Count                int
 }
 
+func initEmoji(t *Timer) (e Emoji) {
+	e.AlarmClock = printEmoji(9200)
+	e.Book = printEmoji(128214)
+	e.Books = printEmoji(128218)
+	e.Box = printEmoji(128230)
+	e.BuildingConstruction = printEmoji(127959)
+	e.Bunny = printEmoji(128048)
+	e.Checkmark = printEmoji(9989)
+	e.Clapper = printEmoji(127916)
+	e.Clipboard = printEmoji(128203)
+	e.CrystalBall = printEmoji(128302)
+	e.DirectHit = printEmoji(127919)
+	e.Desert = printEmoji(127964)
+	e.FaxMachine = printEmoji(128224)
+	e.Finger = printEmoji(128073)
+	e.FileCabinet = printEmoji(128452)
+	e.Flag = printEmoji(127937)
+	e.FlagInHole = printEmoji(9971)
+	e.Fire = printEmoji(128293)
+	e.Folder = printEmoji(128193)
+	e.Glasses = printEmoji(128083)
+	e.Hole = printEmoji(128371)
+	e.Hourglass = printEmoji(9203)
+	e.Inbox = printEmoji(128229)
+	e.Microscope = printEmoji(128300)
+	e.Memo = printEmoji(128221)
+	e.Outbox = printEmoji(128228)
+	e.Pager = printEmoji(128223)
+	e.Parents = printEmoji(128106)
+	e.Pen = printEmoji(128394)
+	e.Pig = printEmoji(128055)
+	e.Popcorn = printEmoji(127871)
+	e.Rocket = printEmoji(128640)
+	e.Run = printEmoji(127939)
+	e.Satellite = printEmoji(128752)
+	e.SatelliteDish = printEmoji(128225)
+	e.Slash = printEmoji(128683)
+	e.Ship = printEmoji(128674)
+	e.Squirrel = printEmoji(128063)
+	e.Telescope = printEmoji(128301)
+	e.Text = printEmoji(128172)
+	e.ThumbsUp = printEmoji(128077)
+	e.TimerClock = printEmoji(9202)
+	e.Traffic = printEmoji(128678)
+	e.Truck = printEmoji(128666)
+	e.Turtle = printEmoji(128034)
+	e.Unicorn = printEmoji(129412)
+	e.Warning = printEmoji(128679)
+	e.Count = reflect.ValueOf(e).NumField() - 1
+	t.markMoment("emoji")
+	return e
+}
+
 func printEmoji(n int) string {
 	str := html.UnescapeString("&#" + strconv.Itoa(n) + ";")
 	return str
 }
 
-// FLAGS
+// --> Flags: struct collecting flag values
+
+type Flags struct {
+	Mode    string
+	Clear   bool
+	Verbose bool
+	Dry     bool
+	Emoji   bool
+	OneLine bool
+	Count   int
+	Summary string
+}
 
 func initFlags(t *Timer) (f Flags) {
 	var m string // mode
@@ -186,8 +199,10 @@ func initFlags(t *Timer) (f Flags) {
 	var d bool   // dry
 	var e bool   // emoji
 	var o bool   // one-line
+
 	var fc int   // flag count
 	var s string // summary
+
 	flag.StringVar(&m, "m", "verify", "mode")
 	flag.BoolVar(&c, "c", false, "clear")
 	flag.BoolVar(&v, "v", true, "verbose")
@@ -245,21 +260,12 @@ func initFlags(t *Timer) (f Flags) {
 	s = strings.Join(sl, ", ")
 
 	// timer
-	t.markSplit()
+	t.markMoment("flags")
+
+	// print
 
 	f = Flags{m, c, v, d, e, o, fc, s}
 	return f
-}
-
-type Flags struct {
-	Mode    string
-	Clear   bool
-	Verbose bool
-	Dry     bool
-	Emoji   bool
-	OneLine bool
-	Count   int
-	Summary string
 }
 
 func isClear(f Flags) bool {
@@ -318,7 +324,7 @@ func oneLine(f Flags) bool {
 	}
 }
 
-// --- Config ---
+// --> Config: ~/.gisrc.json unmarshalled
 
 func initConfig(e Emoji, f Flags, t *Timer, w *Workspace) Config {
 
@@ -351,9 +357,7 @@ func initConfig(e Emoji, f Flags, t *Timer, w *Workspace) Config {
 	}
 
 	// timer
-	t.markSplit()
-	// t.ConfigParse = mark(t.Start)
-	// t.ConfigSplit = t.ConfigParse - t.EmojiParse
+	t.markMoment("config")
 
 	// print
 	targetPrint(f, "%v read %v {%v / %v}", e.Book, g, t.getSplit(), t.getTime())
@@ -373,7 +377,7 @@ type Config struct {
 	} `json:"zones"`
 }
 
-// REPO
+// --> Repo
 
 func initRepo(d *Div, rn string, bu string, br string, bd string) *Repo {
 	r := new(Repo)
@@ -1467,11 +1471,10 @@ func initDivsRepos(c Config, e Emoji, f Flags, t *Timer) (dvs Divs, rs Repos) {
 	sort.Sort(Repos(rs))
 
 	// timer
-	// t.DivsReposParse = mark(t.Start)
-	// t.DivsReposSplit = t.DivsReposParse - t.ConfigParse
+	t.markMoment("parse-divs-repos")
 
 	// print
-	// targetPrint(f, "%v [%v|%v] divs|repos {%v / %v}", e.FaxMachine, len(dvs), len(rs), t.DivsReposSplit, t.DivsReposParse)
+	targetPrint(f, "%v [%v|%v] divs|repos {%v / %v}", e.FaxMachine, len(dvs), len(rs), t.getSplit(), t.getTime())
 
 	return dvs, rs
 }
@@ -1480,6 +1483,7 @@ func initDivsRepos(c Config, e Emoji, f Flags, t *Timer) (dvs Divs, rs Repos) {
 
 func initWorkspace(e Emoji, f Flags, t *Timer) *Workspace {
 	clearScreen(f)
+
 	targetPrint(f, "%v start", e.Clapper)
 
 	if isDry(f) {
@@ -1487,7 +1491,7 @@ func initWorkspace(e Emoji, f Flags, t *Timer) *Workspace {
 	}
 
 	targetPrint(f, "%v parsing flags", e.FlagInHole)
-	// targetPrint(f, "%v [%v] flags (%v) {%v / %v}", e.Flag, f.Count, f.Summary, t.FlagSplit, t.FlagParse)
+	targetPrint(f, "%v [%v] flags (%v) {%v / %v}", e.Flag, f.Count, f.Summary, t.FlagSplit, t.FlagParse)
 
 	if hasEmoji(f) {
 		targetPrint(f, "%v initializing emoji", e.CrystalBall)
@@ -2075,13 +2079,13 @@ func targetPrint(f Flags, s string, z ...interface{}) {
 	}
 }
 
-// MAIN FUNCTIONS
+// --> Main
 
 func initRun() (e Emoji, f Flags, rs Repos, dvs Divs, t *Timer, w *Workspace) {
 
 	t = initTimer()
 	f = initFlags(t)
-	e = initEmoji(f, t)
+	e = initEmoji(t)
 	w = initWorkspace(e, f, t)
 	c := initConfig(e, f, t, w)
 	dvs, rs = initDivsRepos(c, e, f, t)
@@ -2125,12 +2129,8 @@ func terminateRun(e Emoji, f Flags, rs Repos, dvs Divs, t *Timer, w *Workspace) 
 }
 
 func main() {
-	t := initTimer()
-	t.markSplit()
-	fmt.Printf("%v/%v\n", t.getSplit(), t.getTime())
-
-	// e := initEmoji()
-	// e, f, rs, dvs, t, w := initRun()
+	e, f, rs, dvs, t, w := initRun()
+	fmt.Println(e, f, rs, dvs, t, w)
 	// fmt.Println(e, f, rs, dvs, t, w)
 	// verifyDivs(e, f, rs, dvs, t, w)
 	// verifyRepos(e, f, rs, dvs, t, w)

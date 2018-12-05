@@ -21,36 +21,7 @@ import (
 	"time"
 )
 
-func _initTimer() (_t *_Timer) {
-	_t.Start = time.Now()
-	return _t
-}
-
-type _Timer struct {
-	Start  time.Time
-	Splits []time.Duration
-}
-
-// (p)revious, (s)et
-
-func (t *_Timer) markTime() time.Duration {
-	// time (s)ince (s)tart
-	ss := time.Since(t.Start).Truncate(1000)
-
-	// (l)ast (s)plit
-	ls := t.Splits[len(t.Splits)-1]
-
-	// (c)urrent (s)plit
-	cs := ss - ls
-
-	// append array of Splits
-	t.Splits = append(t.Splits, cs)
-
-	// return cs for messaging
-	return cs
-}
-
-// TIMER
+// --- Timer ---
 
 func initTimer() *Timer {
 	t := new(Timer)
@@ -59,81 +30,93 @@ func initTimer() *Timer {
 }
 
 type Timer struct {
-	Start          time.Time
-	FlagParse      time.Duration
-	FlagSplit      time.Duration
-	EmojiParse     time.Duration
-	EmojiSplit     time.Duration
-	ConfigParse    time.Duration
-	ConfigSplit    time.Duration
-	DivsReposParse time.Duration
-	DivsReposSplit time.Duration
-	DivsParse      time.Duration
-	DivsSplit      time.Duration
-	ReposParse     time.Duration
-	ReposSplit     time.Duration
-	Stop           time.Duration
+	Start  time.Time
+	Points []time.Duration
+	Splits []time.Duration
 }
 
-func mark(t time.Time) time.Duration {
-	return time.Since(t).Truncate(1000)
+func (t *Timer) markSplit() {
+	// (l)ast (s)plit
+	var ls time.Duration
+
+	// (c)urrent (s)plit
+	var cs time.Duration
+
+	// time (s)ince (s)tart
+	ss := time.Since(t.Start).Truncate(1000)
+
+	// (s)plit (l)ength
+	if sl := len(t.Splits); sl >= 1 {
+		ls = t.Splits[len(t.Splits)-1]
+		cs = ss - ls
+	} else {
+		cs = ss
+	}
+
+	// append t.Splits = []time.Duration
+	t.Splits = append(t.Splits, cs)
 }
 
-// EMOJI
+func (t *Timer) getSplit() time.Duration {
+	// (l)ast (s)plit
+	return t.Splits[len(t.Splits)-1]
+}
+
+func (t *Timer) getTime() time.Duration {
+	// time (s)ince (s)tart
+	return time.Since(t.Start).Truncate(1000)
+}
 
 func initEmoji(f Flags, t *Timer) (e Emoji) {
-	if hasEmoji(f) {
-		e.AlarmClock = printEmoji(9200)
-		e.Book = printEmoji(128214)
-		e.Books = printEmoji(128218)
-		e.Box = printEmoji(128230)
-		e.BuildingConstruction = printEmoji(127959)
-		e.Bunny = printEmoji(128048)
-		e.Checkmark = printEmoji(9989)
-		e.Clapper = printEmoji(127916)
-		e.Clipboard = printEmoji(128203)
-		e.CrystalBall = printEmoji(128302)
-		e.DirectHit = printEmoji(127919)
-		e.Desert = printEmoji(127964)
-		e.FaxMachine = printEmoji(128224)
-		e.Finger = printEmoji(128073)
-		e.FileCabinet = printEmoji(128452)
-		e.Flag = printEmoji(127937)
-		e.FlagInHole = printEmoji(9971)
-		e.Fire = printEmoji(128293)
-		e.Folder = printEmoji(128193)
-		e.Glasses = printEmoji(128083)
-		e.Hole = printEmoji(128371)
-		e.Hourglass = printEmoji(9203)
-		e.Inbox = printEmoji(128229)
-		e.Microscope = printEmoji(128300)
-		e.Memo = printEmoji(128221)
-		e.Outbox = printEmoji(128228)
-		e.Pager = printEmoji(128223)
-		e.Parents = printEmoji(128106)
-		e.Pen = printEmoji(128394)
-		e.Pig = printEmoji(128055)
-		e.Popcorn = printEmoji(127871)
-		e.Rocket = printEmoji(128640)
-		e.Run = printEmoji(127939)
-		e.Satellite = printEmoji(128752)
-		e.SatelliteDish = printEmoji(128225)
-		e.Slash = printEmoji(128683)
-		e.Ship = printEmoji(128674)
-		e.Squirrel = printEmoji(128063)
-		e.Telescope = printEmoji(128301)
-		e.Text = printEmoji(128172)
-		e.ThumbsUp = printEmoji(128077)
-		e.TimerClock = printEmoji(9202)
-		e.Traffic = printEmoji(128678)
-		e.Truck = printEmoji(128666)
-		e.Turtle = printEmoji(128034)
-		e.Unicorn = printEmoji(129412)
-		e.Warning = printEmoji(128679)
-		e.Count = reflect.ValueOf(e).NumField() - 1
-	}
-	t.EmojiParse = mark(t.Start)
-	t.EmojiSplit = t.EmojiParse - t.FlagParse
+	e.AlarmClock = printEmoji(9200)
+	e.Book = printEmoji(128214)
+	e.Books = printEmoji(128218)
+	e.Box = printEmoji(128230)
+	e.BuildingConstruction = printEmoji(127959)
+	e.Bunny = printEmoji(128048)
+	e.Checkmark = printEmoji(9989)
+	e.Clapper = printEmoji(127916)
+	e.Clipboard = printEmoji(128203)
+	e.CrystalBall = printEmoji(128302)
+	e.DirectHit = printEmoji(127919)
+	e.Desert = printEmoji(127964)
+	e.FaxMachine = printEmoji(128224)
+	e.Finger = printEmoji(128073)
+	e.FileCabinet = printEmoji(128452)
+	e.Flag = printEmoji(127937)
+	e.FlagInHole = printEmoji(9971)
+	e.Fire = printEmoji(128293)
+	e.Folder = printEmoji(128193)
+	e.Glasses = printEmoji(128083)
+	e.Hole = printEmoji(128371)
+	e.Hourglass = printEmoji(9203)
+	e.Inbox = printEmoji(128229)
+	e.Microscope = printEmoji(128300)
+	e.Memo = printEmoji(128221)
+	e.Outbox = printEmoji(128228)
+	e.Pager = printEmoji(128223)
+	e.Parents = printEmoji(128106)
+	e.Pen = printEmoji(128394)
+	e.Pig = printEmoji(128055)
+	e.Popcorn = printEmoji(127871)
+	e.Rocket = printEmoji(128640)
+	e.Run = printEmoji(127939)
+	e.Satellite = printEmoji(128752)
+	e.SatelliteDish = printEmoji(128225)
+	e.Slash = printEmoji(128683)
+	e.Ship = printEmoji(128674)
+	e.Squirrel = printEmoji(128063)
+	e.Telescope = printEmoji(128301)
+	e.Text = printEmoji(128172)
+	e.ThumbsUp = printEmoji(128077)
+	e.TimerClock = printEmoji(9202)
+	e.Traffic = printEmoji(128678)
+	e.Truck = printEmoji(128666)
+	e.Turtle = printEmoji(128034)
+	e.Unicorn = printEmoji(129412)
+	e.Warning = printEmoji(128679)
+	e.Count = reflect.ValueOf(e).NumField() - 1
+	t.markSplit()
 	return e
 }
 
@@ -262,8 +245,7 @@ func initFlags(t *Timer) (f Flags) {
 	s = strings.Join(sl, ", ")
 
 	// timer
-	t.FlagParse = mark(t.Start)
-	t.FlagSplit = t.FlagParse
+	t.markSplit()
 
 	f = Flags{m, c, v, d, e, o, fc, s}
 	return f
@@ -336,7 +318,7 @@ func oneLine(f Flags) bool {
 	}
 }
 
-// CONFIG
+// --- Config ---
 
 func initConfig(e Emoji, f Flags, t *Timer, w *Workspace) Config {
 
@@ -369,11 +351,12 @@ func initConfig(e Emoji, f Flags, t *Timer, w *Workspace) Config {
 	}
 
 	// timer
-	t.ConfigParse = mark(t.Start)
-	t.ConfigSplit = t.ConfigParse - t.EmojiParse
+	t.markSplit()
+	// t.ConfigParse = mark(t.Start)
+	// t.ConfigSplit = t.ConfigParse - t.EmojiParse
 
 	// print
-	targetPrint(f, "%v read %v {%v / %v}", e.Book, g, t.ConfigSplit, t.ConfigParse)
+	targetPrint(f, "%v read %v {%v / %v}", e.Book, g, t.getSplit(), t.getTime())
 
 	return c
 }
@@ -1147,8 +1130,8 @@ func (rs Repos) verify(e Emoji, f Flags, w *Workspace) {
 func (rs Repos) summary(e Emoji, f Flags, t *Timer, w *Workspace) {
 
 	// timer
-	t.ReposParse = mark(t.Start)
-	t.ReposSplit = t.ReposParse - t.DivsReposParse
+	// t.ReposParse = mark(t.Start)
+	// t.ReposSplit = t.ReposParse - t.DivsReposParse
 
 	// summary
 	var b bytes.Buffer
@@ -1172,9 +1155,9 @@ func (rs Repos) summary(e Emoji, f Flags, t *Timer, w *Workspace) {
 	}
 
 	b.WriteString(" {")
-	b.WriteString(t.ReposSplit.String())
+	// b.WriteString(t.ReposSplit.String())
 	b.WriteString(" / ")
-	b.WriteString(t.ReposParse.String())
+	// b.WriteString(t.ReposParse.String())
 	b.WriteString("}")
 
 	// print
@@ -1201,8 +1184,8 @@ func (dvs Divs) verify(e Emoji, f Flags, w *Workspace) {
 func (dvs Divs) summary(e Emoji, f Flags, t *Timer, w *Workspace) {
 
 	// timer
-	t.DivsParse = mark(t.Start)
-	t.DivsSplit = t.DivsParse - t.DivsReposParse
+	// t.DivsParse = mark(t.Start)
+	// t.DivsSplit = t.DivsParse - t.DivsReposParse
 
 	// summary (div)
 	for _, d := range dvs {
@@ -1231,9 +1214,9 @@ func (dvs Divs) summary(e Emoji, f Flags, t *Timer, w *Workspace) {
 	}
 
 	b.WriteString(" {")
-	b.WriteString(t.DivsSplit.String())
+	// b.WriteString(t.DivsSplit.String())
 	b.WriteString(" / ")
-	b.WriteString(t.DivsParse.String())
+	// b.WriteString(t.DivsParse.String())
 	b.WriteString("}")
 
 	// print
@@ -1484,11 +1467,11 @@ func initDivsRepos(c Config, e Emoji, f Flags, t *Timer) (dvs Divs, rs Repos) {
 	sort.Sort(Repos(rs))
 
 	// timer
-	t.DivsReposParse = mark(t.Start)
-	t.DivsReposSplit = t.DivsReposParse - t.ConfigParse
+	// t.DivsReposParse = mark(t.Start)
+	// t.DivsReposSplit = t.DivsReposParse - t.ConfigParse
 
 	// print
-	targetPrint(f, "%v [%v|%v] divs|repos {%v / %v}", e.FaxMachine, len(dvs), len(rs), t.DivsReposSplit, t.DivsReposParse)
+	// targetPrint(f, "%v [%v|%v] divs|repos {%v / %v}", e.FaxMachine, len(dvs), len(rs), t.DivsReposSplit, t.DivsReposParse)
 
 	return dvs, rs
 }
@@ -1504,11 +1487,11 @@ func initWorkspace(e Emoji, f Flags, t *Timer) *Workspace {
 	}
 
 	targetPrint(f, "%v parsing flags", e.FlagInHole)
-	targetPrint(f, "%v [%v] flags (%v) {%v / %v}", e.Flag, f.Count, f.Summary, t.FlagSplit, t.FlagParse)
+	// targetPrint(f, "%v [%v] flags (%v) {%v / %v}", e.Flag, f.Count, f.Summary, t.FlagSplit, t.FlagParse)
 
 	if hasEmoji(f) {
 		targetPrint(f, "%v initializing emoji", e.CrystalBall)
-		targetPrint(f, "%v [%v] emoji {%v / %v}", e.DirectHit, e.Count, t.EmojiSplit, t.EmojiParse)
+		// targetPrint(f, "%v [%v] emoji {%v / %v}", e.DirectHit, e.Count, t.EmojiSplit, t.EmojiParse)
 	}
 
 	w := new(Workspace)
@@ -2142,9 +2125,15 @@ func terminateRun(e Emoji, f Flags, rs Repos, dvs Divs, t *Timer, w *Workspace) 
 }
 
 func main() {
-	e, f, rs, dvs, t, w := initRun()
-	verifyDivs(e, f, rs, dvs, t, w)
-	verifyRepos(e, f, rs, dvs, t, w)
-	verifyChanges(e, f, rs, dvs, t, w) // setActions()
-	terminateRun(e, f, rs, dvs, t, w)
+	t := initTimer()
+	t.markSplit()
+	fmt.Printf("%v/%v\n", t.getSplit(), t.getTime())
+
+	// e := initEmoji()
+	// e, f, rs, dvs, t, w := initRun()
+	// fmt.Println(e, f, rs, dvs, t, w)
+	// verifyDivs(e, f, rs, dvs, t, w)
+	// verifyRepos(e, f, rs, dvs, t, w)
+	// verifyChanges(e, f, rs, dvs, t, w) // setActions()
+	// terminateRun(e, f, rs, dvs, t, w)
 }

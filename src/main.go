@@ -1463,6 +1463,7 @@ func (dvs Divs) Len() int           { return len(dvs) }
 func (dvs Divs) Swap(i, j int)      { dvs[i], dvs[j] = dvs[j], dvs[i] }
 func (dvs Divs) Less(i, j int) bool { return dvs[i].Path < dvs[j].Path }
 
+// this is the key part of all this...
 func initDivsRepos(c Config, e Emoji, f Flags, t *Timer) (dvs Divs, rs Repos) {
 
 	// print

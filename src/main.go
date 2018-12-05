@@ -28,17 +28,26 @@ func _initTimer() (_t *_Timer) {
 
 type _Timer struct {
 	Start  time.Time
-	Splits map[string]time.Duration
+	Splits []time.Duration
 }
 
 // (p)revious, (s)et
 
-func (t *_Timer) markTime(p string, s string) {
-	// duration since (st)art
-	st := time.Since(t.Start).Truncate(1000)
+func (t *_Timer) markTime() time.Duration {
+	// time (s)ince (s)tart
+	ss := time.Since(t.Start).Truncate(1000)
 
-	// (s)plit (d)ifference
-	t.Splits[s] = st - t.Splits[p]
+	// (l)ast (s)plit
+	ls := t.Splits[len(t.Splits)-1]
+
+	// (c)urrent (s)plit
+	cs := ss - ls
+
+	// append array of Splits
+	t.Splits = append(t.Splits, cs)
+
+	// return cs for messaging
+	return cs
 }
 
 // TIMER

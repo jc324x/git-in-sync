@@ -21,6 +21,26 @@ import (
 	"time"
 )
 
+func _initTimer() (_t *_Timer) {
+	_t.Start = time.Now()
+	return _t
+}
+
+type _Timer struct {
+	Start  time.Time
+	Splits map[string]time.Duration
+}
+
+// (p)revious, (s)et
+
+func (t *_Timer) markTime(p string, s string) {
+	// duration since (st)art
+	st := time.Since(t.Start).Truncate(1000)
+
+	// (s)plit (d)ifference
+	t.Splits[s] = st - t.Splits[p]
+}
+
 // TIMER
 
 func initTimer() *Timer {

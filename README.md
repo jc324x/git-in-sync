@@ -9,6 +9,8 @@ repositories as configured.
 
 1. `~/.gisrc.json` outlines directories and their repos as `bundles` and `zones`:
 
+{json block showing configuration}
+
 2. Modes are set with `-m`:
 
 {Here is where the modes go}

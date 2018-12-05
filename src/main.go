@@ -22,9 +22,6 @@ import (
 	"time"
 )
 
-// FLAG: fix property naming
-// might be better to have Run or Total?
-
 // --> Moment: a moment in time
 
 type Moment struct {
@@ -72,9 +69,9 @@ func (t *Timer) getMoment(s string) (Moment, error) {
 			return m, nil
 		}
 	}
-	var m Moment
-	return m, errors.New("no moment found")
 
+	var em Moment // (e)mpty (m)oment
+	return em, errors.New("no moment found")
 }
 
 // --> Emoji: struct collecting emojis
@@ -180,6 +177,7 @@ func initEmoji(f Flags, t *Timer) (e Emoji) {
 	e.Unicorn = printEmoji(129412)
 	e.Warning = printEmoji(128679)
 	e.Count = reflect.ValueOf(e).NumField() - 1
+
 	// timer
 	t.markMoment("emoji")
 
@@ -206,6 +204,7 @@ type Flags struct {
 
 func initFlags(e Emoji, t *Timer) (f Flags) {
 
+	// six possible flags
 	var m string // mode
 	var c bool   // clear
 	var v bool   // verbose
@@ -213,9 +212,11 @@ func initFlags(e Emoji, t *Timer) (f Flags) {
 	var em bool  // emoji
 	var o bool   // one-line
 
+	// summary and count
 	var fc int   // flag count
 	var s string // summary
 
+	// mapping to flag properties
 	flag.StringVar(&m, "m", "verify", "mode")
 	flag.BoolVar(&c, "c", false, "clear")
 	flag.BoolVar(&v, "v", true, "verbose")
@@ -224,54 +225,54 @@ func initFlags(e Emoji, t *Timer) (f Flags) {
 	flag.BoolVar(&o, "o", false, "one-line")
 	flag.Parse()
 
-	// collect and join ", " enabled flags
-	var sl []string
+	// collect and join (e)nabled (f)lags
+	var ef []string
 
 	// mode
 	if m != "" {
 		fc += 1
 	}
 
-	// reset to 'verify' if invalid option is passed
+	// ...otherwise set to 'verify'
 	switch m {
 	case "login", "logout", "verify":
 	default:
 		m = "verify"
 	}
-	sl = append(sl, m)
+	ef = append(ef, m)
 
 	// clear
 	if c == true {
 		fc += 1
-		sl = append(sl, "clear")
+		ef = append(ef, "clear")
 	}
 
 	// dry
 	if d == true {
 		fc += 1
-		sl = append(sl, "dry")
+		ef = append(ef, "dry")
 	}
 
 	// verbose
 	if v == true {
 		fc += 1
-		sl = append(sl, "verbose")
+		ef = append(ef, "verbose")
 	}
 
 	// emoji
 	if em == true {
 		fc += 1
-		sl = append(sl, "emoji")
+		ef = append(ef, "emoji")
 	}
 
 	// one-line
 	if o == true {
 		fc += 1
-		sl = append(sl, "one-line")
+		ef = append(ef, "one-line")
 	}
 
 	// summary
-	s = strings.Join(sl, ", ")
+	s = strings.Join(ef, ", ")
 
 	// timer
 	t.markMoment("flags")
@@ -340,6 +341,18 @@ func oneLine(f Flags) bool {
 
 // --> Config: ~/.gisrc.json unmarshalled
 
+type Config struct {
+	Zones []struct {
+		Path    string `json:"path"`
+		Bundles []struct {
+			User     string   `json:"user"`
+			Remote   string   `json:"remote"`
+			Division string   `json:"division"`
+			Repos    []string `json:"repositories"`
+		} `json:"bundles"`
+	} `json:"zones"`
+}
+
 func initConfig(e Emoji, f Flags, t *Timer, w *Workspace) Config {
 
 	// get the current user
@@ -379,19 +392,54 @@ func initConfig(e Emoji, f Flags, t *Timer, w *Workspace) Config {
 	return c
 }
 
-type Config struct {
-	Zones []struct {
-		Path    string `json:"path"`
-		Bundles []struct {
-			User     string   `json:"user"`
-			Remote   string   `json:"remote"`
-			Division string   `json:"division"`
-			Repos    []string `json:"repositories"`
-		} `json:"bundles"`
-	} `json:"zones"`
-}
-
 // --> Repo
+
+type Repo struct {
+
+	// initRepo
+	Div      *Div
+	Name     string
+	User     string
+	Remote   string
+	GitDir   string
+	Path     string
+	GitPath  string
+	WorkTree string
+	URL      string
+
+	// verify
+	Verified         bool
+	Cloned           bool     // gitClone
+	VerifiedURL      string   // gitConfigOriginURL
+	RemoteUpdate     string   // gitRemoteUpdate
+	Clean            bool     // gitStatusPorcelain
+	LocalBranch      string   // gitLocalBranch
+	LocalSHA         string   // gitLocalSHA
+	MergeBaseSHA     string   // gitMergeBaseSHA
+	UpstreamSHA      string   // gitUpstreamSHA
+	UpstreamBranch   string   // gitRevParseUpstream
+	DiffFiles        []string // gitDiffFiles
+	DiffCount        int      // getDiffSummary
+	DiffSummary      string   // getDiffSummary
+	DiffStatus       bool     // getDiffSummary
+	ShortStat        string   // gitShortstat
+	ShortStatPlus    int      // getShortInts
+	ShortStatMinus   int      // getShortInts
+	Upstream         string   // getUpstreamStatus
+	UntrackedFiles   []string // gitUntracked
+	UntrackedCount   int      // getUntrackedSummary
+	UntrackedSummary string   // getUntrackedSummary
+	UntrackedStatus  bool     // getUntrackedSummary
+	Summary          string   // getSummary
+	Phase            string   // getPhase
+	InfoVerified     bool     // verifyProjectInfo
+
+	// setActions
+	Status       string
+	GitAction    string
+	GitMessage   string
+	GitConfirmed bool
+}
 
 func initRepo(d *Div, rn string, bu string, br string, bd string) *Repo {
 	r := new(Repo)
@@ -448,53 +496,6 @@ func initRepo(d *Div, rn string, bu string, br string, bd string) *Repo {
 	r.URL = b.String()
 
 	return r
-}
-
-type Repo struct {
-
-	// initRepo
-	Div      *Div
-	Name     string
-	User     string
-	Remote   string
-	GitDir   string
-	Path     string
-	GitPath  string
-	WorkTree string
-	URL      string
-
-	// verify
-	Verified         bool
-	Cloned           bool     // gitClone
-	VerifiedURL      string   // gitConfigOriginURL
-	RemoteUpdate     string   // gitRemoteUpdate
-	Clean            bool     // gitStatusPorcelain
-	LocalBranch      string   // gitLocalBranch
-	LocalSHA         string   // gitLocalSHA
-	MergeBaseSHA     string   // gitMergeBaseSHA
-	UpstreamSHA      string   // gitUpstreamSHA
-	UpstreamBranch   string   // gitRevParseUpstream
-	DiffFiles        []string // gitDiffFiles
-	DiffCount        int      // getDiffSummary
-	DiffSummary      string   // getDiffSummary
-	DiffStatus       bool     // getDiffSummary
-	ShortStat        string   // gitShortstat
-	ShortStatPlus    int      // getShortInts
-	ShortStatMinus   int      // getShortInts
-	Upstream         string   // getUpstreamStatus
-	UntrackedFiles   []string // gitUntracked
-	UntrackedCount   int      // getUntrackedSummary
-	UntrackedSummary string   // getUntrackedSummary
-	UntrackedStatus  bool     // getUntrackedSummary
-	Summary          string   // getSummary
-	Phase            string   // getPhase
-	InfoVerified     bool     // verifyProjectInfo
-
-	// setActions
-	Status       string
-	GitAction    string
-	GitMessage   string
-	GitConfirmed bool
 }
 
 // repo fns here
@@ -2147,10 +2148,8 @@ func terminateRun(e Emoji, f Flags, rs Repos, dvs Divs, t *Timer, w *Workspace) 
 
 func main() {
 	e, f, rs, dvs, t, w := initRun()
-	fmt.Println(e, f, rs, dvs, t, w)
-	// fmt.Println(e, f, rs, dvs, t, w)
-	// verifyDivs(e, f, rs, dvs, t, w)
-	// verifyRepos(e, f, rs, dvs, t, w)
-	// verifyChanges(e, f, rs, dvs, t, w) // setActions()
-	// terminateRun(e, f, rs, dvs, t, w)
+	verifyDivs(e, f, rs, dvs, t, w)
+	verifyRepos(e, f, rs, dvs, t, w)
+	verifyChanges(e, f, rs, dvs, t, w) // setActions()
+	terminateRun(e, f, rs, dvs, t, w)
 }

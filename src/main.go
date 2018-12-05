@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
 	"html"
@@ -20,6 +21,9 @@ import (
 	"sync"
 	"time"
 )
+
+// FLAG: fix property naming
+// might be better to have Run or Total?
 
 // --> Moment: a moment in time
 
@@ -62,9 +66,15 @@ func (t *Timer) getSplit() time.Duration {
 	return lm.Split
 }
 
-func (t *Timer) dubs() (st time.Duration, sp time.Duration) {
-	lm := t.Moments[len(t.Moments)-1] // (l)ast (m)oment
-	return lm.Start, lm.Split
+func (t *Timer) getMoment(s string) (Moment, error) {
+	for _, m := range t.Moments {
+		if m.Name == s {
+			return m, nil
+		}
+	}
+	var m Moment
+	return m, errors.New("no moment found")
+
 }
 
 // --> Emoji: struct collecting emojis
@@ -121,7 +131,7 @@ type Emoji struct {
 	Count                int
 }
 
-func initEmoji(t *Timer) (e Emoji) {
+func initEmoji(f Flags, t *Timer) (e Emoji) {
 	e.AlarmClock = printEmoji(9200)
 	e.Book = printEmoji(128214)
 	e.Books = printEmoji(128218)
@@ -170,7 +180,9 @@ func initEmoji(t *Timer) (e Emoji) {
 	e.Unicorn = printEmoji(129412)
 	e.Warning = printEmoji(128679)
 	e.Count = reflect.ValueOf(e).NumField() - 1
+	// timer
 	t.markMoment("emoji")
+
 	return e
 }
 
@@ -192,12 +204,13 @@ type Flags struct {
 	Summary string
 }
 
-func initFlags(t *Timer) (f Flags) {
+func initFlags(e Emoji, t *Timer) (f Flags) {
+
 	var m string // mode
 	var c bool   // clear
 	var v bool   // verbose
 	var d bool   // dry
-	var e bool   // emoji
+	var em bool  // emoji
 	var o bool   // one-line
 
 	var fc int   // flag count
@@ -207,7 +220,7 @@ func initFlags(t *Timer) (f Flags) {
 	flag.BoolVar(&c, "c", false, "clear")
 	flag.BoolVar(&v, "v", true, "verbose")
 	flag.BoolVar(&d, "d", false, "dry")
-	flag.BoolVar(&e, "e", true, "emoji")
+	flag.BoolVar(&em, "e", true, "emoji")
 	flag.BoolVar(&o, "o", false, "one-line")
 	flag.Parse()
 
@@ -219,6 +232,7 @@ func initFlags(t *Timer) (f Flags) {
 		fc += 1
 	}
 
+	// reset to 'verify' if invalid option is passed
 	switch m {
 	case "login", "logout", "verify":
 	default:
@@ -245,7 +259,7 @@ func initFlags(t *Timer) (f Flags) {
 	}
 
 	// emoji
-	if e == true {
+	if em == true {
 		fc += 1
 		sl = append(sl, "emoji")
 	}
@@ -262,9 +276,9 @@ func initFlags(t *Timer) (f Flags) {
 	// timer
 	t.markMoment("flags")
 
-	// print
+	// set Flags
+	f = Flags{m, c, v, d, em, o, fc, s}
 
-	f = Flags{m, c, v, d, e, o, fc, s}
 	return f
 }
 
@@ -1481,23 +1495,7 @@ func initDivsRepos(c Config, e Emoji, f Flags, t *Timer) (dvs Divs, rs Repos) {
 
 // WORKSPACE
 
-func initWorkspace(e Emoji, f Flags, t *Timer) *Workspace {
-	clearScreen(f)
-
-	targetPrint(f, "%v start", e.Clapper)
-
-	if isDry(f) {
-		targetPrint(f, "%v  dry run; no changes will be made", e.Desert)
-	}
-
-	targetPrint(f, "%v parsing flags", e.FlagInHole)
-	targetPrint(f, "%v [%v] flags (%v) {%v / %v}", e.Flag, f.Count, f.Summary, t.FlagSplit, t.FlagParse)
-
-	if hasEmoji(f) {
-		targetPrint(f, "%v initializing emoji", e.CrystalBall)
-		// targetPrint(f, "%v [%v] emoji {%v / %v}", e.DirectHit, e.Count, t.EmojiSplit, t.EmojiParse)
-	}
-
+func initWorkspace() *Workspace {
 	w := new(Workspace)
 	return w
 }
@@ -2082,11 +2080,30 @@ func targetPrint(f Flags, s string, z ...interface{}) {
 // --> Main
 
 func initRun() (e Emoji, f Flags, rs Repos, dvs Divs, t *Timer, w *Workspace) {
-
 	t = initTimer()
-	f = initFlags(t)
-	e = initEmoji(t)
-	w = initWorkspace(e, f, t)
+	f = initFlags(e, t)
+	e = initEmoji(f, t)
+
+	// print
+
+	clearScreen(f)
+	targetPrint(f, "%v start", e.Clapper)
+
+	if isDry(f) {
+		targetPrint(f, "%v  dry run; no changes will be made", e.Desert)
+	}
+
+	if ft, err := t.getMoment("flags"); err == nil {
+		targetPrint(f, "%v parsing flags", e.FlagInHole)
+		targetPrint(f, "%v [%v] flags (%v) {%v / %v}", e.Flag, f.Count, f.Summary, ft.Split, ft.Start)
+	}
+
+	if et, err := t.getMoment("emoji"); err == nil {
+		targetPrint(f, "%v initializing emoji", e.CrystalBall)
+		targetPrint(f, "%v [%v] emoji {%v / %v}", e.DirectHit, e.Count, et.Split, et.Start)
+	}
+
+	w = initWorkspace()
 	c := initConfig(e, f, t, w)
 	dvs, rs = initDivsRepos(c, e, f, t)
 

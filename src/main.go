@@ -37,6 +37,7 @@ type Timer struct {
 	Moments []Moment
 }
 
+// initTimer initializes a *Timer with a Start moment.
 func initTimer() *Timer {
 	t := new(Timer)
 	st := Moment{Name: "Start", Time: time.Now()} // (st)art
@@ -44,6 +45,7 @@ func initTimer() *Timer {
 	return t
 }
 
+// markMoment marks a moment in time as a Moment and appends t.Moments.
 func (t *Timer) markMoment(s string) {
 	sm := t.Moments[0]                           // (s)tarting (m)oment
 	lm := t.Moments[len(t.Moments)-1]            // (l)ast (m)oment
@@ -53,16 +55,19 @@ func (t *Timer) markMoment(s string) {
 	t.Moments = append(t.Moments, m)             // append Moment
 }
 
+// getTime returns the elapsed time at the last recorded moment in t.Moments.
 func (t *Timer) getTime() time.Duration {
 	lm := t.Moments[len(t.Moments)-1] // (l)ast (m)oment
 	return lm.Start
 }
 
+// getSplit returns the split time for the last recorded moment in t.Moments.
 func (t *Timer) getSplit() time.Duration {
 	lm := t.Moments[len(t.Moments)-1] // (l)ast (m)oment
 	return lm.Split
 }
 
+// getMoment returns a Moment and an error value from t.Moments.
 func (t *Timer) getMoment(s string) (Moment, error) {
 	for _, m := range t.Moments {
 		if m.Name == s {
@@ -128,6 +133,7 @@ type Emoji struct {
 	Count                int
 }
 
+// initEmoji returns an Emoji struct with all values initialized.
 func initEmoji(f Flags, t *Timer) (e Emoji) {
 	e.AlarmClock = printEmoji(9200)
 	e.Book = printEmoji(128214)
@@ -184,6 +190,7 @@ func initEmoji(f Flags, t *Timer) (e Emoji) {
 	return e
 }
 
+// printEmoji returns an emoji character as a string value.
 func printEmoji(n int) string {
 	str := html.UnescapeString("&#" + strconv.Itoa(n) + ";")
 	return str
@@ -204,7 +211,7 @@ type Flags struct {
 
 func initFlags(e Emoji, t *Timer) (f Flags) {
 
-	// six possible flags
+	// shortcut variables
 	var m string // mode
 	var c bool   // clear
 	var v bool   // verbose
@@ -216,7 +223,7 @@ func initFlags(e Emoji, t *Timer) (f Flags) {
 	var fc int   // flag count
 	var s string // summary
 
-	// mapping to flag properties
+	// point to shortcut variables
 	flag.StringVar(&m, "m", "verify", "mode")
 	flag.BoolVar(&c, "c", false, "clear")
 	flag.BoolVar(&v, "v", true, "verbose")
@@ -283,6 +290,7 @@ func initFlags(e Emoji, t *Timer) (f Flags) {
 	return f
 }
 
+// isClear returns true if f.Clear is true.
 func isClear(f Flags) bool {
 	if f.Clear {
 		return true
@@ -291,6 +299,7 @@ func isClear(f Flags) bool {
 	}
 }
 
+// isVerbose returns true if f.Verbose is true.
 func isVerbose(f Flags) bool {
 	if f.Verbose {
 		return true
@@ -299,6 +308,7 @@ func isVerbose(f Flags) bool {
 	}
 }
 
+// isDry returns true if f.Dry is true.
 func isDry(f Flags) bool {
 	if f.Dry {
 		return true
@@ -307,6 +317,7 @@ func isDry(f Flags) bool {
 	}
 }
 
+// isActive returns true if f.Dry is true.
 func isActive(f Flags) bool {
 	if f.Dry {
 		return false
@@ -315,6 +326,7 @@ func isActive(f Flags) bool {
 	}
 }
 
+// hasEmoji returns true if f.Emoji is true.
 func hasEmoji(f Flags) bool {
 	if f.Emoji {
 		return true
@@ -323,6 +335,7 @@ func hasEmoji(f Flags) bool {
 	}
 }
 
+// noEmoji returns true if f.Emoji is false.
 func noEmoji(f Flags) bool {
 	if f.Emoji {
 		return false
@@ -331,6 +344,7 @@ func noEmoji(f Flags) bool {
 	}
 }
 
+// oneLine returns true if f.OneLine is true.
 func oneLine(f Flags) bool {
 	if f.OneLine {
 		return true
@@ -353,6 +367,7 @@ type Config struct {
 	} `json:"zones"`
 }
 
+// initConfig returns
 func initConfig(e Emoji, f Flags, t *Timer, w *Workspace) Config {
 
 	// get the current user
@@ -2105,8 +2120,8 @@ func initRun() (e Emoji, f Flags, rs Repos, dvs Divs, t *Timer, w *Workspace) {
 		targetPrint(f, "%v [%v] emoji {%v / %v}", e.DirectHit, e.Count, et.Split, et.Start)
 	}
 
-	w = initWorkspace()
 	c := initConfig(e, f, t, w)
+	w = initWorkspace()
 	dvs, rs = initDivsRepos(c, e, f, t)
 
 	return e, f, rs, dvs, t, w

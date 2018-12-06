@@ -353,6 +353,27 @@ func oneLine(f Flags) bool {
 	}
 }
 
+// initPrint
+
+func initPrint(e Emoji, f Flags, t *Timer) {
+	clearScreen(f)
+	targetPrint(f, "%v start", e.Clapper)
+
+	if isDry(f) {
+		targetPrint(f, "%v  dry run; no changes will be made", e.Desert)
+	}
+
+	if ft, err := t.getMoment("flags"); err == nil {
+		targetPrint(f, "%v parsing flags", e.FlagInHole)
+		targetPrint(f, "%v [%v] flags (%v) {%v / %v}", e.Flag, f.Count, f.Summary, ft.Split, ft.Start)
+	}
+
+	if et, err := t.getMoment("emoji"); err == nil {
+		targetPrint(f, "%v initializing emoji", e.CrystalBall)
+		targetPrint(f, "%v [%v] emoji {%v / %v}", e.DirectHit, e.Count, et.Split, et.Start)
+	}
+}
+
 // --> Config: ~/.gisrc.json unmarshalled
 
 type Config struct {
@@ -2094,33 +2115,21 @@ func targetPrint(f Flags, s string, z ...interface{}) {
 	}
 }
 
-// --> Main
+// --> Main functions
 
 func initRun() (e Emoji, f Flags, rs Repos, dvs Divs, t *Timer, w *Workspace) {
+
+	// initialize Timer, Flags and Emoji
 	t = initTimer()
 	f = initFlags(e, t)
 	e = initEmoji(f, t)
 
-	// print
+	// clear screen, early messaging
+	initPrint(e, f, t)
 
-	clearScreen(f)
-	targetPrint(f, "%v start", e.Clapper)
-
-	if isDry(f) {
-		targetPrint(f, "%v  dry run; no changes will be made", e.Desert)
-	}
-
-	if ft, err := t.getMoment("flags"); err == nil {
-		targetPrint(f, "%v parsing flags", e.FlagInHole)
-		targetPrint(f, "%v [%v] flags (%v) {%v / %v}", e.Flag, f.Count, f.Summary, ft.Split, ft.Start)
-	}
-
-	if et, err := t.getMoment("emoji"); err == nil {
-		targetPrint(f, "%v initializing emoji", e.CrystalBall)
-		targetPrint(f, "%v [%v] emoji {%v / %v}", e.DirectHit, e.Count, et.Split, et.Start)
-	}
-
+	// read ~/.gisrc.json, initialize Config
 	c := initConfig(e, f, t, w)
+
 	w = initWorkspace()
 	dvs, rs = initDivsRepos(c, e, f, t)
 

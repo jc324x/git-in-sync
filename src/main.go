@@ -353,12 +353,17 @@ func oneLine(f Flags) bool {
 	}
 }
 
-// initPrint
+// initPrint prints info on Emoji and Flag values.
 
 func initPrint(e Emoji, f Flags, t *Timer) {
+
+	// clears the screen if f.Clear or f.Emoji are true
 	clearScreen(f)
+
+	// targetPrint prints a message with or without an emoji if f.Emoji is true or false.
 	targetPrint(f, "%v start", e.Clapper)
 
+	// isDry returns true if f.Dry is true.
 	if isDry(f) {
 		targetPrint(f, "%v  dry run; no changes will be made", e.Desert)
 	}
@@ -388,10 +393,10 @@ type Config struct {
 	} `json:"bundles"`
 }
 
-// initConfig returns
-func initConfig(e Emoji, f Flags, t *Timer, w *Workspace) Config {
+// initConfig returns data from ~/.gisrc.json as a Config struct.
+func initConfig(e Emoji, f Flags, t *Timer, w *Workspace) (c Config) {
 
-	// get the current user
+	// get the current user, otherwise fatal
 	u, err := user.Current()
 
 	if err != nil {
@@ -412,7 +417,6 @@ func initConfig(e Emoji, f Flags, t *Timer, w *Workspace) Config {
 	}
 
 	// unmarshall json
-	c := Config{}
 	err = json.Unmarshal(r, &c)
 
 	if err != nil {
@@ -428,7 +432,7 @@ func initConfig(e Emoji, f Flags, t *Timer, w *Workspace) Config {
 	return c
 }
 
-// --> Repo
+// --> Repo: Configuration and information about a repository.
 
 type Repo struct {
 
@@ -477,6 +481,7 @@ type Repo struct {
 	GitConfirmed bool
 }
 
+// initRepo returns a *Repo with initial values set.
 func initRepo(d *Div, rn string, bu string, br string, bd string) *Repo {
 	r := new(Repo)
 	r.Div = d

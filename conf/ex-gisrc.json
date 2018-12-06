@@ -1,7 +1,7 @@
 {
-	"zones": [{
+	"bundles": [{
 		"path": "~/go-git-in-sync-example",
-		"bundles": [{
+		"zones": [{
 				"user": "jychri",
 				"remote": "github",
 				"division": "google-apps-script",

@@ -377,15 +377,15 @@ func initPrint(e Emoji, f Flags, t *Timer) {
 // --> Config: ~/.gisrc.json unmarshalled
 
 type Config struct {
-	Zones []struct {
-		Path    string `json:"path"`
-		Bundles []struct {
+	Bundles []struct {
+		Path  string `json:"path"`
+		Zones []struct {
 			User     string   `json:"user"`
 			Remote   string   `json:"remote"`
 			Division string   `json:"division"`
 			Repos    []string `json:"repositories"`
-		} `json:"bundles"`
-	} `json:"zones"`
+		} `json:"zones"`
+	} `json:"bundles"`
 }
 
 // initConfig returns
@@ -1506,8 +1506,8 @@ func initDivsRepos(c Config, e Emoji, f Flags, t *Timer) (dvs Divs, rs Repos) {
 	targetPrint(f, "%v parsing divs|repos", e.Pager)
 
 	// initialize divs and repos from config
-	for _, z := range c.Zones {
-		for _, bl := range z.Bundles {
+	for _, z := range c.Bundles {
+		for _, bl := range z.Zones {
 			d := initDiv(z.Path, bl.Division)
 			for _, rn := range bl.Repos {
 				r := initRepo(d, rn, bl.User, bl.Remote, bl.Division)

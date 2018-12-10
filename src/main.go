@@ -1,7 +1,7 @@
 package main
 
 import (
-	"bufio"
+	// "bufio"
 	"bytes"
 	"encoding/json"
 	"errors"
@@ -18,7 +18,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"sync"
+	// "sync"
 	"time"
 )
 
@@ -185,7 +185,7 @@ func initEmoji(f Flags, t *Timer) (e Emoji) {
 	e.Count = reflect.ValueOf(e).NumField() - 1
 
 	// timer
-	t.markMoment("emoji")
+	t.markMoment("init-emoji")
 
 	return e
 }
@@ -282,7 +282,7 @@ func initFlags(e Emoji, t *Timer) (f Flags) {
 	s = strings.Join(ef, ", ")
 
 	// timer
-	t.markMoment("flags")
+	t.markMoment("init-flags")
 
 	// set Flags
 	f = Flags{m, c, v, d, em, o, fc, s}
@@ -393,7 +393,7 @@ type Config struct {
 }
 
 // initConfig returns data from ~/.gisrc.json as a Config struct.
-func initConfig(e Emoji, f Flags, t *Timer, w *Workspace) (c Config) {
+func initConfig(e Emoji, f Flags, t *Timer) (c Config) {
 
 	// get the current user, otherwise fatal
 	u, err := user.Current()
@@ -423,7 +423,7 @@ func initConfig(e Emoji, f Flags, t *Timer, w *Workspace) (c Config) {
 	}
 
 	// timer
-	t.markMoment("config")
+	t.markMoment("init-config")
 
 	// print
 	targetPrint(f, "%v read %v {%v / %v}", e.Book, g, t.getSplit(), t.getTime())
@@ -540,50 +540,50 @@ func initRepo(d *Div, rn string, bu string, br string, bd string) *Repo {
 
 // repo fns here
 
-func (r *Repo) verify(e Emoji, f Flags, w *Workspace) {
+// func (r *Repo) verify(e Emoji, f Flags, w *Workspace) {
 
-	if noDiv(r) {
-		targetPrint(f, "%v %v (%v/%v)", e.Slash, r.Name, r.Div.Name, r.Remote)
-		return
-	}
+// 	if noDiv(r) {
+// 		targetPrint(f, "%v %v (%v/%v)", e.Slash, r.Name, r.Div.Name, r.Remote)
+// 		return
+// 	}
 
-	if canClone(f, r) {
-		r.gitClone(e, f, w)
-	}
+// 	if canClone(f, r) {
+// 		r.gitClone(e, f, w)
+// 	}
 
-	if isMissing(r) {
-		targetPrint(f, "%v %v (%v/%v)", e.Slash, r.Name, r.Div.Name, r.Remote)
-		return
-	}
+// 	if isMissing(r) {
+// 		targetPrint(f, "%v %v (%v/%v)", e.Slash, r.Name, r.Div.Name, r.Remote)
+// 		return
+// 	}
 
-	r.gitConfigOriginURL()
-	r.gitRemoteUpdate()
-	r.gitStatusPorcelain()
-	r.gitLocalSHA()
-	r.gitLocalBranch()
-	r.gitMergeBaseSHA()
-	r.gitUpstreamSHA()
-	r.gitRevParseUpstream()
-	r.gitDiffsNameOnly()
-	r.getDiffSummary()
-	r.gitShortstat()
-	r.getShortInts()
-	r.gitUntracked()
-	r.getUntrackedSummary()
-	r.getUpstreamStatus()
-	r.getPhase()
+// 	r.gitConfigOriginURL()
+// 	r.gitRemoteUpdate()
+// 	r.gitStatusPorcelain()
+// 	r.gitLocalSHA()
+// 	r.gitLocalBranch()
+// 	r.gitMergeBaseSHA()
+// 	r.gitUpstreamSHA()
+// 	r.gitRevParseUpstream()
+// 	r.gitDiffsNameOnly()
+// 	r.getDiffSummary()
+// 	r.gitShortstat()
+// 	r.getShortInts()
+// 	r.gitUntracked()
+// 	r.getUntrackedSummary()
+// 	r.getUpstreamStatus()
+// 	r.getPhase()
 
-	if isUpToDate(r) {
-		w.VerifiedRepos = append(w.VerifiedRepos, r)
-		targetPrint(f, "%v %v (%v/%v)", e.Checkmark, r.Name, r.Div.Name, r.Remote)
-	} else {
-		// fmt.Println("DEBUG:")
-		// fmt.Println(r)
-		fmt.Printf("DEBUG: Phase = %v\n", r.Phase)
+// 	if isUpToDate(r) {
+// 		w.VerifiedRepos = append(w.VerifiedRepos, r)
+// 		targetPrint(f, "%v %v (%v/%v)", e.Checkmark, r.Name, r.Div.Name, r.Remote)
+// 	} else {
+// 		// fmt.Println("DEBUG:")
+// 		// fmt.Println(r)
+// 		fmt.Printf("DEBUG: Phase = %v\n", r.Phase)
 
-		targetPrint(f, "%v %v (%v/%v)", e.Warning, r.Name, r.Div.Name, r.Remote)
-	}
-}
+// 		targetPrint(f, "%v %v (%v/%v)", e.Warning, r.Name, r.Div.Name, r.Remote)
+// 	}
+// }
 
 func canClone(f Flags, r *Repo) bool {
 
@@ -642,17 +642,17 @@ func isUpToDate(r *Repo) bool {
 	}
 }
 
-func (r *Repo) gitClone(e Emoji, f Flags, w *Workspace) {
-	targetPrint(f, "%v cloning %v {%v}", e.Box, r.Name, r.Div.Name)
+// func (r *Repo) gitClone(e Emoji, f Flags, w *Workspace) {
+// 	targetPrint(f, "%v cloning %v {%v}", e.Box, r.Name, r.Div.Name)
 
-	args := []string{"clone", r.URL, r.Path}
-	cmd := exec.Command("git", args...)
-	var out bytes.Buffer
-	cmd.Stdout = &out
-	cmd.Run()
+// 	args := []string{"clone", r.URL, r.Path}
+// 	cmd := exec.Command("git", args...)
+// 	var out bytes.Buffer
+// 	cmd.Stdout = &out
+// 	cmd.Run()
 
-	w.ClonedRepos = append(w.ClonedRepos, r)
-}
+// 	w.ClonedRepos = append(w.ClonedRepos, r)
+// }
 
 func (r *Repo) gitConfigOriginURL() {
 	if r.Verified {
@@ -1072,45 +1072,45 @@ type Div struct {
 	SkippedRepos   Repos
 }
 
-func (d *Div) verify(e Emoji, f Flags, w *Workspace) {
-	// check path; create if missing and active
-	_, err := os.Stat(d.Path)
-	if os.IsNotExist(err) && isActive(f) {
-		targetPrint(f, "%v creating %v", e.Folder, d.Path)
+// func (d *Div) verify(e Emoji, f Flags, w *Workspace) {
+// 	// check path; create if missing and active
+// 	_, err := os.Stat(d.Path)
+// 	if os.IsNotExist(err) && isActive(f) {
+// 		targetPrint(f, "%v creating %v", e.Folder, d.Path)
 
-		os.MkdirAll(d.Path, 0777)
-		d.PathCreated = true
-		w.CreatedDivs = append(w.CreatedDivs, d)
-	}
+// 		os.MkdirAll(d.Path, 0777)
+// 		d.PathCreated = true
+// 		w.CreatedDivs = append(w.CreatedDivs, d)
+// 	}
 
-	// check path
-	info, err := os.Stat(d.Path)
+// 	// check path
+// 	info, err := os.Stat(d.Path)
 
-	switch {
-	case err != nil:
-		d.PathVerified = false
-		d.PathError = "No directory"
-	case os.IsNotExist(err):
-		d.PathVerified = false
-		d.PathError = "No directory"
-	case !info.IsDir():
-		d.PathVerified = false
-		d.PathError = "File blocking path"
-	case noPermission(info):
-		d.PathVerified = false
-		d.PathError = "No permission"
-	default:
-		d.PathVerified = true
-		d.PathError = ""
-	}
+// 	switch {
+// 	case err != nil:
+// 		d.PathVerified = false
+// 		d.PathError = "No directory"
+// 	case os.IsNotExist(err):
+// 		d.PathVerified = false
+// 		d.PathError = "No directory"
+// 	case !info.IsDir():
+// 		d.PathVerified = false
+// 		d.PathError = "File blocking path"
+// 	case noPermission(info):
+// 		d.PathVerified = false
+// 		d.PathError = "No permission"
+// 	default:
+// 		d.PathVerified = true
+// 		d.PathError = ""
+// 	}
 
-	if d.PathVerified {
-		w.VerifiedDivs = append(w.VerifiedDivs, d)
-		d.Summary = fmt.Sprintf("%v %v", e.Checkmark, d.Path)
-	} else {
-		d.Summary = fmt.Sprintf("%v %v (%v)", e.Slash, d.Path, d.PathError)
-	}
-}
+// 	if d.PathVerified {
+// 		w.VerifiedDivs = append(w.VerifiedDivs, d)
+// 		d.Summary = fmt.Sprintf("%v %v", e.Checkmark, d.Path)
+// 	} else {
+// 		d.Summary = fmt.Sprintf("%v %v (%v)", e.Slash, d.Path, d.PathError)
+// 	}
+// }
 
 // div fns here
 
@@ -1174,54 +1174,54 @@ func (d *Div) getPendingReposSummary() {
 
 type Repos []*Repo
 
-func (rs Repos) verify(e Emoji, f Flags, w *Workspace) {
-	var wg sync.WaitGroup
-	for i := range rs {
-		wg.Add(1)
-		go func(r *Repo) {
-			defer wg.Done()
-			r.verify(e, f, w)
-		}(rs[i])
-	}
-	wg.Wait()
-}
+// func (rs Repos) verify(e Emoji, f Flags, w *Workspace) {
+// 	var wg sync.WaitGroup
+// 	for i := range rs {
+// 		wg.Add(1)
+// 		go func(r *Repo) {
+// 			defer wg.Done()
+// 			r.verify(e, f, w)
+// 		}(rs[i])
+// 	}
+// 	wg.Wait()
+// }
 
-func (rs Repos) summary(e Emoji, f Flags, t *Timer, w *Workspace) {
+// func (rs Repos) summary(e Emoji, f Flags, t *Timer, w *Workspace) {
 
-	// timer
-	// t.ReposParse = mark(t.Start)
-	// t.ReposSplit = t.ReposParse - t.DivsReposParse
+// 	// timer
+// 	// t.ReposParse = mark(t.Start)
+// 	// t.ReposSplit = t.ReposParse - t.DivsReposParse
 
-	// summary
-	var b bytes.Buffer
+// 	// summary
+// 	var b bytes.Buffer
 
-	if len(w.VerifiedRepos) == len(rs) {
-		b.WriteString(e.ThumbsUp)
-	} else {
-		b.WriteString(e.Warning)
-	}
+// 	if len(w.VerifiedRepos) == len(rs) {
+// 		b.WriteString(e.ThumbsUp)
+// 	} else {
+// 		b.WriteString(e.Warning)
+// 	}
 
-	b.WriteString(" [")
-	b.WriteString(strconv.Itoa(len(w.VerifiedRepos)))
-	b.WriteString("/")
-	b.WriteString(strconv.Itoa(len(rs)))
-	b.WriteString("] repos up to date")
+// 	b.WriteString(" [")
+// 	b.WriteString(strconv.Itoa(len(w.VerifiedRepos)))
+// 	b.WriteString("/")
+// 	b.WriteString(strconv.Itoa(len(rs)))
+// 	b.WriteString("] repos up to date")
 
-	if len(w.ClonedRepos) >= 1 {
-		b.WriteString(", cloned (")
-		b.WriteString(strconv.Itoa(len(w.ClonedRepos)))
-		b.WriteString(")")
-	}
+// 	if len(w.ClonedRepos) >= 1 {
+// 		b.WriteString(", cloned (")
+// 		b.WriteString(strconv.Itoa(len(w.ClonedRepos)))
+// 		b.WriteString(")")
+// 	}
 
-	b.WriteString(" {")
-	// b.WriteString(t.ReposSplit.String())
-	b.WriteString(" / ")
-	// b.WriteString(t.ReposParse.String())
-	b.WriteString("}")
+// 	b.WriteString(" {")
+// 	// b.WriteString(t.ReposSplit.String())
+// 	b.WriteString(" / ")
+// 	// b.WriteString(t.ReposParse.String())
+// 	b.WriteString("}")
 
-	// print
-	targetPrint(f, b.String())
-}
+// 	// print
+// 	targetPrint(f, b.String())
+// }
 
 func (rs Repos) itemIndex(r *Repo) int {
 	for i, rl := range rs {
@@ -1232,266 +1232,266 @@ func (rs Repos) itemIndex(r *Repo) int {
 	return -1
 }
 
-type Divs []*Div
+// type Divs []*Div
 
-func (dvs Divs) verify(e Emoji, f Flags, w *Workspace) {
-	for _, d := range dvs {
-		d.verify(e, f, w)
-	}
-}
+// func (dvs Divs) verify(e Emoji, f Flags, w *Workspace) {
+// 	for _, d := range dvs {
+// 		d.verify(e, f, w)
+// 	}
+// }
 
-func (dvs Divs) summary(e Emoji, f Flags, t *Timer, w *Workspace) {
+// func (dvs Divs) summary(e Emoji, f Flags, t *Timer, w *Workspace) {
 
-	// timer
-	// t.DivsParse = mark(t.Start)
-	// t.DivsSplit = t.DivsParse - t.DivsReposParse
+// 	// timer
+// 	// t.DivsParse = mark(t.Start)
+// 	// t.DivsSplit = t.DivsParse - t.DivsReposParse
 
-	// summary (div)
-	for _, d := range dvs {
-		targetPrint(f, d.Summary)
-	}
+// 	// summary (div)
+// 	for _, d := range dvs {
+// 		targetPrint(f, d.Summary)
+// 	}
 
-	// summary (divs)
-	var b bytes.Buffer
+// 	// summary (divs)
+// 	var b bytes.Buffer
 
-	if len(w.VerifiedDivs) == len(dvs) {
-		b.WriteString(e.ThumbsUp)
-	} else {
-		b.WriteString(e.Slash)
-	}
+// 	if len(w.VerifiedDivs) == len(dvs) {
+// 		b.WriteString(e.ThumbsUp)
+// 	} else {
+// 		b.WriteString(e.Slash)
+// 	}
 
-	b.WriteString(" [")
-	b.WriteString(strconv.Itoa(len(w.VerifiedDivs)))
-	b.WriteString("/")
-	b.WriteString(strconv.Itoa(len(dvs)))
-	b.WriteString("] divs verified")
+// 	b.WriteString(" [")
+// 	b.WriteString(strconv.Itoa(len(w.VerifiedDivs)))
+// 	b.WriteString("/")
+// 	b.WriteString(strconv.Itoa(len(dvs)))
+// 	b.WriteString("] divs verified")
 
-	if len(w.CreatedDivs) >= 1 {
-		b.WriteString(", created (")
-		b.WriteString(strconv.Itoa(len(w.CreatedDivs)))
-		b.WriteString(")")
-	}
+// 	if len(w.CreatedDivs) >= 1 {
+// 		b.WriteString(", created (")
+// 		b.WriteString(strconv.Itoa(len(w.CreatedDivs)))
+// 		b.WriteString(")")
+// 	}
 
-	b.WriteString(" {")
-	// b.WriteString(t.DivsSplit.String())
-	b.WriteString(" / ")
-	// b.WriteString(t.DivsParse.String())
-	b.WriteString("}")
+// 	b.WriteString(" {")
+// 	// b.WriteString(t.DivsSplit.String())
+// 	b.WriteString(" / ")
+// 	// b.WriteString(t.DivsParse.String())
+// 	b.WriteString("}")
 
-	// print
-	targetPrint(f, b.String())
-}
+// 	// print
+// 	targetPrint(f, b.String())
+// }
 
-func (dvs Divs) dispatch(e Emoji, f Flags, w *Workspace) {
-	for _, d := range dvs {
-		d.dispatch(e, f, w)
-	}
-}
+// func (dvs Divs) dispatch(e Emoji, f Flags, w *Workspace) {
+// 	for _, d := range dvs {
+// 		d.dispatch(e, f, w)
+// 	}
+// }
 
-func (d *Div) dispatch(e Emoji, f Flags, w *Workspace) {
-	// divs.sort() -------------------------------------
-	for _, r := range d.Repos {
-		switch {
-		case r.Phase == "Ahead" && f.Mode == "logout":
-			r.Status = "Scheduled"
-			r.GitAction = "push"
-			d.ScheduledRepos = append(d.ScheduledRepos, r)
-		case r.Phase == "Behind" && f.Mode == "login":
-			r.Status = "Scheduled"
-			r.GitAction = "pull"
-			d.ScheduledRepos = append(d.ScheduledRepos, r)
-		case r.Phase == "Up-To-Date" && r.InfoVerified == true:
-			r.Status = "Complete"
-			d.CompleteRepos = append(d.CompleteRepos, r)
-		case r.InfoVerified == false:
-			r.Status = "Skipped"
-			d.SkippedRepos = append(d.SkippedRepos, r)
-		default:
-			r.Status = "Pending"
-			d.PendingRepos = append(d.PendingRepos, r)
-		}
-	}
-	// ---------------------------------------------
+// func (d *Div) dispatch(e Emoji, f Flags, w *Workspace) {
+// 	// divs.sort() -------------------------------------
+// 	for _, r := range d.Repos {
+// 		switch {
+// 		case r.Phase == "Ahead" && f.Mode == "logout":
+// 			r.Status = "Scheduled"
+// 			r.GitAction = "push"
+// 			d.ScheduledRepos = append(d.ScheduledRepos, r)
+// 		case r.Phase == "Behind" && f.Mode == "login":
+// 			r.Status = "Scheduled"
+// 			r.GitAction = "pull"
+// 			d.ScheduledRepos = append(d.ScheduledRepos, r)
+// 		case r.Phase == "Up-To-Date" && r.InfoVerified == true:
+// 			r.Status = "Complete"
+// 			d.CompleteRepos = append(d.CompleteRepos, r)
+// 		case r.InfoVerified == false:
+// 			r.Status = "Skipped"
+// 			d.SkippedRepos = append(d.SkippedRepos, r)
+// 		default:
+// 			r.Status = "Pending"
+// 			d.PendingRepos = append(d.PendingRepos, r)
+// 		}
+// 	}
+// 	// ---------------------------------------------
 
-	var b bytes.Buffer
+// 	var b bytes.Buffer
 
-	if len(d.Repos) == len(d.CompleteRepos) {
-		b.WriteString(e.Checkmark)
-	} else {
-		b.WriteString(e.Warning)
-	}
+// 	if len(d.Repos) == len(d.CompleteRepos) {
+// 		b.WriteString(e.Checkmark)
+// 	} else {
+// 		b.WriteString(e.Warning)
+// 	}
 
-	b.WriteString(" ")
-	b.WriteString(d.Path)
+// 	b.WriteString(" ")
+// 	b.WriteString(d.Path)
 
-	if len(d.Repos) == len(d.CompleteRepos) {
-		d.getReposSummary()
-		b.WriteString(" [")
-		b.WriteString(strconv.Itoa(len(d.CompleteRepos)))
-		b.WriteString("/")
-		b.WriteString(strconv.Itoa(len(d.Repos)))
-		b.WriteString("]{")
-		b.WriteString(d.ReposSummary)
-		b.WriteString("}")
+// 	if len(d.Repos) == len(d.CompleteRepos) {
+// 		d.getReposSummary()
+// 		b.WriteString(" [")
+// 		b.WriteString(strconv.Itoa(len(d.CompleteRepos)))
+// 		b.WriteString("/")
+// 		b.WriteString(strconv.Itoa(len(d.Repos)))
+// 		b.WriteString("]{")
+// 		b.WriteString(d.ReposSummary)
+// 		b.WriteString("}")
 
-	} else {
-		d.getPendingReposSummary()
-		b.WriteString(" (")
-		b.WriteString(strconv.Itoa(len(d.PendingRepos)))
-		b.WriteString("){")
-		b.WriteString(d.Summary)
-		b.WriteString("}")
-	}
+// 	} else {
+// 		d.getPendingReposSummary()
+// 		b.WriteString(" (")
+// 		b.WriteString(strconv.Itoa(len(d.PendingRepos)))
+// 		b.WriteString("){")
+// 		b.WriteString(d.Summary)
+// 		b.WriteString("}")
+// 	}
 
-	// print summary
-	targetPrint(f, b.String())
+// 	// print summary
+// 	targetPrint(f, b.String())
 
-	// loop over pending, confirm action
-	for _, r := range d.PendingRepos {
-		var b bytes.Buffer
+// 	// loop over pending, confirm action
+// 	for _, r := range d.PendingRepos {
+// 		var b bytes.Buffer
 
-		switch r.Phase {
-		case "Ahead":
-			b.WriteString(e.Bunny)
-			b.WriteString(" ")
-			b.WriteString(r.Name)
-			b.WriteString(" is ahead of ")
-			b.WriteString(r.UpstreamBranch)
-		case "Behind":
-			b.WriteString(e.Turtle)
-			b.WriteString(" ")
-			b.WriteString(r.Name)
-			b.WriteString(" is behind")
-			b.WriteString(r.UpstreamBranch)
-		case "Dirty", "DirtyUntracked", "DirtyAhead", "DirtyBehind":
-			b.WriteString(e.Pig)
-			b.WriteString(" ")
-			b.WriteString(r.Name)
-			b.WriteString(" is dirty [")
-			b.WriteString(strconv.Itoa((r.DiffCount)))
-			b.WriteString("]{")
-			b.WriteString(r.DiffSummary)
-			b.WriteString("}(+")
-			b.WriteString(strconv.Itoa(r.ShortStatPlus))
-			b.WriteString("|-")
-			b.WriteString(strconv.Itoa(r.ShortStatMinus))
-			b.WriteString(")")
-		case "Untracked", "UntrackedAhead", "UntrackedBehind":
-			b.WriteString(e.Pig)
-			b.WriteString(" ")
-			b.WriteString(r.Name)
-			b.WriteString(" has untracked files[")
-			b.WriteString(strconv.Itoa(r.UntrackedCount))
-			b.WriteString("]{")
-			b.WriteString(r.UntrackedSummary)
-			b.WriteString("}")
-		case "Up-To-Date":
-			b.WriteString(e.Checkmark)
-			b.WriteString(" ")
-			b.WriteString(r.Name)
-			b.WriteString(" is up to date with ")
-			b.WriteString(r.UpstreamBranch)
-		}
+// 		switch r.Phase {
+// 		case "Ahead":
+// 			b.WriteString(e.Bunny)
+// 			b.WriteString(" ")
+// 			b.WriteString(r.Name)
+// 			b.WriteString(" is ahead of ")
+// 			b.WriteString(r.UpstreamBranch)
+// 		case "Behind":
+// 			b.WriteString(e.Turtle)
+// 			b.WriteString(" ")
+// 			b.WriteString(r.Name)
+// 			b.WriteString(" is behind")
+// 			b.WriteString(r.UpstreamBranch)
+// 		case "Dirty", "DirtyUntracked", "DirtyAhead", "DirtyBehind":
+// 			b.WriteString(e.Pig)
+// 			b.WriteString(" ")
+// 			b.WriteString(r.Name)
+// 			b.WriteString(" is dirty [")
+// 			b.WriteString(strconv.Itoa((r.DiffCount)))
+// 			b.WriteString("]{")
+// 			b.WriteString(r.DiffSummary)
+// 			b.WriteString("}(+")
+// 			b.WriteString(strconv.Itoa(r.ShortStatPlus))
+// 			b.WriteString("|-")
+// 			b.WriteString(strconv.Itoa(r.ShortStatMinus))
+// 			b.WriteString(")")
+// 		case "Untracked", "UntrackedAhead", "UntrackedBehind":
+// 			b.WriteString(e.Pig)
+// 			b.WriteString(" ")
+// 			b.WriteString(r.Name)
+// 			b.WriteString(" has untracked files[")
+// 			b.WriteString(strconv.Itoa(r.UntrackedCount))
+// 			b.WriteString("]{")
+// 			b.WriteString(r.UntrackedSummary)
+// 			b.WriteString("}")
+// 		case "Up-To-Date":
+// 			b.WriteString(e.Checkmark)
+// 			b.WriteString(" ")
+// 			b.WriteString(r.Name)
+// 			b.WriteString(" is up to date with ")
+// 			b.WriteString(r.UpstreamBranch)
+// 		}
 
-		switch r.Phase {
-		case "DirtyUntracked":
-			b.WriteString(" with untracked files [")
-			b.WriteString(strconv.Itoa(r.UntrackedCount))
-			b.WriteString("]{")
-			b.WriteString(r.UntrackedSummary)
-			b.WriteString("}")
-		case "DirtyAhead":
-			b.WriteString(" & ahead of ")
-			b.WriteString(r.UpstreamBranch)
-		case "DirtyBehind":
-			b.WriteString(" & behind")
-			b.WriteString(r.UpstreamBranch)
-		case "UntrackedAhead":
-			b.WriteString(" & is ahead of ")
-			b.WriteString(r.UpstreamBranch)
-		case "UntrackedBehind":
-			b.WriteString(" & is behind")
-			b.WriteString(r.UpstreamBranch)
-		}
+// 		switch r.Phase {
+// 		case "DirtyUntracked":
+// 			b.WriteString(" with untracked files [")
+// 			b.WriteString(strconv.Itoa(r.UntrackedCount))
+// 			b.WriteString("]{")
+// 			b.WriteString(r.UntrackedSummary)
+// 			b.WriteString("}")
+// 		case "DirtyAhead":
+// 			b.WriteString(" & ahead of ")
+// 			b.WriteString(r.UpstreamBranch)
+// 		case "DirtyBehind":
+// 			b.WriteString(" & behind")
+// 			b.WriteString(r.UpstreamBranch)
+// 		case "UntrackedAhead":
+// 			b.WriteString(" & is ahead of ")
+// 			b.WriteString(r.UpstreamBranch)
+// 		case "UntrackedBehind":
+// 			b.WriteString(" & is behind")
+// 			b.WriteString(r.UpstreamBranch)
+// 		}
 
-		// print prompt (part 1)
-		targetPrint(f, b.String())
+// 		// print prompt (part 1)
+// 		targetPrint(f, b.String())
 
-		// print prompt (part 2)
-		switch {
-		case r.Phase == "Ahead":
-			r.GitAction = "push"
-			fmt.Printf("%v push changes to %v? ", e.Rocket, r.Remote)
-		case r.Phase == "Behind":
-			r.GitAction = "pull"
-			fmt.Printf("%v pull changes from %v? ", e.Ship, r.Remote)
-		case r.Phase == "Dirty":
-			r.GitAction = "add-commit-push"
-			fmt.Printf("%v add all files, commit and push to %v? ", e.Clipboard, r.Remote)
-		case r.Phase == "DirtyUntracked":
-			r.GitAction = "add-commit-push"
-			fmt.Printf("%v add all files, commit and push to %v? ", e.Clipboard, r.Remote)
-		case r.Phase == "DirtyAhead":
-			r.GitAction = "add-commit-push"
-			fmt.Printf("%v add all files, commit and push to %v? ", e.Clipboard, r.Remote)
-		case r.Phase == "DirtyBehind":
-			r.GitAction = "stash-pull-pop-commit-push"
-			fmt.Printf("%v stash all files, pull changes, commit and push to %v? ", e.Clipboard, r.Remote)
-		case r.Phase == "Untracked":
-			r.GitAction = "add-commit-push"
-			fmt.Printf("%v add all files, commit and push to %v? ", e.Clipboard, r.Remote)
-		case r.Phase == "UntrackedAhead":
-			r.GitAction = "add-commit-push"
-			fmt.Printf("%v add all files, commit and push to %v? ", e.Clipboard, r.Remote)
-		case r.Phase == "UntrackedBehind":
-			r.GitAction = "stash-pull-pop-commit-push"
-			fmt.Printf("%v stash all files, pull changes, commit and push to %v? ", e.Clipboard, r.Remote)
-		}
+// 		// print prompt (part 2)
+// 		switch {
+// 		case r.Phase == "Ahead":
+// 			r.GitAction = "push"
+// 			fmt.Printf("%v push changes to %v? ", e.Rocket, r.Remote)
+// 		case r.Phase == "Behind":
+// 			r.GitAction = "pull"
+// 			fmt.Printf("%v pull changes from %v? ", e.Ship, r.Remote)
+// 		case r.Phase == "Dirty":
+// 			r.GitAction = "add-commit-push"
+// 			fmt.Printf("%v add all files, commit and push to %v? ", e.Clipboard, r.Remote)
+// 		case r.Phase == "DirtyUntracked":
+// 			r.GitAction = "add-commit-push"
+// 			fmt.Printf("%v add all files, commit and push to %v? ", e.Clipboard, r.Remote)
+// 		case r.Phase == "DirtyAhead":
+// 			r.GitAction = "add-commit-push"
+// 			fmt.Printf("%v add all files, commit and push to %v? ", e.Clipboard, r.Remote)
+// 		case r.Phase == "DirtyBehind":
+// 			r.GitAction = "stash-pull-pop-commit-push"
+// 			fmt.Printf("%v stash all files, pull changes, commit and push to %v? ", e.Clipboard, r.Remote)
+// 		case r.Phase == "Untracked":
+// 			r.GitAction = "add-commit-push"
+// 			fmt.Printf("%v add all files, commit and push to %v? ", e.Clipboard, r.Remote)
+// 		case r.Phase == "UntrackedAhead":
+// 			r.GitAction = "add-commit-push"
+// 			fmt.Printf("%v add all files, commit and push to %v? ", e.Clipboard, r.Remote)
+// 		case r.Phase == "UntrackedBehind":
+// 			r.GitAction = "stash-pull-pop-commit-push"
+// 			fmt.Printf("%v stash all files, pull changes, commit and push to %v? ", e.Clipboard, r.Remote)
+// 		}
 
-		rdr := bufio.NewReader(os.Stdin)
-		in, err := rdr.ReadString('\n')
+// 		rdr := bufio.NewReader(os.Stdin)
+// 		in, err := rdr.ReadString('\n')
 
-		if err != nil {
-			r.GitConfirmed = false
-		} else {
-			in = strings.TrimSuffix(in, "\n")
-			switch in {
-			case "please", "y", "yes", "ys", "1", "ok", "push", "pull", "sure", "you betcha", "do it":
-				r.GitConfirmed = true
-			case "n", "no", "nah", "0", "stop", "skip", "abort", "halt", "quit":
-				r.GitConfirmed = false
-			default:
-				r.GitConfirmed = false
-			}
-		}
+// 		if err != nil {
+// 			r.GitConfirmed = false
+// 		} else {
+// 			in = strings.TrimSuffix(in, "\n")
+// 			switch in {
+// 			case "please", "y", "yes", "ys", "1", "ok", "push", "pull", "sure", "you betcha", "do it":
+// 				r.GitConfirmed = true
+// 			case "n", "no", "nah", "0", "stop", "skip", "abort", "halt", "quit":
+// 				r.GitConfirmed = false
+// 			default:
+// 				r.GitConfirmed = false
+// 			}
+// 		}
 
-		if r.GitConfirmed == true && strings.Contains(r.GitAction, "commit") {
-			if hasEmoji(f) {
-				fmt.Printf("%v commit message: ", e.Memo)
-			} else {
-				fmt.Printf("commit message: ")
-			}
+// 		if r.GitConfirmed == true && strings.Contains(r.GitAction, "commit") {
+// 			if hasEmoji(f) {
+// 				fmt.Printf("%v commit message: ", e.Memo)
+// 			} else {
+// 				fmt.Printf("commit message: ")
+// 			}
 
-			rdr := bufio.NewReader(os.Stdin)
-			in, _ := rdr.ReadString('\n')
-			switch in {
-			case "n", "no", "nah", "0", "stop", "skip", "abort", "halt", "quit":
-				r.GitConfirmed = false
-				r.GitMessage = ""
-				d.SkippedRepos = append(d.SkippedRepos, r)
-			default:
-				r.GitConfirmed = true
-				r.GitMessage = in
-				d.ScheduledRepos = append(d.ScheduledRepos, r)
-			}
-		} else if r.GitConfirmed == true {
-			d.ScheduledRepos = append(d.ScheduledRepos, r)
-		} else if r.GitConfirmed == false {
-			d.SkippedRepos = append(d.SkippedRepos, r)
-		}
-	}
-	// clear out pending at this point?
-}
+// 			rdr := bufio.NewReader(os.Stdin)
+// 			in, _ := rdr.ReadString('\n')
+// 			switch in {
+// 			case "n", "no", "nah", "0", "stop", "skip", "abort", "halt", "quit":
+// 				r.GitConfirmed = false
+// 				r.GitMessage = ""
+// 				d.SkippedRepos = append(d.SkippedRepos, r)
+// 			default:
+// 				r.GitConfirmed = true
+// 				r.GitMessage = in
+// 				d.ScheduledRepos = append(d.ScheduledRepos, r)
+// 			}
+// 		} else if r.GitConfirmed == true {
+// 			d.ScheduledRepos = append(d.ScheduledRepos, r)
+// 		} else if r.GitConfirmed == false {
+// 			d.SkippedRepos = append(d.SkippedRepos, r)
+// 		}
+// 	}
+// 	// clear out pending at this point?
+// }
 
 // sorting
 
@@ -1499,559 +1499,552 @@ func (rs Repos) Len() int           { return len(rs) }
 func (rs Repos) Swap(i, j int)      { rs[i], rs[j] = rs[j], rs[i] }
 func (rs Repos) Less(i, j int) bool { return rs[i].Name < rs[j].Name }
 
-func (dvs Divs) Len() int           { return len(dvs) }
-func (dvs Divs) Swap(i, j int)      { dvs[i], dvs[j] = dvs[j], dvs[i] }
-func (dvs Divs) Less(i, j int) bool { return dvs[i].Path < dvs[j].Path }
+// func (dvs Divs) Len() int           { return len(dvs) }
+// func (dvs Divs) Swap(i, j int)      { dvs[i], dvs[j] = dvs[j], dvs[i] }
+// func (dvs Divs) Less(i, j int) bool { return dvs[i].Path < dvs[j].Path }
 
-// this is the key part of all this...
-func initDivsRepos(c Config, e Emoji, f Flags, t *Timer) (dvs Divs, rs Repos) {
+func initRepos(c Config, e Emoji, f Flags, t *Timer) (rs Repos) {
 
 	// print
-	targetPrint(f, "%v parsing divs|repos", e.Pager)
+	targetPrint(f, "%v parsing repos", e.Pager)
 
-	// initialize divs and repos from config
+	// initialize Repos from Config
 	for _, z := range c.Bundles {
 		for _, bl := range z.Zones {
 			d := initDiv(z.Path, bl.Division)
 			for _, rn := range bl.Repos {
 				r := initRepo(d, rn, bl.User, bl.Remote, bl.Division)
 				rs = append(rs, r)
-				d.Repos = append(d.Repos, r)
 			}
-			dvs = append(dvs, d)
 		}
 	}
 
+	// get divs
+
 	// sort
-	sort.Sort(Divs(dvs))
 	sort.Sort(Repos(rs))
 
 	// timer
-	t.markMoment("parse-divs-repos")
+	t.markMoment("init-repos")
 
 	// print
-	targetPrint(f, "%v [%v|%v] divs|repos {%v / %v}", e.FaxMachine, len(dvs), len(rs), t.getSplit(), t.getTime())
+	targetPrint(f, "%v [%v] repos {%v / %v}", e.FaxMachine, len(rs), t.getSplit(), t.getTime())
 
-	return dvs, rs
+	return rs
 }
 
 // WORKSPACE
 
-func initWorkspace() *Workspace {
-	w := new(Workspace)
-	return w
-}
+// type Workspace struct {
 
-type Workspace struct {
+// 	// verifyDivs
+// 	CreatedDivs  Divs
+// 	VerifiedDivs Divs
 
-	// verifyDivs
-	CreatedDivs  Divs
-	VerifiedDivs Divs
+// 	// verifyRepos
+// 	ClonedRepos   Repos
+// 	VerifiedRepos Repos
 
-	// verifyRepos
-	ClonedRepos   Repos
-	VerifiedRepos Repos
+// 	// FLAG: Streamlining setActions
+// 	// setActions
 
-	// FLAG: Streamlining setActions
-	// setActions
+// 	CompleteDivs   Divs
+// 	IncompleteDivs Divs
 
-	CompleteDivs   Divs
-	IncompleteDivs Divs
+// 	IsComplete     bool
+// 	CompleteRepos  Repos
+// 	PendingRepos   Repos
+// 	ScheduledRepos Repos
+// 	SkippedRepos   Repos
+// 	PendingCount   int
+// 	DrySummary     string
 
-	IsComplete     bool
-	CompleteRepos  Repos
-	PendingRepos   Repos
-	ScheduledRepos Repos
-	SkippedRepos   Repos
-	PendingCount   int
-	DrySummary     string
+// 	// getSummary(*)
+// 	PushRepos      Repos
+// 	PushSummary    string
+// 	PullRepos      Repos
+// 	PullSummary    string
+// 	CommitRepos    Repos
+// 	CommitSummary  string
+// 	SkippedSummary string
+// 	// IsApproved      bool
+// 	ChangesApproved bool
+// }
 
-	// getSummary(*)
-	PushRepos      Repos
-	PushSummary    string
-	PullRepos      Repos
-	PullSummary    string
-	CommitRepos    Repos
-	CommitSummary  string
-	SkippedSummary string
-	// IsApproved      bool
-	ChangesApproved bool
-}
+// func (w *Workspace) getSkippedSummary(e Emoji) {
+// 	if len(w.SkippedRepos) > 0 {
+// 		var b bytes.Buffer
+// 		var fs []string // file slice
+// 		var ds []string // diff slice
+// 		var dc int      // diff count
+// 		var pc int      // plus count
+// 		var mc int      // minus count
+// 		var fj string   // file join
+// 		var dj string   // diff join
 
-func (w *Workspace) getSkippedSummary(e Emoji) {
-	if len(w.SkippedRepos) > 0 {
-		var b bytes.Buffer
-		var fs []string // file slice
-		var ds []string // diff slice
-		var dc int      // diff count
-		var pc int      // plus count
-		var mc int      // minus count
-		var fj string   // file join
-		var dj string   // diff join
+// 		for _, r := range w.SkippedRepos {
 
-		for _, r := range w.SkippedRepos {
+// 			lr := len(strings.Join(fs, ", ")) // length (of) repo string
 
-			lr := len(strings.Join(fs, ", ")) // length (of) repo string
+// 			if lr <= 20 {
+// 				fs = append(fs, r.Name)
+// 			}
 
-			if lr <= 20 {
-				fs = append(fs, r.Name)
-			}
+// 			for _, d := range r.DiffFiles {
+// 				ld := len(strings.Join(ds, ", ")) // length (of) div string
 
-			for _, d := range r.DiffFiles {
-				ld := len(strings.Join(ds, ", ")) // length (of) div string
+// 				if ld <= 20 {
+// 					ds = append(ds, d)
+// 				}
 
-				if ld <= 20 {
-					ds = append(ds, d)
-				}
+// 			}
 
-			}
+// 			// count of Diffs, Additions (Plus) and Subtractions (Minus)
 
-			// count of Diffs, Additions (Plus) and Subtractions (Minus)
+// 			dc += r.DiffCount
+// 			pc += r.ShortStatPlus
+// 			mc += r.ShortStatMinus
+// 		}
 
-			dc += r.DiffCount
-			pc += r.ShortStatPlus
-			mc += r.ShortStatMinus
-		}
+// 		fj = strings.Join(fs, ", ")
+// 		dj = strings.Join(ds, ", ")
 
-		fj = strings.Join(fs, ", ")
-		dj = strings.Join(ds, ", ")
+// 		// FLAG: logic here?
+// 		if len(fs) != len(w.SkippedRepos) {
+// 			var lb bytes.Buffer
+// 			fj = strings.TrimSuffix(fj, ", ")
+// 			lb.WriteString(fj)
+// 			lb.WriteString(",...")
+// 			fj = lb.String()
+// 		}
 
-		// FLAG: logic here?
-		if len(fs) != len(w.SkippedRepos) {
-			var lb bytes.Buffer
-			fj = strings.TrimSuffix(fj, ", ")
-			lb.WriteString(fj)
-			lb.WriteString(",...")
-			fj = lb.String()
-		}
+// 		if len(ds) != dc {
+// 			var lb bytes.Buffer
+// 			dj = strings.TrimSuffix(dj, ", ")
+// 			lb.WriteString(dj)
+// 			lb.WriteString(",...")
+// 			dj = lb.String()
+// 		}
 
-		if len(ds) != dc {
-			var lb bytes.Buffer
-			dj = strings.TrimSuffix(dj, ", ")
-			lb.WriteString(dj)
-			lb.WriteString(",...")
-			dj = lb.String()
-		}
-
-		b.WriteString(e.Slash)
-		b.WriteString(" skipped = [")
-		b.WriteString(strconv.Itoa(len(w.SkippedRepos)))
-		b.WriteString("]{")
-		b.WriteString(fj)
-		b.WriteString("} [")
-		b.WriteString(strconv.Itoa(dc))
-		b.WriteString("]{")
-		b.WriteString(dj)
-		b.WriteString("}")
-		w.SkippedSummary = b.String()
-	}
-}
+// 		b.WriteString(e.Slash)
+// 		b.WriteString(" skipped = [")
+// 		b.WriteString(strconv.Itoa(len(w.SkippedRepos)))
+// 		b.WriteString("]{")
+// 		b.WriteString(fj)
+// 		b.WriteString("} [")
+// 		b.WriteString(strconv.Itoa(dc))
+// 		b.WriteString("]{")
+// 		b.WriteString(dj)
+// 		b.WriteString("}")
+// 		w.SkippedSummary = b.String()
+// 	}
+// }
 
 // FLAG: build in support for untracked files too
-func (w *Workspace) getCommitSummary(e Emoji) {
-	if len(w.CommitRepos) > 0 {
-		var b bytes.Buffer
-		var fs []string // file slice
-		var ds []string // diff slice
-		var us []string // untracked slice
-		var dc int      // diff count
-		var pc int      // plus count
-		var mc int      // minus count
-		var uc int      // untracked count
-		var fj string   // file join
-		var dj string   // diff join
-		var uj string   // untracked join
+// func (w *Workspace) getCommitSummary(e Emoji) {
+// 	if len(w.CommitRepos) > 0 {
+// 		var b bytes.Buffer
+// 		var fs []string // file slice
+// 		var ds []string // diff slice
+// 		var us []string // untracked slice
+// 		var dc int      // diff count
+// 		var pc int      // plus count
+// 		var mc int      // minus count
+// 		var uc int      // untracked count
+// 		var fj string   // file join
+// 		var dj string   // diff join
+// 		var uj string   // untracked join
 
-		for _, r := range w.CommitRepos {
-			lr := len(strings.Join(fs, ", ")) // length (of) repo string
-			if lr <= 12 {
-				fs = append(fs, r.Name)
-			}
+// 		for _, r := range w.CommitRepos {
+// 			lr := len(strings.Join(fs, ", ")) // length (of) repo string
+// 			if lr <= 12 {
+// 				fs = append(fs, r.Name)
+// 			}
 
-			for _, d := range r.DiffFiles {
-				ld := len(strings.Join(ds, ", ")) // length (of) div string
-				if ld <= 12 {
-					ds = append(ds, d)
-				}
+// 			for _, d := range r.DiffFiles {
+// 				ld := len(strings.Join(ds, ", ")) // length (of) div string
+// 				if ld <= 12 {
+// 					ds = append(ds, d)
+// 				}
 
-			}
+// 			}
 
-			for _, f := range r.UntrackedFiles {
-				lu := len(strings.Join(us, ", "))
-				if lu <= 12 {
-					us = append(us, f)
-				}
-			}
+// 			for _, f := range r.UntrackedFiles {
+// 				lu := len(strings.Join(us, ", "))
+// 				if lu <= 12 {
+// 					us = append(us, f)
+// 				}
+// 			}
 
-			// count of Diffs, Additions (Plus) and Subtractions (Minus)
+// 			// count of Diffs, Additions (Plus) and Subtractions (Minus)
 
-			dc += r.DiffCount
-			pc += r.ShortStatPlus
-			mc += r.ShortStatMinus
-			uc += r.UntrackedCount
-		}
+// 			dc += r.DiffCount
+// 			pc += r.ShortStatPlus
+// 			mc += r.ShortStatMinus
+// 			uc += r.UntrackedCount
+// 		}
 
-		fj = strings.Join(fs, ", ")
-		dj = strings.Join(ds, ", ")
-		uj = strings.Join(us, ", ")
+// 		fj = strings.Join(fs, ", ")
+// 		dj = strings.Join(ds, ", ")
+// 		uj = strings.Join(us, ", ")
 
-		if len(fs) != len(w.CommitRepos) {
-			var lb bytes.Buffer
-			fj = strings.TrimSuffix(fj, ", ")
-			lb.WriteString(fj)
-			lb.WriteString(",...")
-			fj = lb.String()
-		}
+// 		if len(fs) != len(w.CommitRepos) {
+// 			var lb bytes.Buffer
+// 			fj = strings.TrimSuffix(fj, ", ")
+// 			lb.WriteString(fj)
+// 			lb.WriteString(",...")
+// 			fj = lb.String()
+// 		}
 
-		if len(ds) != dc {
-			var lb bytes.Buffer
-			dj = strings.TrimSuffix(dj, ", ")
-			lb.WriteString(dj)
-			lb.WriteString(",...")
-			dj = lb.String()
-		}
+// 		if len(ds) != dc {
+// 			var lb bytes.Buffer
+// 			dj = strings.TrimSuffix(dj, ", ")
+// 			lb.WriteString(dj)
+// 			lb.WriteString(",...")
+// 			dj = lb.String()
+// 		}
 
-		if len(us) != uc {
-			var lb bytes.Buffer
-			lb.WriteString(uj)
-			lb.WriteString(",...")
-			uj = lb.String()
-		}
+// 		if len(us) != uc {
+// 			var lb bytes.Buffer
+// 			lb.WriteString(uj)
+// 			lb.WriteString(",...")
+// 			uj = lb.String()
+// 		}
 
-		b.WriteString(e.Clipboard)
-		b.WriteString(" commit ")
+// 		b.WriteString(e.Clipboard)
+// 		b.WriteString(" commit ")
 
-		if w.SkippedSummary != "" {
-			b.WriteString(" ")
-		}
+// 		if w.SkippedSummary != "" {
+// 			b.WriteString(" ")
+// 		}
 
-		b.WriteString("= [")
-		b.WriteString(strconv.Itoa(len(w.CommitRepos)))
-		b.WriteString("]{")
-		b.WriteString(fj)
-		b.WriteString("} [")
-		b.WriteString(strconv.Itoa(dc))
-		b.WriteString("]{")
-		b.WriteString(dj)
-		b.WriteString("}(+")
-		b.WriteString(strconv.Itoa(pc))
-		b.WriteString("/-")
-		b.WriteString(strconv.Itoa(mc))
-		b.WriteString(")")
+// 		b.WriteString("= [")
+// 		b.WriteString(strconv.Itoa(len(w.CommitRepos)))
+// 		b.WriteString("]{")
+// 		b.WriteString(fj)
+// 		b.WriteString("} [")
+// 		b.WriteString(strconv.Itoa(dc))
+// 		b.WriteString("]{")
+// 		b.WriteString(dj)
+// 		b.WriteString("}(+")
+// 		b.WriteString(strconv.Itoa(pc))
+// 		b.WriteString("/-")
+// 		b.WriteString(strconv.Itoa(mc))
+// 		b.WriteString(")")
 
-		if uc > 0 {
-			b.WriteString(" [")
-			b.WriteString(strconv.Itoa(uc))
-			b.WriteString("]{")
-			b.WriteString(uj)
-			b.WriteString("}")
-		}
+// 		if uc > 0 {
+// 			b.WriteString(" [")
+// 			b.WriteString(strconv.Itoa(uc))
+// 			b.WriteString("]{")
+// 			b.WriteString(uj)
+// 			b.WriteString("}")
+// 		}
 
-		w.CommitSummary = b.String()
-	}
-}
+// 		w.CommitSummary = b.String()
+// 	}
+// }
 
-func (w *Workspace) getPushSummary(e Emoji) {
-	if len(w.PushRepos) > 0 {
-		var b bytes.Buffer
-		var fs []string // file slice
-		var ds []string // diff slice
-		var dc int      // diff count
-		var fj string   // file join
-		var dj string   // diff join
+// func (w *Workspace) getPushSummary(e Emoji) {
+// 	if len(w.PushRepos) > 0 {
+// 		var b bytes.Buffer
+// 		var fs []string // file slice
+// 		var ds []string // diff slice
+// 		var dc int      // diff count
+// 		var fj string   // file join
+// 		var dj string   // diff join
 
-		for _, r := range w.PushRepos {
+// 		for _, r := range w.PushRepos {
 
-			lr := len(strings.Join(fs, ", ")) // length (of) repo string
+// 			lr := len(strings.Join(fs, ", ")) // length (of) repo string
 
-			if lr <= 20 {
-				fs = append(fs, r.Name)
-			}
+// 			if lr <= 20 {
+// 				fs = append(fs, r.Name)
+// 			}
 
-			for _, d := range r.DiffFiles {
-				ld := len(strings.Join(ds, ", ")) // length (of) div string
+// 			for _, d := range r.DiffFiles {
+// 				ld := len(strings.Join(ds, ", ")) // length (of) div string
 
-				if ld <= 20 {
-					ds = append(ds, d)
-				}
+// 				if ld <= 20 {
+// 					ds = append(ds, d)
+// 				}
 
-			}
+// 			}
 
-			// count of Diffs, Additions (Plus) and Subtractions (Minus)
+// 			// count of Diffs, Additions (Plus) and Subtractions (Minus)
 
-			dc += r.DiffCount
-		}
+// 			dc += r.DiffCount
+// 		}
 
-		fj = strings.Join(fs, ", ")
-		dj = strings.Join(ds, ", ")
+// 		fj = strings.Join(fs, ", ")
+// 		dj = strings.Join(ds, ", ")
 
-		if len(fs) != len(w.PushRepos) {
-			var lb bytes.Buffer
-			fj = strings.TrimSuffix(fj, ", ")
-			lb.WriteString(fj)
-			lb.WriteString(",...")
-			fj = lb.String()
-		}
+// 		if len(fs) != len(w.PushRepos) {
+// 			var lb bytes.Buffer
+// 			fj = strings.TrimSuffix(fj, ", ")
+// 			lb.WriteString(fj)
+// 			lb.WriteString(",...")
+// 			fj = lb.String()
+// 		}
 
-		if len(ds) != dc {
-			var lb bytes.Buffer
-			dj = strings.TrimSuffix(dj, ", ")
-			lb.WriteString(dj)
-			lb.WriteString(",...")
-			dj = lb.String()
-		}
+// 		if len(ds) != dc {
+// 			var lb bytes.Buffer
+// 			dj = strings.TrimSuffix(dj, ", ")
+// 			lb.WriteString(dj)
+// 			lb.WriteString(",...")
+// 			dj = lb.String()
+// 		}
 
-		b.WriteString(e.Rocket)
-		b.WriteString(" push ")
+// 		b.WriteString(e.Rocket)
+// 		b.WriteString(" push ")
 
-		// fmt.Printf("%v | %v\n", len(w.SkippedSummary), len(w.CommitSummary))
+// 		// fmt.Printf("%v | %v\n", len(w.SkippedSummary), len(w.CommitSummary))
 
-		switch {
-		case w.SkippedSummary != "" && w.CommitSummary == "":
-			b.WriteString("   ")
-		case w.SkippedSummary != "" && w.CommitSummary != "":
-			b.WriteString("   ")
-		case w.CommitSummary != "" && w.SkippedSummary == "":
-			b.WriteString("  ")
-		}
+// 		switch {
+// 		case w.SkippedSummary != "" && w.CommitSummary == "":
+// 			b.WriteString("   ")
+// 		case w.SkippedSummary != "" && w.CommitSummary != "":
+// 			b.WriteString("   ")
+// 		case w.CommitSummary != "" && w.SkippedSummary == "":
+// 			b.WriteString("  ")
+// 		}
 
-		b.WriteString("= [")
-		b.WriteString(strconv.Itoa(len(w.PushRepos)))
-		b.WriteString("]{")
-		b.WriteString(fj)
-		b.WriteString("} [")
-		b.WriteString(strconv.Itoa(dc))
-		b.WriteString("]{")
-		b.WriteString(dj)
-		b.WriteString("}")
+// 		b.WriteString("= [")
+// 		b.WriteString(strconv.Itoa(len(w.PushRepos)))
+// 		b.WriteString("]{")
+// 		b.WriteString(fj)
+// 		b.WriteString("} [")
+// 		b.WriteString(strconv.Itoa(dc))
+// 		b.WriteString("]{")
+// 		b.WriteString(dj)
+// 		b.WriteString("}")
 
-		w.PushSummary = b.String()
-	}
-}
+// 		w.PushSummary = b.String()
+// 	}
+// }
 
-func (w *Workspace) getPullSummary(e Emoji) {
-	if len(w.PullRepos) > 0 {
-		var b bytes.Buffer
-		var fs []string // file slice
-		var ds []string // diff slice
-		var dc int      // diff count
-		var pc int      // plus count
-		var mc int      // minus count
-		var fj string   // file join
-		var dj string   // diff join
+// func (w *Workspace) getPullSummary(e Emoji) {
+// 	if len(w.PullRepos) > 0 {
+// 		var b bytes.Buffer
+// 		var fs []string // file slice
+// 		var ds []string // diff slice
+// 		var dc int      // diff count
+// 		var pc int      // plus count
+// 		var mc int      // minus count
+// 		var fj string   // file join
+// 		var dj string   // diff join
 
-		for _, r := range w.PullRepos {
+// 		for _, r := range w.PullRepos {
 
-			lr := len(strings.Join(fs, ", ")) // length (of) repo string
+// 			lr := len(strings.Join(fs, ", ")) // length (of) repo string
 
-			if lr <= 20 {
-				fs = append(fs, r.Name)
-			}
+// 			if lr <= 20 {
+// 				fs = append(fs, r.Name)
+// 			}
 
-			for _, d := range r.DiffFiles {
-				ld := len(strings.Join(ds, ", ")) // length (of) div string
+// 			for _, d := range r.DiffFiles {
+// 				ld := len(strings.Join(ds, ", ")) // length (of) div string
 
-				if ld <= 20 {
-					ds = append(ds, d)
-				}
+// 				if ld <= 20 {
+// 					ds = append(ds, d)
+// 				}
 
-			}
+// 			}
 
-			// count of Diffs, Additions (Plus) and Subtractions (Minus)
+// 			// count of Diffs, Additions (Plus) and Subtractions (Minus)
 
-			dc += r.DiffCount
-			pc += r.ShortStatPlus
-			mc += r.ShortStatMinus
-		}
+// 			dc += r.DiffCount
+// 			pc += r.ShortStatPlus
+// 			mc += r.ShortStatMinus
+// 		}
 
-		fj = strings.Join(fs, ", ")
-		dj = strings.Join(ds, ", ")
+// 		fj = strings.Join(fs, ", ")
+// 		dj = strings.Join(ds, ", ")
 
-		if len(fs) != len(w.PullRepos) {
-			var lb bytes.Buffer
-			fj = strings.TrimSuffix(fj, ", ")
-			lb.WriteString(fj)
-			lb.WriteString(",...")
-			fj = lb.String()
-		}
+// 		if len(fs) != len(w.PullRepos) {
+// 			var lb bytes.Buffer
+// 			fj = strings.TrimSuffix(fj, ", ")
+// 			lb.WriteString(fj)
+// 			lb.WriteString(",...")
+// 			fj = lb.String()
+// 		}
 
-		if len(ds) != dc {
-			var lb bytes.Buffer
-			dj = strings.TrimSuffix(dj, ", ")
-			lb.WriteString(dj)
-			lb.WriteString(",...")
-			dj = lb.String()
-		}
+// 		if len(ds) != dc {
+// 			var lb bytes.Buffer
+// 			dj = strings.TrimSuffix(dj, ", ")
+// 			lb.WriteString(dj)
+// 			lb.WriteString(",...")
+// 			dj = lb.String()
+// 		}
 
-		b.WriteString(e.Ship)
-		b.WriteString(" pull ")
+// 		b.WriteString(e.Ship)
+// 		b.WriteString(" pull ")
 
-		switch {
-		case w.SkippedSummary != "" && w.CommitSummary == "":
-			b.WriteString("   ")
-		case w.SkippedSummary != "" && w.CommitSummary != "":
-			b.WriteString("   ")
-		case w.CommitSummary != "" && w.SkippedSummary == "":
-			b.WriteString("  ")
-		}
+// 		switch {
+// 		case w.SkippedSummary != "" && w.CommitSummary == "":
+// 			b.WriteString("   ")
+// 		case w.SkippedSummary != "" && w.CommitSummary != "":
+// 			b.WriteString("   ")
+// 		case w.CommitSummary != "" && w.SkippedSummary == "":
+// 			b.WriteString("  ")
+// 		}
 
-		b.WriteString("= [")
-		b.WriteString(strconv.Itoa(len(w.PullRepos)))
-		b.WriteString("]{")
-		b.WriteString(fj)
-		b.WriteString("} [")
-		b.WriteString(strconv.Itoa(dc))
-		b.WriteString("]{")
-		b.WriteString(dj)
-		b.WriteString("}")
-		w.PullSummary = b.String()
-	}
-}
+// 		b.WriteString("= [")
+// 		b.WriteString(strconv.Itoa(len(w.PullRepos)))
+// 		b.WriteString("]{")
+// 		b.WriteString(fj)
+// 		b.WriteString("} [")
+// 		b.WriteString(strconv.Itoa(dc))
+// 		b.WriteString("]{")
+// 		b.WriteString(dj)
+// 		b.WriteString("}")
+// 		w.PullSummary = b.String()
+// 	}
+// }
 
 // FLAG: Double tap on the marking
 
 // FLAG: more Go like to return err/int?
 
-func (w *Workspace) clearPending(r *Repo) {
-	i := w.PendingRepos.itemIndex(r)
+// func (w *Workspace) clearPending(r *Repo) {
+// 	i := w.PendingRepos.itemIndex(r)
 
-	if i >= 0 {
-		copy(w.PendingRepos[i:], w.PendingRepos[i+1:])
-		w.PendingRepos[len(w.PendingRepos)-1] = nil
-		w.PendingRepos = w.PendingRepos[:len(w.PendingRepos)-1]
-	}
+// 	if i >= 0 {
+// 		copy(w.PendingRepos[i:], w.PendingRepos[i+1:])
+// 		w.PendingRepos[len(w.PendingRepos)-1] = nil
+// 		w.PendingRepos = w.PendingRepos[:len(w.PendingRepos)-1]
+// 	}
 
-	i = r.Div.PendingRepos.itemIndex(r)
+// 	i = r.Div.PendingRepos.itemIndex(r)
 
-	if i >= 0 {
-		copy(r.Div.PendingRepos[i:], r.Div.PendingRepos[i+1:])
-		r.Div.PendingRepos[len(r.Div.PendingRepos)-1] = nil
-		r.Div.PendingRepos = r.Div.PendingRepos[:len(r.Div.PendingRepos)-1]
-	}
-}
+// 	if i >= 0 {
+// 		copy(r.Div.PendingRepos[i:], r.Div.PendingRepos[i+1:])
+// 		r.Div.PendingRepos[len(r.Div.PendingRepos)-1] = nil
+// 		r.Div.PendingRepos = r.Div.PendingRepos[:len(r.Div.PendingRepos)-1]
+// 	}
+// }
 
-func (w *Workspace) clearAllPending() {
-	for _, r := range w.ScheduledRepos {
-		i := w.PendingRepos.itemIndex(r)
-		if i >= 0 {
-			copy(w.PendingRepos[i:], w.PendingRepos[i+1:])
-			w.PendingRepos[len(w.PendingRepos)-1] = nil
-			w.PendingRepos = w.PendingRepos[:len(w.PendingRepos)-1]
-		}
-	}
+// func (w *Workspace) clearAllPending() {
+// 	for _, r := range w.ScheduledRepos {
+// 		i := w.PendingRepos.itemIndex(r)
+// 		if i >= 0 {
+// 			copy(w.PendingRepos[i:], w.PendingRepos[i+1:])
+// 			w.PendingRepos[len(w.PendingRepos)-1] = nil
+// 			w.PendingRepos = w.PendingRepos[:len(w.PendingRepos)-1]
+// 		}
+// 	}
 
-	for _, r := range w.SkippedRepos {
-		i := w.PendingRepos.itemIndex(r)
-		if i >= 0 {
-			copy(w.PendingRepos[i:], w.PendingRepos[i+1:])
-			w.PendingRepos[len(w.PendingRepos)-1] = nil
-			w.PendingRepos = w.PendingRepos[:len(w.PendingRepos)-1]
-		}
-	}
-}
+// 	for _, r := range w.SkippedRepos {
+// 		i := w.PendingRepos.itemIndex(r)
+// 		if i >= 0 {
+// 			copy(w.PendingRepos[i:], w.PendingRepos[i+1:])
+// 			w.PendingRepos[len(w.PendingRepos)-1] = nil
+// 			w.PendingRepos = w.PendingRepos[:len(w.PendingRepos)-1]
+// 		}
+// 	}
+// }
 
-func (w *Workspace) dispatch(dvs Divs, e Emoji, f Flags) {
+// func (w *Workspace) dispatch(dvs Divs, e Emoji, f Flags) {
 
-	// compile scheduled, skipped and complete repos
-	for _, d := range dvs {
-		w.ScheduledRepos = append(w.ScheduledRepos, d.ScheduledRepos...)
-		w.SkippedRepos = append(w.SkippedRepos, d.SkippedRepos...)
-		w.CompleteRepos = append(w.CompleteRepos, d.CompleteRepos...)
-	}
+// 	// compile scheduled, skipped and complete repos
+// 	for _, d := range dvs {
+// 		w.ScheduledRepos = append(w.ScheduledRepos, d.ScheduledRepos...)
+// 		w.SkippedRepos = append(w.SkippedRepos, d.SkippedRepos...)
+// 		w.CompleteRepos = append(w.CompleteRepos, d.CompleteRepos...)
+// 	}
 
-	// FLAG: just put in both?
-	if len(w.ScheduledRepos) >= 1 {
-		for _, r := range w.ScheduledRepos {
-			switch r.GitAction {
-			case "push":
-				w.PushRepos = append(w.PushRepos, r)
-			case "pull":
-				w.PullRepos = append(w.PullRepos, r)
-			case "add-commit-push":
-				w.CommitRepos = append(w.CommitRepos, r)
-			case "stash-pull-pop-commit-push":
-				w.CommitRepos = append(w.CommitRepos, r)
-			}
-		}
+// 	// FLAG: just put in both?
+// 	if len(w.ScheduledRepos) >= 1 {
+// 		for _, r := range w.ScheduledRepos {
+// 			switch r.GitAction {
+// 			case "push":
+// 				w.PushRepos = append(w.PushRepos, r)
+// 			case "pull":
+// 				w.PullRepos = append(w.PullRepos, r)
+// 			case "add-commit-push":
+// 				w.CommitRepos = append(w.CommitRepos, r)
+// 			case "stash-pull-pop-commit-push":
+// 				w.CommitRepos = append(w.CommitRepos, r)
+// 			}
+// 		}
 
-		// get summaries
-		w.getSkippedSummary(e)
-		w.getCommitSummary(e)
-		w.getPushSummary(e)
-		w.getPullSummary(e)
+// 		// get summaries
+// 		w.getSkippedSummary(e)
+// 		w.getCommitSummary(e)
+// 		w.getPushSummary(e)
+// 		w.getPullSummary(e)
 
-		// FLAG: getSummary should 'hide' the logic
+// 		// FLAG: getSummary should 'hide' the logic
 
-		fmt.Printf("%v [%v] scheduled: \n", e.Unicorn, len(w.ScheduledRepos)) // FLAG: bring back emojiPrint
+// 		fmt.Printf("%v [%v] scheduled: \n", e.Unicorn, len(w.ScheduledRepos)) // FLAG: bring back emojiPrint
 
-		if w.PushSummary != "" {
-			fmt.Println(w.PushSummary)
-		}
+// 		if w.PushSummary != "" {
+// 			fmt.Println(w.PushSummary)
+// 		}
 
-		if w.PullSummary != "" {
-			fmt.Println(w.PullSummary)
-		}
+// 		if w.PullSummary != "" {
+// 			fmt.Println(w.PullSummary)
+// 		}
 
-		if w.CommitSummary != "" {
-			fmt.Println(w.CommitSummary)
-		}
+// 		if w.CommitSummary != "" {
+// 			fmt.Println(w.CommitSummary)
+// 		}
 
-		if w.SkippedSummary != "" {
-			fmt.Println(w.SkippedSummary)
-		}
+// 		if w.SkippedSummary != "" {
+// 			fmt.Println(w.SkippedSummary)
+// 		}
 
-		fmt.Printf("%v submit changes? ", e.Traffic)
+// 		fmt.Printf("%v submit changes? ", e.Traffic)
 
-		rdr := bufio.NewReader(os.Stdin)
-		in, err := rdr.ReadString('\n')
+// 		rdr := bufio.NewReader(os.Stdin)
+// 		in, err := rdr.ReadString('\n')
 
-		if err != nil {
-			w.ChangesApproved = false
-		} else {
-			in = strings.TrimSuffix(in, "\n")
-			switch in {
-			case "please", "y", "yes", "ys", "1", "ok", "push", "pull", "sure", "you betcha", "do it":
-				w.ChangesApproved = true
-			case "n", "no", "nah", "0", "stop", "skip", "abort", "halt", "quit":
-				w.ChangesApproved = false
-			default:
-				w.ChangesApproved = false
-			}
-		}
+// 		if err != nil {
+// 			w.ChangesApproved = false
+// 		} else {
+// 			in = strings.TrimSuffix(in, "\n")
+// 			switch in {
+// 			case "please", "y", "yes", "ys", "1", "ok", "push", "pull", "sure", "you betcha", "do it":
+// 				w.ChangesApproved = true
+// 			case "n", "no", "nah", "0", "stop", "skip", "abort", "halt", "quit":
+// 				w.ChangesApproved = false
+// 			default:
+// 				w.ChangesApproved = false
+// 			}
+// 		}
 
-		if w.ChangesApproved {
-			targetPrint(f, "%v [%v] submitting changes", e.SatelliteDish, len(w.ScheduledRepos))
+// 		if w.ChangesApproved {
+// 			targetPrint(f, "%v [%v] submitting changes", e.SatelliteDish, len(w.ScheduledRepos))
 
-			var wg sync.WaitGroup
-			for i := range w.ScheduledRepos {
-				wg.Add(1)
-				go func(r *Repo) {
-					defer wg.Done()
-					switch r.GitAction {
-					case "pull":
-						r.gitPull(e, f)
-					case "push":
-						r.gitPush(e, f)
-					case "add-commit-push":
-						r.gitAdd(e, f)
-						r.gitCommit(e, f)
-						r.gitPush(e, f)
-					case "stash-pull-pop-commit-push":
-						r.gitStash(e, f)
-						r.gitPull(e, f)
-						r.gitPop(e, f)
-						r.gitCommit(e, f)
-						r.gitPush(e, f)
-					}
-				}(w.ScheduledRepos[i])
-			}
-			wg.Wait()
-		}
+// 			var wg sync.WaitGroup
+// 			for i := range w.ScheduledRepos {
+// 				wg.Add(1)
+// 				go func(r *Repo) {
+// 					defer wg.Done()
+// 					switch r.GitAction {
+// 					case "pull":
+// 						r.gitPull(e, f)
+// 					case "push":
+// 						r.gitPush(e, f)
+// 					case "add-commit-push":
+// 						r.gitAdd(e, f)
+// 						r.gitCommit(e, f)
+// 						r.gitPush(e, f)
+// 					case "stash-pull-pop-commit-push":
+// 						r.gitStash(e, f)
+// 						r.gitPull(e, f)
+// 						r.gitPop(e, f)
+// 						r.gitCommit(e, f)
+// 						r.gitPush(e, f)
+// 					}
+// 				}(w.ScheduledRepos[i])
+// 			}
+// 			wg.Wait()
+// 		}
 
-	}
+// 	}
 
-	// sort scheduled into push, pull or commit
-}
+// 	// sort scheduled into push, pull or commit
+// }
 
 // FLAG: different? short summary (multi lines) then show each push/pull/commit (multiline)?
 // this needs to also check if Skipped and no pending
@@ -2121,7 +2114,7 @@ func targetPrint(f Flags, s string, z ...interface{}) {
 
 // --> Main functions
 
-func initRun() (e Emoji, f Flags, rs Repos, dvs Divs, t *Timer, w *Workspace) {
+func initRun() (e Emoji, f Flags, rs Repos, t *Timer) {
 
 	// initialize Timer, Flags and Emoji
 	t = initTimer()
@@ -2132,53 +2125,53 @@ func initRun() (e Emoji, f Flags, rs Repos, dvs Divs, t *Timer, w *Workspace) {
 	initPrint(e, f, t)
 
 	// read ~/.gisrc.json, initialize Config
-	c := initConfig(e, f, t, w)
+	c := initConfig(e, f, t)
 
-	w = initWorkspace()
-	dvs, rs = initDivsRepos(c, e, f, t)
+	rs = initRepos(c, e, f, t)
 
-	return e, f, rs, dvs, t, w
+	return e, f, rs, t
 }
 
-func verifyDivs(e Emoji, f Flags, rs Repos, dvs Divs, t *Timer, w *Workspace) {
+// func verifyDivs(e Emoji, f Flags, rs Repos, dvs Divs, t *Timer, w *Workspace) {
 
-	// print
-	targetPrint(f, "%v  verifying divs [%v]", e.FileCabinet, len(dvs))
+// 	// print
+// 	targetPrint(f, "%v  verifying divs [%v]", e.FileCabinet, len(dvs))
 
-	// verify
-	dvs.verify(e, f, w)
+// 	// verify
+// 	dvs.verify(e, f, w)
 
-	// summary
-	dvs.summary(e, f, t, w)
-}
+// 	// summary
+// 	dvs.summary(e, f, t, w)
+// }
 
-func verifyRepos(e Emoji, f Flags, rs Repos, dvs Divs, t *Timer, w *Workspace) {
+// func verifyRepos(e Emoji, f Flags, rs Repos, dvs Divs, t *Timer, w *Workspace) {
 
-	// print
-	targetPrint(f, "%v verifying repos [%v]", e.Truck, len(rs))
+// 	// print
+// 	targetPrint(f, "%v verifying repos [%v]", e.Truck, len(rs))
 
-	// verify
-	rs.verify(e, f, w)
+// 	// verify
+// 	rs.verify(e, f, w)
 
-	// summary
-	rs.summary(e, f, t, w)
-}
+// 	// summary
+// 	rs.summary(e, f, t, w)
+// }
 
-func verifyChanges(e Emoji, f Flags, rs Repos, dvs Divs, t *Timer, w *Workspace) {
-	// summarize all repos by div, prompt user for approval and/or commit message
-	dvs.dispatch(e, f, w)
+// func verifyChanges(e Emoji, f Flags, rs Repos, dvs Divs, t *Timer, w *Workspace) {
+// 	// summarize all repos by div, prompt user for approval and/or commit message
+// 	dvs.dispatch(e, f, w)
 
-	// summarize, prompt user for global approval, submit changes
-	w.dispatch(dvs, e, f)
-}
+// 	// summarize, prompt user for global approval, submit changes
+// 	w.dispatch(dvs, e, f)
+// }
 
-func terminateRun(e Emoji, f Flags, rs Repos, dvs Divs, t *Timer, w *Workspace) {
-}
+// func terminateRun(e Emoji, f Flags, rs Repos, dvs Divs, t *Timer, w *Workspace) {
+// }
 
 func main() {
-	e, f, rs, dvs, t, w := initRun()
-	verifyDivs(e, f, rs, dvs, t, w)
-	verifyRepos(e, f, rs, dvs, t, w)
-	verifyChanges(e, f, rs, dvs, t, w) // setActions()
-	terminateRun(e, f, rs, dvs, t, w)
+	e, f, rs, t := initRun()
+	fmt.Println(e, f, rs, t)
+	// verifyDivs(e, f, rs, dvs, t, w)
+	// verifyRepos(e, f, rs, dvs, t, w)
+	// verifyChanges(e, f, rs, dvs, t, w) // setActions()
+	// terminateRun(e, f, rs, dvs, t, w)
 }

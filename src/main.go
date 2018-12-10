@@ -353,8 +353,7 @@ func oneLine(f Flags) bool {
 	}
 }
 
-// initPrint prints info on Emoji and Flag values.
-
+// initPrint prints info for Emoji and Flag values.
 func initPrint(e Emoji, f Flags, t *Timer) {
 
 	// clears the screen if f.Clear or f.Emoji are true

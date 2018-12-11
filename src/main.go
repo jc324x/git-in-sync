@@ -362,16 +362,18 @@ func initPrint(e Emoji, f Flags, t *Timer) {
 	// targetPrint prints a message with or without an emoji if f.Emoji is true or false.
 	targetPrint(f, "%v start", e.Clapper)
 
-	// isDry returns true if f.Dry is true.
+	// dry run only messaging
 	if isDry(f) {
 		targetPrint(f, "%v  dry run; no changes will be made", e.Desert)
 	}
 
+	// print flag init
 	if ft, err := t.getMoment("flags"); err == nil {
 		targetPrint(f, "%v parsing flags", e.FlagInHole)
 		targetPrint(f, "%v [%v] flags (%v) {%v / %v}", e.Flag, f.Count, f.Summary, ft.Split, ft.Start)
 	}
 
+	// print emoji init
 	if et, err := t.getMoment("emoji"); err == nil {
 		targetPrint(f, "%v initializing emoji", e.CrystalBall)
 		targetPrint(f, "%v [%v] emoji {%v / %v}", e.DirectHit, e.Count, et.Split, et.Start)
@@ -435,16 +437,22 @@ func initConfig(e Emoji, f Flags, t *Timer) (c Config) {
 
 type Repo struct {
 
-	// initRepo
-	Div      *Div
-	Name     string
-	User     string
-	Remote   string
-	GitDir   string
-	Path     string
-	GitPath  string
-	WorkTree string
-	URL      string
+	// --- ultra branch ---
+
+	// initRun -> initRepos -> initRepo
+	BundlePath   string // "~/dev"
+	ZoneDivision string // "main" or "go-lang"
+	ZoneUser     string // "jychri"
+	ZoneRemote   string // "github" or "gitlab"
+	RepoName     string // "git-in-sync"
+	DivPath      string // "/Users/jychri/dev/go-lang/"
+	RepoPath     string // "/Users/jychri/dev/go-lang/git-in-sync"
+	GitPath      string // "/Users/jychri/dev/go-lang/git-in-sync/.git"
+	GitDir       string // "--git-dir=/Users/jychri/dev/go-lang/git-in-sync/.git"
+	WorkTree     string // "--work-tree=/Users/jychri/dev/go-lang/git-in-sync"
+	RepoURL      string // "https://github.com/jychri/git-in-sync"
+
+	// --- maybe maybe not? we'll see... ---
 
 	// verify
 	Verified         bool
@@ -481,59 +489,73 @@ type Repo struct {
 }
 
 // initRepo returns a *Repo with initial values set.
-func initRepo(d *Div, rn string, bu string, br string, bd string) *Repo {
+
+func initRepo(bp string, zd string, zu string, zr string, rn string) *Repo {
+
 	r := new(Repo)
-	r.Div = d
-	r.Name = rn
-	r.User = bu   // bundle user
-	r.Remote = br // bundle remote
+
+	// "~/dev", (b)undle(p)ath
+	r.BundlePath = bp
+
+	// "main" or "go-lang", (z)one(d)ivision
+	r.ZoneDivision = zd
+
+	// "jychri", (z)one(u)ser
+	r.ZoneUser = zu
+
+	// "github" or "gitlab", (z)one(r)emote
+	r.ZoneRemote = zr
+
+	// "git-in-sync", (r)epo(n)ame
+	r.RepoName = rn
 
 	var b bytes.Buffer
 
-	b.WriteString("--git-dir=")
-	b.WriteString(r.Div.Path)
-	b.WriteString("/")
-	b.WriteString(r.Name)
-	b.WriteString("/.git")
-	r.GitDir = b.String()
+	// "/Users/jychri/dev/go-lang/"
+	b.WriteString(validatePath(r.BundlePath))
+	if r.ZoneDivision != "main" {
+		b.WriteString("/")
+		b.WriteString(r.ZoneDivision)
+	}
+	r.DivPath = b.String()
 
+	// "/Users/jychri/dev/go-lang/git-in-sync/"
 	b.Reset()
-	b.WriteString(r.Div.Path)
+	b.WriteString(r.DivPath)
 	b.WriteString("/")
-	b.WriteString(r.Name)
+	b.WriteString(r.RepoName)
+	r.RepoPath = b.String()
+
+	// "/Users/jychri/dev/go-lang/git-in-sync/.git"
+	b.Reset()
+	b.WriteString(r.RepoPath)
 	b.WriteString("/.git")
 	r.GitPath = b.String()
 
+	// "--git-dir=/Users/jychri/dev/go-lang/git-in-sync/.git"
 	b.Reset()
-	b.WriteString(r.Div.Path)
-	b.WriteString("/")
-	b.WriteString(r.Name)
-	r.Path = b.String()
+	b.WriteString("--git-dir=")
+	b.WriteString(r.GitPath)
+	r.GitDir = b.String()
 
+	// "--work-tree=/Users/jychri/dev/go-lang/git-in-sync"
 	b.Reset()
 	b.WriteString("--work-tree=")
-	b.WriteString(r.Div.Path)
-	b.WriteString("/")
-	b.WriteString(r.Name)
+	b.WriteString(r.RepoPath)
 	r.WorkTree = b.String()
 
+	// "https://github.com/jychri/git-in-sync"
 	b.Reset()
-	switch r.Remote {
+	switch r.ZoneRemote {
 	case "github":
 		b.WriteString("https://github.com/")
 	case "gitlab":
 		b.WriteString("https://gitlab.com/")
 	}
-	b.WriteString(r.User)
+	b.WriteString(r.ZoneUser)
 	b.WriteString("/")
-	b.WriteString(r.Name)
-
-	switch r.Remote {
-	case "gitlab":
-		b.WriteString(".git")
-	}
-
-	r.URL = b.String()
+	b.WriteString(r.RepoName)
+	r.RepoURL = b.String()
 
 	return r
 }
@@ -585,25 +607,25 @@ func initRepo(d *Div, rn string, bu string, br string, bd string) *Repo {
 // 	}
 // }
 
-func canClone(f Flags, r *Repo) bool {
+// func canClone(f Flags, r *Repo) bool {
 
-	_, err := os.Stat(r.Path)
+// 	_, err := os.Stat(r.Path)
 
-	if os.IsNotExist(err) && isActive(f) {
-		return true
-	} else {
-		return false
-	}
-}
+// 	if os.IsNotExist(err) && isActive(f) {
+// 		return true
+// 	} else {
+// 		return false
+// 	}
+// }
 
-func noDiv(r *Repo) bool {
-	if r.Div.PathVerified == false {
-		return true
-	} else {
-		r.Verified = true
-		return false
-	}
-}
+// func noDiv(r *Repo) bool {
+// 	if r.Div.PathVerified == false {
+// 		return true
+// 	} else {
+// 		r.Verified = true
+// 		return false
+// 	}
+// }
 
 func isMissing(r *Repo) bool {
 	_, err := os.Stat(r.GitPath)
@@ -654,24 +676,24 @@ func isUpToDate(r *Repo) bool {
 // 	w.ClonedRepos = append(w.ClonedRepos, r)
 // }
 
-func (r *Repo) gitConfigOriginURL() {
-	if r.Verified {
-		args := []string{r.GitDir, "config", "--get", "remote.origin.url"}
-		cmd := exec.Command("git", args...)
-		var out bytes.Buffer
-		cmd.Stdout = &out
-		cmd.Run()
-		s := out.String()
-		s = strings.TrimSuffix(s, "\n")
-		r.VerifiedURL = s
+// func (r *Repo) gitConfigOriginURL() {
+// 	if r.Verified {
+// 		args := []string{r.GitDir, "config", "--get", "remote.origin.url"}
+// 		cmd := exec.Command("git", args...)
+// 		var out bytes.Buffer
+// 		cmd.Stdout = &out
+// 		cmd.Run()
+// 		s := out.String()
+// 		s = strings.TrimSuffix(s, "\n")
+// 		r.VerifiedURL = s
 
-		if r.VerifiedURL == r.URL {
-			r.Verified = true
-		} else {
-			r.Verified = false
-		}
-	}
-}
+// 		if r.VerifiedURL == r.URL {
+// 			r.Verified = true
+// 		} else {
+// 			r.Verified = false
+// 		}
+// 	}
+// }
 
 func (r *Repo) gitRemoteUpdate() {
 	if r.Verified {
@@ -761,20 +783,20 @@ func (r *Repo) gitMergeBaseSHA() {
 	}
 }
 
-func (r *Repo) gitRevParseUpstream() {
-	if r.Verified {
-		args := []string{r.GitDir, r.WorkTree, "rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{u}"}
-		cmd := exec.Command("git", args...)
-		var out bytes.Buffer
-		cmd.Stdout = &out
-		cmd.Run()
-		if str := out.String(); str != "" {
-			r.UpstreamBranch = trim(out.String())
-		} else {
-			fmt.Printf("can't get upstream for %v\n ", r.Name)
-		}
-	}
-}
+// func (r *Repo) gitRevParseUpstream() {
+// 	if r.Verified {
+// 		args := []string{r.GitDir, r.WorkTree, "rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{u}"}
+// 		cmd := exec.Command("git", args...)
+// 		var out bytes.Buffer
+// 		cmd.Stdout = &out
+// 		cmd.Run()
+// 		if str := out.String(); str != "" {
+// 			r.UpstreamBranch = trim(out.String())
+// 		} else {
+// 			fmt.Printf("can't get upstream for %v\n ", r.Name)
+// 		}
+// 	}
+// }
 
 func (r *Repo) gitDiffsNameOnly() {
 	if r.Verified {
@@ -969,47 +991,47 @@ func (r *Repo) getPhase() {
 
 // FLAG: overhaul with bytes.buffer at somepoint
 
-func (r *Repo) gitPull(e Emoji, f Flags) {
-	targetPrint(f, "%v %v pulling from %v", e.Ship, r.Name, r.Remote)
+// func (r *Repo) gitPull(e Emoji, f Flags) {
+// 	targetPrint(f, "%v %v pulling from %v", e.Ship, r.Name, r.Remote)
 
-	args := []string{"-C", r.Path, "pull"}
-	cmd := exec.Command("git", args...)
-	cmd.Run()
-}
+// 	args := []string{"-C", r.Path, "pull"}
+// 	cmd := exec.Command("git", args...)
+// 	cmd.Run()
+// }
 
-func (r *Repo) gitPush(e Emoji, f Flags) {
-	targetPrint(f, "%v %v pushing to %v", e.Rocket, r.Name, r.Remote)
+// func (r *Repo) gitPush(e Emoji, f Flags) {
+// 	targetPrint(f, "%v %v pushing to %v", e.Rocket, r.Name, r.Remote)
 
-	args := []string{"-C", r.Path, "push"}
-	cmd := exec.Command("git", args...)
-	cmd.Run()
-}
+// 	args := []string{"-C", r.Path, "push"}
+// 	cmd := exec.Command("git", args...)
+// 	cmd.Run()
+// }
 
-func (r *Repo) gitAdd(e Emoji, f Flags) {
-	targetPrint(f, "%v  %v adding changes [%v]{%v}(+%v|-%v)", e.Satellite, r.Name, r.DiffCount, r.DiffSummary, r.ShortStatPlus, r.ShortStatMinus)
-	args := []string{"-C", r.Path, "add", "-A"}
-	cmd := exec.Command("git", args...)
-	cmd.Run()
-}
+// func (r *Repo) gitAdd(e Emoji, f Flags) {
+// 	targetPrint(f, "%v  %v adding changes [%v]{%v}(+%v|-%v)", e.Satellite, r.Name, r.DiffCount, r.DiffSummary, r.ShortStatPlus, r.ShortStatMinus)
+// 	args := []string{"-C", r.Path, "add", "-A"}
+// 	cmd := exec.Command("git", args...)
+// 	cmd.Run()
+// }
 
 // FLAG: check for stash?
 
-func (r *Repo) gitCommit(e Emoji, f Flags) {
-	targetPrint(f, "%v %v committing changes [%v]{%v}(+%v|-%v)", e.Fire, r.Name, r.DiffCount, r.DiffSummary, r.ShortStatPlus, r.ShortStatMinus)
+// func (r *Repo) gitCommit(e Emoji, f Flags) {
+// 	targetPrint(f, "%v %v committing changes [%v]{%v}(+%v|-%v)", e.Fire, r.Name, r.DiffCount, r.DiffSummary, r.ShortStatPlus, r.ShortStatMinus)
 
-	args := []string{"-C", r.Path, "commit", "-m", r.GitMessage}
-	cmd := exec.Command("git", args...)
-	cmd.Run()
-}
+// 	args := []string{"-C", r.Path, "commit", "-m", r.GitMessage}
+// 	cmd := exec.Command("git", args...)
+// 	cmd.Run()
+// }
 
-func (r *Repo) gitStash(e Emoji, f Flags) {
-	targetPrint(f, "%v  %v stashing changes", e.Squirrel, r.Name)
+// func (r *Repo) gitStash(e Emoji, f Flags) {
+// 	targetPrint(f, "%v  %v stashing changes", e.Squirrel, r.Name)
 
-}
+// }
 
-func (r *Repo) gitPop(e Emoji, f Flags) {
-	targetPrint(f, "%v %v popping changes", e.Popcorn, r.Name)
-}
+// func (r *Repo) gitPop(e Emoji, f Flags) {
+// 	targetPrint(f, "%v %v popping changes", e.Popcorn, r.Name)
+// }
 
 // func (r *Repo) run(e Emoji, f Flags) {
 // 	switch r.GitAction {
@@ -1034,43 +1056,43 @@ func (r *Repo) gitPop(e Emoji, f Flags) {
 // d.Path set from Zone.Path (zp) and bundle.Division (bd)
 // Note: zone and bundle aren't defined structs
 
-func initDiv(zp string, bd string) *Div {
-	d := new(Div)
-	var b bytes.Buffer
-	b.WriteString(validatePath(zp))
+// func initDiv(zp string, bd string) *Div {
+// 	d := new(Div)
+// 	var b bytes.Buffer
+// 	b.WriteString(validatePath(zp))
 
-	if bd != "main" {
-		b.WriteString("/")
-		b.WriteString(bd)
-	}
+// 	if bd != "main" {
+// 		b.WriteString("/")
+// 		b.WriteString(bd)
+// 	}
 
-	d.Name = bd
-	d.Path = b.String()
+// 	d.Name = bd
+// 	d.Path = b.String()
 
-	return d
-}
+// 	return d
+// }
 
-type Div struct {
-	// initDiv
-	Name string
-	Path string
+// type Div struct {
+// 	// initDiv
+// 	Name string
+// 	Path string
 
-	// initDivsRepos
-	Repos Repos
+// 	// initDivsRepos
+// 	Repos Repos
 
-	// verifyDivs
-	ReposSummary string
-	PathCreated  bool
-	PathVerified bool
-	Summary      string
-	PathError    string
+// 	// verifyDivs
+// 	ReposSummary string
+// 	PathCreated  bool
+// 	PathVerified bool
+// 	Summary      string
+// 	PathError    string
 
-	// setActions
-	CompleteRepos  Repos
-	PendingRepos   Repos
-	ScheduledRepos Repos
-	SkippedRepos   Repos
-}
+// 	// setActions
+// 	CompleteRepos  Repos
+// 	PendingRepos   Repos
+// 	ScheduledRepos Repos
+// 	SkippedRepos   Repos
+// }
 
 // func (d *Div) verify(e Emoji, f Flags, w *Workspace) {
 // 	// check path; create if missing and active
@@ -1114,61 +1136,61 @@ type Div struct {
 
 // div fns here
 
-func (d *Div) getReposSummary() {
-	switch len(d.Repos) {
-	case 0:
-		d.ReposSummary = "N/A"
-	case 1:
-		d.ReposSummary = d.Repos[0].Name
-	default:
-		var sl []string
+// func (d *Div) getReposSummary() {
+// 	switch len(d.Repos) {
+// 	case 0:
+// 		d.ReposSummary = "N/A"
+// 	case 1:
+// 		d.ReposSummary = d.Repos[0].Name
+// 	default:
+// 		var sl []string
 
-		for _, r := range d.Repos {
-			if lr := len(strings.Join(sl, ", ")); lr <= 22 {
-				if len(r.Name) <= 12 {
-					sl = append(sl, r.Name)
-				}
-			}
-		}
+// 		for _, r := range d.Repos {
+// 			if lr := len(strings.Join(sl, ", ")); lr <= 22 {
+// 				if len(r.Name) <= 12 {
+// 					sl = append(sl, r.Name)
+// 				}
+// 			}
+// 		}
 
-		s := strings.Join(sl, ", ")
+// 		s := strings.Join(sl, ", ")
 
-		if len(sl) != len(d.Repos) {
-			s = fmt.Sprintf("%v...", s)
-		}
-		d.ReposSummary = s
-	}
-}
+// 		if len(sl) != len(d.Repos) {
+// 			s = fmt.Sprintf("%v...", s)
+// 		}
+// 		d.ReposSummary = s
+// 	}
+// }
 
-func (d *Div) getPendingReposSummary() {
-	var sl []string
+// func (d *Div) getPendingReposSummary() {
+// 	var sl []string
 
-	switch len(d.PendingRepos) {
-	case 0:
-		d.Summary = "N/A"
-	case 1:
-		d.Summary = d.PendingRepos[0].Name
-	default:
-		for _, r := range d.PendingRepos {
-			if lsl := len(strings.Join(sl, ", ")); lsl <= 20 {
-				// fmt.Println(r.Name)
-				sl = append(sl, r.Name)
-			}
-		}
+// 	switch len(d.PendingRepos) {
+// 	case 0:
+// 		d.Summary = "N/A"
+// 	case 1:
+// 		d.Summary = d.PendingRepos[0].Name
+// 	default:
+// 		for _, r := range d.PendingRepos {
+// 			if lsl := len(strings.Join(sl, ", ")); lsl <= 20 {
+// 				// fmt.Println(r.Name)
+// 				sl = append(sl, r.Name)
+// 			}
+// 		}
 
-		sj := strings.Join(sl, ", ")
+// 		sj := strings.Join(sl, ", ")
 
-		if len(sl) != len(d.PendingRepos) {
-			var lb bytes.Buffer
-			sj = strings.TrimSuffix(sj, ", ")
-			lb.WriteString(sj)
-			lb.WriteString(",...")
-			d.Summary = lb.String()
-		} else {
-			d.Summary = sj
-		}
-	}
-}
+// 		if len(sl) != len(d.PendingRepos) {
+// 			var lb bytes.Buffer
+// 			sj = strings.TrimSuffix(sj, ", ")
+// 			lb.WriteString(sj)
+// 			lb.WriteString(",...")
+// 			d.Summary = lb.String()
+// 		} else {
+// 			d.Summary = sj
+// 		}
+// 	}
+// }
 
 // divs and repos sorting
 
@@ -1223,14 +1245,14 @@ type Repos []*Repo
 // 	targetPrint(f, b.String())
 // }
 
-func (rs Repos) itemIndex(r *Repo) int {
-	for i, rl := range rs {
-		if rl.Name == r.Name {
-			return i
-		}
-	}
-	return -1
-}
+// func (rs Repos) itemIndex(r *Repo) int {
+// 	for i, rl := range rs {
+// 		if rl.Name == r.Name {
+// 			return i
+// 		}
+// 	}
+// 	return -1
+// }
 
 // type Divs []*Div
 
@@ -1497,11 +1519,31 @@ func (rs Repos) itemIndex(r *Repo) int {
 
 func (rs Repos) Len() int           { return len(rs) }
 func (rs Repos) Swap(i, j int)      { rs[i], rs[j] = rs[j], rs[i] }
-func (rs Repos) Less(i, j int) bool { return rs[i].Name < rs[j].Name }
+func (rs Repos) Less(i, j int) bool { return rs[i].RepoName < rs[j].RepoName }
 
 // func (dvs Divs) Len() int           { return len(dvs) }
 // func (dvs Divs) Swap(i, j int)      { dvs[i], dvs[j] = dvs[j], dvs[i] }
 // func (dvs Divs) Less(i, j int) bool { return dvs[i].Path < dvs[j].Path }
+
+// Returns *Div.
+// d.Path set from Zone.Path (zp) and bundle.Division (bd)
+// Note: zone and bundle aren't defined structs
+
+// func initDiv(zp string, bd string) *Div {
+// 	d := new(Div)
+// 	var b bytes.Buffer
+// 	b.WriteString(validatePath(zp))
+
+// 	if bd != "main" {
+// 		b.WriteString("/")
+// 		b.WriteString(bd)
+// 	}
+
+// 	d.Name = bd
+// 	d.Path = b.String()
+
+// 	return d
+// }
 
 func initRepos(c Config, e Emoji, f Flags, t *Timer) (rs Repos) {
 
@@ -1509,11 +1551,10 @@ func initRepos(c Config, e Emoji, f Flags, t *Timer) (rs Repos) {
 	targetPrint(f, "%v parsing repos", e.Pager)
 
 	// initialize Repos from Config
-	for _, z := range c.Bundles {
-		for _, bl := range z.Zones {
-			d := initDiv(z.Path, bl.Division)
-			for _, rn := range bl.Repos {
-				r := initRepo(d, rn, bl.User, bl.Remote, bl.Division)
+	for _, bl := range c.Bundles {
+		for _, z := range bl.Zones {
+			for _, rn := range z.Repos {
+				r := initRepo(z.Division, z.User, z.Remote, bl.Path, rn)
 				rs = append(rs, r)
 			}
 		}
@@ -2169,6 +2210,11 @@ func initRun() (e Emoji, f Flags, rs Repos, t *Timer) {
 
 func main() {
 	e, f, rs, t := initRun()
+	// verifyPaths(e, f, rs, t)
+	// verifyRepos()
+	// verifyChanges()
+	// terminateRun()
+
 	fmt.Println(e, f, rs, t)
 	// verifyDivs(e, f, rs, dvs, t, w)
 	// verifyRepos(e, f, rs, dvs, t, w)

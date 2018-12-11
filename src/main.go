@@ -899,20 +899,27 @@ func (rs Repos) sortByPath() {
 
 func (rs Repos) verifyDivs(e Emoji, f Flags, t *Timer) {
 
-	// print
-	targetPrint(f, "%v  verifying divs", e.FileCabinet)
-
 	// sort
 	rs.sortByPath()
 
-	// tracking divs
+	// total divs
 	var dvs []string // divs
+
+	for _, r := range rs {
+		dvs = append(dvs, r.DivPath)
+	}
+
+	dvs = removeDuplicates(dvs)
+
+	// print
+	targetPrint(f, "%v  verifying divs [%v]", e.FileCabinet, len(dvs))
+
+	// created, verified and missing divs
 	var cd []string  // created divs
 	var vfd []string // verified divs
 	var md []string  // missing divs
 
 	for _, r := range rs {
-		dvs = append(dvs, r.DivPath)
 
 		_, err := os.Stat(r.DivPath)
 
@@ -952,7 +959,6 @@ func (rs Repos) verifyDivs(e Emoji, f Flags, t *Timer) {
 	t.markMoment("verify-divs")
 
 	// remove duplicates from slices
-	dvs = removeDuplicates(dvs)
 	vfd = removeDuplicates(vfd)
 	md = removeDuplicates(md)
 
@@ -984,6 +990,12 @@ func (rs Repos) verifyDivs(e Emoji, f Flags, t *Timer) {
 	b.WriteString("}")
 
 	targetPrint(f, b.String())
+}
+
+func (rs Repos) verifyRepos(e Emoji, f Flags, t *Timer) {
+
+	// print
+	targetPrint(f, "%v verifying repos [%v]", e.Truck, len(rs))
 }
 
 func initRepos(c Config, e Emoji, f Flags, t *Timer) (rs Repos) {
@@ -1111,6 +1123,6 @@ func initRun() (e Emoji, f Flags, rs Repos, t *Timer) {
 func main() {
 	e, f, rs, t := initRun()
 	rs.verifyDivs(e, f, t)
-	// rs.verifyRepos(e, f, t)
+	rs.verifyRepos(e, f, t)
 	// rs.verifyChanges(e, f, t)
 }

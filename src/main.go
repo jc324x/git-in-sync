@@ -437,8 +437,6 @@ func initConfig(e Emoji, f Flags, t *Timer) (c Config) {
 
 type Repo struct {
 
-	// --- ultra branch ---
-
 	// initRun -> initRepos -> initRepo
 	BundlePath   string // "~/dev"
 	ZoneDivision string // "main" or "go-lang"
@@ -451,6 +449,12 @@ type Repo struct {
 	GitDir       string // "--git-dir=/Users/jychri/dev/go-lang/git-in-sync/.git"
 	WorkTree     string // "--work-tree=/Users/jychri/dev/go-lang/git-in-sync"
 	RepoURL      string // "https://github.com/jychri/git-in-sync"
+
+	// rs.verifyDivs
+	DivPathVerified bool   // true if DivPath verified
+	DivPathError    string // error if DivPathVerified is false
+
+	// rs.verifyRepos
 
 	// --- maybe maybe not? we'll see... ---
 
@@ -883,14 +887,103 @@ func (r *Repo) getPhase() {
 type Repos []*Repo
 
 // sort A-Z by r.RepoName
-func (rn Repos) sortByName() {
-	sort.SliceStable(rn, func(i, j int) bool { return rn[i].RepoName < rn[j].RepoName })
+func (rs Repos) sortByName() {
+	sort.SliceStable(rs, func(i, j int) bool { return rs[i].RepoName < rs[j].RepoName })
 }
 
 // sort A-Z by r.DivPath, then r.RepoName
-func (rn Repos) sortByPath() {
-	sort.SliceStable(rn, func(i, j int) bool { return rn[i].RepoName < rn[j].RepoName })
-	sort.SliceStable(rn, func(i, j int) bool { return rn[i].DivPath < rn[j].DivPath })
+func (rs Repos) sortByPath() {
+	sort.SliceStable(rs, func(i, j int) bool { return rs[i].RepoName < rs[j].RepoName })
+	sort.SliceStable(rs, func(i, j int) bool { return rs[i].DivPath < rs[j].DivPath })
+}
+
+func (rs Repos) verifyDivs(e Emoji, f Flags, t *Timer) {
+
+	// print
+	targetPrint(f, "%v  verifying divs", e.FileCabinet)
+
+	// sort
+	rs.sortByPath()
+
+	// tracking divs
+	var dvs []string // divs
+	var cd []string  // created divs
+	var vfd []string // verified divs
+	var md []string  // missing divs
+
+	for _, r := range rs {
+		dvs = append(dvs, r.DivPath)
+
+		_, err := os.Stat(r.DivPath)
+
+		if os.IsNotExist(err) && isActive(f) {
+			targetPrint(f, "%v creating %v", e.Folder, r.DivPath)
+			os.MkdirAll(r.DivPath, 0777)
+			cd = append(cd, r.DivPath)
+		}
+
+		info, err := os.Stat(r.DivPath)
+
+		switch {
+		case noPermission(info):
+			r.DivPathVerified = false
+			r.DivPathError = "No permission"
+			md = append(md, r.DivPath)
+		case !info.IsDir():
+			r.DivPathVerified = false
+			r.DivPathError = "File blocking path"
+			md = append(md, r.DivPath)
+		case os.IsNotExist(err):
+			r.DivPathVerified = false
+			r.DivPathError = "No directory"
+			md = append(md, r.DivPath)
+		case err != nil:
+			r.DivPathVerified = false
+			r.DivPathError = "No directory"
+			md = append(md, r.DivPath)
+		default:
+			r.DivPathVerified = true
+			r.DivPathError = ""
+			vfd = append(vfd, r.DivPath)
+		}
+	}
+
+	// timer
+	t.markMoment("verify-divs")
+
+	// remove duplicates from slices
+	dvs = removeDuplicates(dvs)
+	vfd = removeDuplicates(vfd)
+	md = removeDuplicates(md)
+
+	// summary
+	var b bytes.Buffer
+
+	if len(dvs) == len(vfd) {
+		b.WriteString(e.ThumbsUp)
+	} else {
+		b.WriteString(e.Slash)
+	}
+
+	b.WriteString(" [")
+	b.WriteString(strconv.Itoa(len(vfd)))
+	b.WriteString("/")
+	b.WriteString(strconv.Itoa(len(dvs)))
+	b.WriteString("] divs verified")
+
+	if len(cd) >= 1 {
+		b.WriteString(", created (")
+		b.WriteString(strconv.Itoa(len(cd)))
+		b.WriteString(")")
+	}
+
+	b.WriteString(" {")
+	b.WriteString(t.getSplit().String())
+	b.WriteString(" / ")
+	b.WriteString(t.getTime().String())
+	b.WriteString("}")
+
+	targetPrint(f, b.String())
 }
 
 func initRepos(c Config, e Emoji, f Flags, t *Timer) (rs Repos) {
@@ -907,9 +1000,6 @@ func initRepos(c Config, e Emoji, f Flags, t *Timer) (rs Repos) {
 			}
 		}
 	}
-
-	// sort by r.RepoName
-	rs.sortByName()
 
 	// timer
 	t.markMoment("init-repos")
@@ -982,6 +1072,21 @@ func targetPrint(f Flags, s string, z ...interface{}) {
 	}
 }
 
+func removeDuplicates(ssl []string) (sl []string) {
+
+	smap := make(map[string]bool)
+
+	for i := range ssl {
+		if smap[ssl[i]] == true {
+		} else {
+			smap[ssl[i]] = true
+			sl = append(sl, ssl[i])
+		}
+	}
+
+	return sl
+}
+
 // --> Main functions
 
 func initRun() (e Emoji, f Flags, rs Repos, t *Timer) {
@@ -997,20 +1102,15 @@ func initRun() (e Emoji, f Flags, rs Repos, t *Timer) {
 	// read ~/.gisrc.json, initialize Config
 	c := initConfig(e, f, t)
 
-	// initialize repos
+	// initialize Repos
 	rs = initRepos(c, e, f, t)
 
 	return e, f, rs, t
 }
 
-func verifyPaths(e Emoji, f Flags, rs Repos, t *Timer) {
-
-}
-
 func main() {
 	e, f, rs, t := initRun()
-	verifyPaths(e, f, rs, t)
-	// verifyRepos()
-	// verifyChanges()
-	// terminateRun()
+	rs.verifyDivs(e, f, t)
+	// rs.verifyRepos(e, f, t)
+	// rs.verifyChanges(e, f, t)
 }

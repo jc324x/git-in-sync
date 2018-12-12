@@ -497,6 +497,10 @@ type Repo struct {
 	RepoShortPlus  int    // ...
 	RepoShortMinus int    // ...
 
+	// rs.verifyRepos -> gitUntracked
+	RepoUntrackedFiles   []string // ...
+	RepoUntrackedSummary string   // ...
+
 	Upstream         string   // getUpstreamStatus
 	UntrackedFiles   []string // gitUntracked
 	UntrackedCount   int      // getUntrackedSummary
@@ -938,6 +942,7 @@ func (r *Repo) gitUntracked() {
 	if notVerified(r) {
 		return
 	}
+
 	args := []string{r.GitDir, r.WorkTree, "ls-files", "--others", "--exclude-standard"}
 	cmd := exec.Command("git", args...)
 	var out bytes.Buffer

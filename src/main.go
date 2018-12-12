@@ -464,9 +464,13 @@ type Repo struct {
 	RepoCloned       bool   // true if Repo was cloned
 
 	// rs.verifyRepos -> gitConfigOriginURL
-	OriginURL         string // output of
+	OriginURL         string // "https://github.com/jychri/git-in-sync"
 	OriginURLVerified bool   // true if RepoURL is verified
 	OriginURLError    string // error if URLVerified is false
+
+	// rs.verifyRepos -> gitRemoteUpdate
+	RemoteUpdateOut   string // output of `git ...fetch origin`
+	RemoteUpdateError string // error out of `git ...fetch origin`
 
 	// --- maybe maybe not? we'll see... ---
 
@@ -668,6 +672,7 @@ func (r *Repo) gitVerify(e Emoji, f Flags) {
 	}
 }
 
+// this should really handle errors...
 func (r *Repo) gitClone(e Emoji, f Flags) {
 	// print
 	targetPrint(f, "%v cloning %v {%v}", e.Box, r.RepoName, r.ZoneDivision)
@@ -679,7 +684,8 @@ func (r *Repo) gitClone(e Emoji, f Flags) {
 	cmd.Run()
 }
 
-func (r *Repo) gitConfigOriginURL() {
+func (r *Repo) gitConfigOriginURL(e Emoji, f Flags) {
+
 	// return if not verified
 	if notVerified(r) {
 		return
@@ -699,62 +705,65 @@ func (r *Repo) gitConfigOriginURL() {
 	// set OriginURL
 	r.OriginURL = s
 
-	// compare OriginURL and RepoURL
-	if r.OriginURL == r.RepoURL {
+	// switch
+	switch {
+	case r.OriginURL == r.RepoURL:
 		r.OriginURLVerified = true
-	} else {
-		r.OriginURLError = "OriginURL doesn't match RepoURL"
+	case r.OriginURL == "":
+		r.OriginURLError = "fatal: 'origin' does not appear to be a git repository"
+		r.RepoVerified = false
+	case r.OriginURL != r.RepoURL:
+		r.OriginURLError = "warning: RepoURL != OriginURL"
 		r.RepoVerified = false
 	}
-}
 
-// repo fns here
-
-func isUpToDate(r *Repo) bool {
-	if r.Verified == true {
-		switch {
-		case r.LocalSHA == "":
-			r.InfoVerified = false
-		case r.RemoteUpdate == "":
-			r.InfoVerified = false
-		case r.MergeBaseSHA == "":
-			r.InfoVerified = false
-		case r.UpstreamSHA == "":
-			r.InfoVerified = false
-		case r.UpstreamBranch == "":
-			r.InfoVerified = false
-		case r.Phase == "":
-			r.InfoVerified = false
+	if r.OriginURLError != "" {
+		if strings.Contains(r.OriginURLError, "warning") {
+			targetPrint(f, "%v %v (%v)", e.Warning, r.RepoName, r.OriginURLError)
 		}
-		r.InfoVerified = true
-	}
 
-	if r.Verified == true && r.Phase == "Up-To-Date" {
-		return true
-	} else {
-		return false
+		if strings.Contains(r.OriginURLError, "fatal") {
+			targetPrint(f, "%v %v (%v)", e.Slash, r.RepoName, r.OriginURLError)
+		}
+
 	}
 }
 
-func (r *Repo) gitRemoteUpdate() {
-	if r.Verified {
-		args := []string{r.GitDir, r.WorkTree, "fetch", "origin"}
-		cmd := exec.Command("git", args...)
-		var out bytes.Buffer
-		var err bytes.Buffer
-		cmd.Stdout = &out
-		cmd.Stderr = &err
-		cmd.Run()
+func (r *Repo) gitRemoteUpdate(e Emoji, f Flags) {
 
-		if str := out.String(); str != "" {
-			r.RemoteUpdate = trim(out.String())
+	// return if not verified
+	if notVerified(r) {
+		return
+	}
+
+	// command
+	args := []string{r.GitDir, r.WorkTree, "fetch", "origin"}
+	cmd := exec.Command("git", args...)
+	var out bytes.Buffer
+	var err bytes.Buffer
+	cmd.Stdout = &out
+	cmd.Stderr = &err
+	cmd.Run()
+
+	if str := out.String(); str != "" {
+		r.RemoteUpdateOut = trim(out.String())
+	}
+
+	if str := err.String(); str != "" {
+		r.RemoteUpdateError = trim(err.String())
+	}
+
+	if r.RemoteUpdateError != "" {
+		if strings.Contains(r.RemoteUpdateError, "warning") {
+			targetPrint(f, "%v %v (%v)", e.Warning, r.RepoName, firstLine(r.RemoteUpdateError))
 		}
 
-		if str := err.String(); str != "" {
-			r.RemoteUpdate = trim(err.String())
+		if strings.Contains(r.RemoteUpdateError, "fatal") {
+			targetPrint(f, "%v %v (%v)", e.Slash, r.RepoName, firstLine(r.RemoteUpdateError))
 		}
 
 	}
+
 }
 
 func (r *Repo) gitStatusPorcelain() {
@@ -1015,6 +1024,34 @@ func (r *Repo) getPhase() {
 	}
 }
 
+// still needed?
+
+func isUpToDate(r *Repo) bool {
+	if r.Verified == true {
+		switch {
+		case r.LocalSHA == "":
+			r.InfoVerified = false
+		case r.RemoteUpdate == "":
+			r.InfoVerified = false
+		case r.MergeBaseSHA == "":
+			r.InfoVerified = false
+		case r.UpstreamSHA == "":
+			r.InfoVerified = false
+		case r.UpstreamBranch == "":
+			r.InfoVerified = false
+		case r.Phase == "":
+			r.InfoVerified = false
+		}
+		r.InfoVerified = true
+	}
+
+	if r.Verified == true && r.Phase == "Up-To-Date" {
+		return true
+	} else {
+		return false
+	}
+}
+
 // --> Repos: Collection of Repos
 
 type Repos []*Repo
@@ -1139,7 +1176,8 @@ func (rs Repos) verifyRepos(e Emoji, f Flags, t *Timer) {
 		go func(r *Repo) {
 			defer wg.Done()
 			r.gitVerify(e, f)
-			r.gitConfigOriginURL()
+			r.gitConfigOriginURL(e, f)
+			r.gitRemoteUpdate(e, f)
 		}(rs[i])
 	}
 	wg.Wait()
@@ -1310,6 +1348,15 @@ func removeDuplicates(ssl []string) (sl []string) {
 	}
 
 	return sl
+}
+
+func firstLine(s string) string {
+	lines := strings.Split(strings.TrimSuffix(s, "\n"), "\n")
+	if len(lines) >= 1 {
+		return lines[0]
+	} else {
+		return ""
+	}
 }
 
 // --> Main functions

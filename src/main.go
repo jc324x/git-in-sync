@@ -469,18 +469,21 @@ type Repo struct {
 	OriginURLError    string // error if URLVerified is false
 
 	// rs.verifyRepos -> gitRemoteUpdate
-	RemoteUpdateOut   string // output of `git ...fetch origin`
-	RemoteUpdateError string // error out of `git ...fetch origin`
+	RemoteUpdateOut      string // output of `git fetch origin`
+	RemoteUpdateError    string // error out of `git fetch origin`
+	RemoteUpdateVerified bool   // true if RemoteUpdateError is "" or "warning: *"
+
+	// rs.verifyRepos -> gitStatusPorcelain
+	IsClean bool // true if `git status --porcelain` returns ""
+
+	// rs.verifyRepos -> gitAbbrevRef (deprecated?)
+	RepoLocalBranch string // `git rev-parse --abbrev-ref HEAD`, "master"
 
 	// --- maybe maybe not? we'll see... ---
 
 	// verify
-	Verified         bool
-	Cloned           bool     // gitClone
 	VerifiedURL      string   // gitConfigOriginURL
 	RemoteUpdate     string   // gitRemoteUpdate
-	Clean            bool     // gitStatusPorcelain
-	LocalBranch      string   // gitLocalBranch
 	LocalSHA         string   // gitLocalSHA
 	MergeBaseSHA     string   // gitMergeBaseSHA
 	UpstreamSHA      string   // gitUpstreamSHA
@@ -499,7 +502,7 @@ type Repo struct {
 	UntrackedStatus  bool     // getUntrackedSummary
 	Summary          string   // getSummary
 	Phase            string   // getPhase
-	InfoVerified     bool     // verifyProjectInfo
+	InfoVerified     bool     // verifyProjectInfo // deprecate
 
 	// setActions
 	Status       string
@@ -756,300 +759,355 @@ func (r *Repo) gitRemoteUpdate(e Emoji, f Flags) {
 	if r.RemoteUpdateError != "" {
 		if strings.Contains(r.RemoteUpdateError, "warning") {
 			targetPrint(f, "%v %v (%v)", e.Warning, r.RepoName, firstLine(r.RemoteUpdateError))
+			r.RemoteUpdateVerified = true
 		}
 
 		if strings.Contains(r.RemoteUpdateError, "fatal") {
 			targetPrint(f, "%v %v (%v)", e.Slash, r.RepoName, firstLine(r.RemoteUpdateError))
+			r.RemoteUpdateVerified = false
 		}
+	}
 
+	if r.RemoteUpdateError == "" {
+		r.RemoteUpdateVerified = true
 	}
 
 }
 
 func (r *Repo) gitStatusPorcelain() {
-	if r.Verified {
-		args := []string{r.GitDir, r.WorkTree, "status", "--porcelain"}
-		cmd := exec.Command("git", args...)
-		var out bytes.Buffer
-		cmd.Stdout = &out
-		cmd.Run()
-		if str := out.String(); str != "" {
-			r.Clean = false
-		} else {
-			r.Clean = true
-		}
+
+	// return if not verified
+	if notVerified(r) {
+		return
+	}
+
+	// command
+	args := []string{r.GitDir, r.WorkTree, "status", "--porcelain"}
+	cmd := exec.Command("git", args...)
+	var out bytes.Buffer
+	cmd.Stdout = &out
+	cmd.Run()
+
+	if str := out.String(); str != "" {
+		r.IsClean = false
+	} else {
+		r.IsClean = true
 	}
 }
 
-func (r *Repo) gitLocalBranch() {
-	if r.Verified {
-		args := []string{r.GitDir, r.WorkTree, "rev-parse", "--abbrev-ref", "HEAD"}
-		cmd := exec.Command("git", args...)
-		var out bytes.Buffer
-		cmd.Stdout = &out
-		cmd.Run()
-		if str := out.String(); str != "" {
-			r.LocalBranch = trim(out.String())
-		}
+func (r *Repo) gitAbbrevRef() {
+
+	// return if not verified
+	if notVerified(r) {
+		return
+	}
+
+	args := []string{r.GitDir, r.WorkTree, "rev-parse", "--abbrev-ref", "HEAD"}
+	cmd := exec.Command("git", args...)
+	var out bytes.Buffer
+	cmd.Stdout = &out
+	cmd.Run()
+	if str := out.String(); str != "" {
+		r.RepoLocalBranch = trim(out.String())
 	}
 }
 
 func (r *Repo) gitLocalSHA() {
-	if r.Verified {
-		args := []string{r.GitDir, r.WorkTree, "rev-parse", "@"}
-		cmd := exec.Command("git", args...)
-		var out bytes.Buffer
-		cmd.Stdout = &out
-		cmd.Run()
-		if str := out.String(); str != "" {
-			r.LocalSHA = trim(out.String())
-		}
+
+	// return if not verified
+	if notVerified(r) {
+		return
+	}
+
+	args := []string{r.GitDir, r.WorkTree, "rev-parse", "@"}
+	cmd := exec.Command("git", args...)
+	var out bytes.Buffer
+	cmd.Stdout = &out
+	cmd.Run()
+	if str := out.String(); str != "" {
+		r.LocalSHA = trim(out.String())
 	}
 }
 
 func (r *Repo) gitUpstreamSHA() {
-	if r.Verified {
-		args := []string{r.GitDir, r.WorkTree, "rev-parse", "@{u}"}
-		cmd := exec.Command("git", args...)
-		var out bytes.Buffer
-		cmd.Stdout = &out
-		cmd.Run()
-		if str := out.String(); str != "" {
-			r.UpstreamSHA = trim(out.String())
-		}
+
+	// return if not verified
+	if notVerified(r) {
+		return
+	}
+
+	args := []string{r.GitDir, r.WorkTree, "rev-parse", "@{u}"}
+	cmd := exec.Command("git", args...)
+	var out bytes.Buffer
+	cmd.Stdout = &out
+	cmd.Run()
+	if str := out.String(); str != "" {
+		r.UpstreamSHA = trim(out.String())
 	}
 }
 
 func (r *Repo) gitMergeBaseSHA() {
-	if r.Verified {
-		args := []string{r.GitDir, r.WorkTree, "merge-base", "@", "@{u}"}
-		cmd := exec.Command("git", args...)
-		var out bytes.Buffer
-		cmd.Stdout = &out
-		cmd.Run()
-		if str := out.String(); str != "" {
-			r.MergeBaseSHA = trim(out.String())
-		}
+
+	// return if not verified
+	if notVerified(r) {
+		return
+	}
+
+	args := []string{r.GitDir, r.WorkTree, "merge-base", "@", "@{u}"}
+	cmd := exec.Command("git", args...)
+	var out bytes.Buffer
+	cmd.Stdout = &out
+	cmd.Run()
+	if str := out.String(); str != "" {
+		r.MergeBaseSHA = trim(out.String())
 	}
 }
 
 func (r *Repo) gitDiffsNameOnly() {
-	if r.Verified {
-		args := []string{r.GitDir, r.WorkTree, "diff", "--name-only", "@{u}"}
-		cmd := exec.Command("git", args...)
-		var out bytes.Buffer
-		cmd.Stdout = &out
-		cmd.Run()
-		if str := out.String(); str != "" {
-			r.DiffFiles = strings.Fields(str)
-		} else {
-			r.DiffFiles = make([]string, 0)
-		}
+
+	// return if not verified
+	if notVerified(r) {
+		return
+	}
+
+	args := []string{r.GitDir, r.WorkTree, "diff", "--name-only", "@{u}"}
+	cmd := exec.Command("git", args...)
+	var out bytes.Buffer
+	cmd.Stdout = &out
+	cmd.Run()
+	if str := out.String(); str != "" {
+		r.DiffFiles = strings.Fields(str)
+	} else {
+		r.DiffFiles = make([]string, 0)
 	}
 }
 
-func (r *Repo) getDiffSummary() {
-	if r.Verified && len(r.DiffFiles) > 0 {
-		r.DiffCount = len(r.DiffFiles)
-		// var b bytes.Buffer
+// func (r *Repo) getDiffSummary() {
+// 	if r.Verified && len(r.DiffFiles) > 0 {
+// 		r.DiffCount = len(r.DiffFiles)
+// 		// var b bytes.Buffer
 
-		// for _, d := range r.DiffFiles {
-		// 	ld := len(strings.Join(r.DiffFiles, ", ")) // length of diff string
+// 		// for _, d := range r.DiffFiles {
+// 		// 	ld := len(strings.Join(r.DiffFiles, ", ")) // length of diff string
 
-		// }
+// 		// }
 
-		switch {
-		case r.DiffCount == 0:
-			r.DiffSummary = "" // r.DiffSummary = "No diffs"
-			r.DiffStatus = false
-		case r.DiffCount == 1:
-			r.DiffSummary = fmt.Sprintf(r.DiffFiles[0])
-			r.DiffStatus = true
-		case r.DiffCount >= 2:
-			var b bytes.Buffer
-			t := 0
-			for _, d := range r.DiffFiles {
-				if b.Len() <= 25 {
-					d = fmt.Sprintf("%v, ", d)
-					b.WriteString(d)
-					t++
-				} else {
-					break
-				}
-			}
-			s := b.String()
-			s = strings.TrimSuffix(s, ", ")
-			if t != len(r.DiffFiles) {
-				s = fmt.Sprintf("%v...", s)
-			}
-			r.DiffSummary = s
-			r.DiffStatus = true
-		}
-	}
-}
+// 		switch {
+// 		case r.DiffCount == 0:
+// 			r.DiffSummary = "" // r.DiffSummary = "No diffs"
+// 			r.DiffStatus = false
+// 		case r.DiffCount == 1:
+// 			r.DiffSummary = fmt.Sprintf(r.DiffFiles[0])
+// 			r.DiffStatus = true
+// 		case r.DiffCount >= 2:
+// 			var b bytes.Buffer
+// 			t := 0
+// 			for _, d := range r.DiffFiles {
+// 				if b.Len() <= 25 {
+// 					d = fmt.Sprintf("%v, ", d)
+// 					b.WriteString(d)
+// 					t++
+// 				} else {
+// 					break
+// 				}
+// 			}
+// 			s := b.String()
+// 			s = strings.TrimSuffix(s, ", ")
+// 			if t != len(r.DiffFiles) {
+// 				s = fmt.Sprintf("%v...", s)
+// 			}
+// 			r.DiffSummary = s
+// 			r.DiffStatus = true
+// 		}
+// 	}
+// }
 
-func (r *Repo) gitShortstat() {
-	if r.Verified {
-		args := []string{r.GitDir, r.WorkTree, "diff", "--shortstat"}
-		cmd := exec.Command("git", args...)
-		var out bytes.Buffer
-		cmd.Stdout = &out
-		cmd.Run()
-		if str := out.String(); str != "" {
-			r.ShortStat = trim(str)
-		}
-	}
-}
+// func (r *Repo) gitShortstat() {
+// 	if r.Verified {
+// 		args := []string{r.GitDir, r.WorkTree, "diff", "--shortstat"}
+// 		cmd := exec.Command("git", args...)
+// 		var out bytes.Buffer
+// 		cmd.Stdout = &out
+// 		cmd.Run()
+// 		if str := out.String(); str != "" {
+// 			r.ShortStat = trim(str)
+// 		}
+// 	}
+// }
 
 func (r *Repo) getShortInts() {
-	if r.Verified {
-		if r.ShortStat != "" {
-			rxi := regexp.MustCompile(`changed, (.*)? insertions`)
-			rxs := rxi.FindStringSubmatch(r.ShortStat)
-			if len(rxs) == 2 {
-				s := rxs[1]
-				if i, err := strconv.Atoi(s); err == nil {
-					r.ShortStatPlus = i // FLAG: r.PlusCount
-				} else {
-					fmt.Println(err)
-				}
-			}
 
-			rxd := regexp.MustCompile(`\(\+\), (.*)? deletions`)
-			rxs = rxd.FindStringSubmatch(r.ShortStat)
-			if len(rxs) == 2 {
-				s := rxs[1]
-				if i, err := strconv.Atoi(s); err == nil {
-					r.ShortStatMinus = i // FLAG: r.MinusCount
-				}
+	// return if not verified
+	if notVerified(r) {
+		return
+	}
+
+	if r.ShortStat != "" {
+		rxi := regexp.MustCompile(`changed, (.*)? insertions`)
+		rxs := rxi.FindStringSubmatch(r.ShortStat)
+		if len(rxs) == 2 {
+			s := rxs[1]
+			if i, err := strconv.Atoi(s); err == nil {
+				r.ShortStatPlus = i // FLAG: r.PlusCount
+			} else {
+				fmt.Println(err)
+			}
+		}
+
+		rxd := regexp.MustCompile(`\(\+\), (.*)? deletions`)
+		rxs = rxd.FindStringSubmatch(r.ShortStat)
+		if len(rxs) == 2 {
+			s := rxs[1]
+			if i, err := strconv.Atoi(s); err == nil {
+				r.ShortStatMinus = i // FLAG: r.MinusCount
 			}
 		}
 	}
 }
 
 func (r *Repo) gitUntracked() {
-	if r.Verified {
-		args := []string{r.GitDir, r.WorkTree, "ls-files", "--others", "--exclude-standard"}
-		cmd := exec.Command("git", args...)
-		var out bytes.Buffer
-		cmd.Stdout = &out
-		cmd.Run()
-		if str := out.String(); str != "" {
-			ufr := strings.Fields(str) // untracked files raw
-			for _, f := range ufr {
-				f = lastPathSelection(f)
-				r.UntrackedFiles = append(r.UntrackedFiles, f)
-			}
-
-		} else {
-			r.UntrackedFiles = make([]string, 0)
+	// return if not verified
+	if notVerified(r) {
+		return
+	}
+	args := []string{r.GitDir, r.WorkTree, "ls-files", "--others", "--exclude-standard"}
+	cmd := exec.Command("git", args...)
+	var out bytes.Buffer
+	cmd.Stdout = &out
+	cmd.Run()
+	if str := out.String(); str != "" {
+		ufr := strings.Fields(str) // untracked files raw
+		for _, f := range ufr {
+			f = lastPathSelection(f)
+			r.UntrackedFiles = append(r.UntrackedFiles, f)
 		}
+
+	} else {
+		r.UntrackedFiles = make([]string, 0)
 	}
 }
 
 func (r *Repo) getUntrackedSummary() {
-	if r.Verified {
-		r.UntrackedCount = len(r.UntrackedFiles)
-		switch {
-		case r.UntrackedCount == 0:
-			r.UntrackedSummary = "No untracked files"
-			r.UntrackedStatus = false
-		case r.UntrackedCount == 1:
-			r.UntrackedSummary = fmt.Sprintf(r.UntrackedFiles[0])
-			r.UntrackedStatus = true
-		case r.UntrackedCount >= 2:
-			var b bytes.Buffer
-			t := 0
-			// FLAG: also limit the size of file names?
-			for _, d := range r.UntrackedFiles {
-				if b.Len() <= 25 {
-					d = fmt.Sprintf("%v, ", d)
-					b.WriteString(d)
-					t++
-				} else {
-					break
-				}
+
+	// return if not verified
+	if notVerified(r) {
+		return
+	}
+	r.UntrackedCount = len(r.UntrackedFiles)
+	switch {
+	case r.UntrackedCount == 0:
+		r.UntrackedSummary = "No untracked files"
+		r.UntrackedStatus = false
+	case r.UntrackedCount == 1:
+		r.UntrackedSummary = fmt.Sprintf(r.UntrackedFiles[0])
+		r.UntrackedStatus = true
+	case r.UntrackedCount >= 2:
+		var b bytes.Buffer
+		t := 0
+		// FLAG: also limit the size of file names?
+		for _, d := range r.UntrackedFiles {
+			if b.Len() <= 25 {
+				d = fmt.Sprintf("%v, ", d)
+				b.WriteString(d)
+				t++
+			} else {
+				break
 			}
-			s := b.String()
-			s = strings.TrimSuffix(s, ", ")
-			if t != r.UntrackedCount {
-				s = fmt.Sprintf("%v...", s)
-			}
-			r.UntrackedSummary = s
-			r.UntrackedStatus = true
 		}
+		s := b.String()
+		s = strings.TrimSuffix(s, ", ")
+		if t != r.UntrackedCount {
+			s = fmt.Sprintf("%v...", s)
+		}
+		r.UntrackedSummary = s
+		r.UntrackedStatus = true
 	}
 }
 
 func (r *Repo) getUpstreamStatus() {
-	if r.Verified {
-		switch {
-		case r.LocalSHA == r.UpstreamSHA:
-			r.Upstream = "Up-To-Date"
-		case r.LocalSHA == r.MergeBaseSHA:
-			r.Upstream = "Behind"
-		case r.UpstreamSHA == r.MergeBaseSHA:
-			r.Upstream = "Ahead"
-		}
+
+	// return if not verified
+	if notVerified(r) {
+		return
+	}
+
+	switch {
+	case r.LocalSHA == r.UpstreamSHA:
+		r.Upstream = "Up-To-Date"
+	case r.LocalSHA == r.MergeBaseSHA:
+		r.Upstream = "Behind"
+	case r.UpstreamSHA == r.MergeBaseSHA:
+		r.Upstream = "Ahead"
 	}
 }
 
 func (r *Repo) getPhase() {
-	if r.Verified {
-		switch {
-		case (r.Clean == true && r.UntrackedStatus == false && r.Upstream == "Ahead"):
-			r.Phase = "Ahead"
-		case (r.Clean == true && r.UntrackedStatus == false && r.Upstream == "Behind"):
-			r.Phase = "Behind"
-		case (r.Clean == false && r.UntrackedStatus == false && r.Upstream == "Up-To-Date"):
-			r.Phase = "Dirty"
-		case (r.Clean == false && r.UntrackedStatus == true && r.Upstream == "Up-To-Date"):
-			r.Phase = "DirtyUntracked"
-		case (r.Clean == false && r.UntrackedStatus == false && r.Upstream == "Ahead"):
-			r.Phase = "DirtyAhead"
-		case (r.Clean == false && r.UntrackedStatus == false && r.Upstream == "Behind"):
-			r.Phase = "DirtyBehind"
-		case (r.Clean == false && r.UntrackedStatus == true && r.Upstream == "Up-To-Date"):
-			r.Phase = "Untracked"
-		case (r.Clean == false && r.UntrackedStatus == true && r.Upstream == "Ahead"):
-			r.Phase = "UntrackedAhead"
-		case (r.Clean == false && r.UntrackedStatus == true && r.Upstream == "Behind"):
-			r.Phase = "UntrackedBehind"
-		case (r.Clean == true && r.UntrackedStatus == false && r.Upstream == "Up-To-Date"):
-			r.Phase = "Up-To-Date"
-		default:
-			r.Phase = "wtf"
-			fmt.Printf("%v %v %v", r.Clean, r.UntrackedStatus, r.Upstream)
-		}
+
+	// return if not verified
+	if notVerified(r) {
+		return
+	}
+
+	switch {
+	case (r.IsClean == true && r.UntrackedStatus == false && r.Upstream == "Ahead"):
+		r.Phase = "Ahead"
+	case (r.IsClean == true && r.UntrackedStatus == false && r.Upstream == "Behind"):
+		r.Phase = "Behind"
+	case (r.IsClean == false && r.UntrackedStatus == false && r.Upstream == "Up-To-Date"):
+		r.Phase = "Dirty"
+	case (r.IsClean == false && r.UntrackedStatus == true && r.Upstream == "Up-To-Date"):
+		r.Phase = "DirtyUntracked"
+	case (r.IsClean == false && r.UntrackedStatus == false && r.Upstream == "Ahead"):
+		r.Phase = "DirtyAhead"
+	case (r.IsClean == false && r.UntrackedStatus == false && r.Upstream == "Behind"):
+		r.Phase = "DirtyBehind"
+	case (r.IsClean == false && r.UntrackedStatus == true && r.Upstream == "Up-To-Date"):
+		r.Phase = "Untracked"
+	case (r.IsClean == false && r.UntrackedStatus == true && r.Upstream == "Ahead"):
+		r.Phase = "UntrackedAhead"
+	case (r.IsClean == false && r.UntrackedStatus == true && r.Upstream == "Behind"):
+		r.Phase = "UntrackedBehind"
+	case (r.IsClean == true && r.UntrackedStatus == false && r.Upstream == "Up-To-Date"):
+		r.Phase = "Up-To-Date"
+	default:
+		r.Phase = "wtf"
+		fmt.Printf("%v %v %v", r.IsClean, r.UntrackedStatus, r.Upstream)
 	}
 }
 
-// still needed?
+// still needed? or just point back to existing Verified?
 
 func isUpToDate(r *Repo) bool {
-	if r.Verified == true {
-		switch {
-		case r.LocalSHA == "":
-			r.InfoVerified = false
-		case r.RemoteUpdate == "":
-			r.InfoVerified = false
-		case r.MergeBaseSHA == "":
-			r.InfoVerified = false
-		case r.UpstreamSHA == "":
-			r.InfoVerified = false
-		case r.UpstreamBranch == "":
-			r.InfoVerified = false
-		case r.Phase == "":
-			r.InfoVerified = false
-		}
-		r.InfoVerified = true
-	}
 
-	if r.Verified == true && r.Phase == "Up-To-Date" {
-		return true
-	} else {
+	// return if not verified
+	if notVerified(r) {
 		return false
 	}
+
+	switch {
+	case r.LocalSHA == "":
+		r.InfoVerified = false
+	case r.RemoteUpdateVerified == true:
+		r.InfoVerified = false
+	case r.MergeBaseSHA == "":
+		r.InfoVerified = false
+	case r.UpstreamSHA == "":
+		r.InfoVerified = false
+	case r.UpstreamBranch == "":
+		r.InfoVerified = false
+	case r.Phase == "":
+		r.InfoVerified = false
+	}
+	r.InfoVerified = true
+
+	// return if not verified
+	if notVerified(r) {
+		return false
+	} else if r.Phase == "Up-To-Date" {
+		return true
+	}
+
+	return false
 }
 
 // --> Repos: Collection of Repos
@@ -1352,6 +1410,7 @@ func removeDuplicates(ssl []string) (sl []string) {
 
 func firstLine(s string) string {
 	lines := strings.Split(strings.TrimSuffix(s, "\n"), "\n")
+
 	if len(lines) >= 1 {
 		return lines[0]
 	} else {

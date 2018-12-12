@@ -8,6 +8,7 @@ import (
 	"flag"
 	"fmt"
 	"html"
+	"io"
 	"io/ioutil"
 	"log"
 	"os"
@@ -454,11 +455,14 @@ type Repo struct {
 	DivPathVerified bool   // true if DivPath verified
 	DivPathError    string // error if DivPathVerified is false
 
-	// rs.verifyRepos
+	// rs.verifyRepos -> gitVerify -> gitClone
 	RepoPathVerified bool   // true if RepoPath verified
 	RepoPathError    string // error if RepoPathVerified is false
 	GitPathVerified  bool   // true if GitPath verified
 	GitPathError     string // error if GitPathVerified is false
+	RepoCloned       bool   // true if Repo was cloned
+
+	// rs.verifyRepos -> git
 
 	// --- maybe maybe not? we'll see... ---
 
@@ -572,53 +576,81 @@ func initRepo(zd string, zu string, zr string, bp string, rn string) *Repo {
 
 func (r *Repo) gitVerify(e Emoji, f Flags) {
 
-	// check if RepoPath exists
-	info, rerr := os.Stat(r.RepoPath)
-	_, gerr := os.Stat(r.GitPath)
-
-	switch {
-	case os.IsNotExist(rerr) && os.IsNotExist(gerr) && isActive(f):
-		fmt.Printf("cool! wide open. go ahead and clone %v\n", r.RepoName)
-		// case noPermission(info):
-		// 	fmt.Println("whoa! hold up. can't access the repo directory")
-	case !info.IsDir():
-		fmt.Println("whoa! hold up. file occupying the path")
+	// check if DivPath is accessible
+	if r.DivPathVerified == false || r.DivPathError != "" {
+		r.RepoPathVerified = false
+		r.RepoPathError = "Div inaccessible."
+		r.GitPathVerified = false
+		r.GitPathError = "Div inaccessible."
+		return
 	}
 
-	// switch {
-	// case os.IsNotExist(err) && isActive(f):
-	// 	// cool! go ahead and clone
-	// case os.IsNotExist(err) && isDry(f):
-	// 	r.RepoPathVerified = true
-	// 	r.RepoPathError = ""
-	// }
+	// check if RepoPath and GitPath are accessible
+	rinfo, rerr := os.Stat(r.RepoPath)
+	ginfo, gerr := os.Stat(r.GitPath)
 
-	// check if GitPath exists
-	// _, err = os.Stat(r.RepoPath)
+	switch {
+	case isFile(rinfo):
+		r.RepoPathVerified = false
+		r.RepoPathError = "File occupying repository path."
+		r.GitPathVerified = false
+		r.GitPathError = "File occupying repository path."
+	case isDirectory(rinfo) && notEmpty(r.RepoPath) && os.IsNotExist(gerr):
+		r.RepoPathVerified = false
+		r.RepoPathError = "Directory occupying repository path."
+		r.GitPathVerified = false
+		r.GitPathError = "Directory occupying repository path."
+	case isDirectory(rinfo) && isEmpty(r.RepoPath) && isActive(f):
+		r.RepoPathVerified = false
+		r.RepoPathError = "No repository found; pending Git Clone."
+		r.GitPathVerified = false
+		r.GitPathError = "No repository found; pending Git Clone."
+		r.gitClone(e, f)
+		r.RepoCloned = true
+	case os.IsNotExist(rerr) && os.IsNotExist(gerr) && isActive(f):
+		r.RepoPathVerified = false
+		r.RepoPathError = "No repository found; pending Git Clone."
+		r.GitPathVerified = false
+		r.GitPathError = "No repository found; pending Git Clone."
+		r.gitClone(e, f)
+		r.RepoCloned = true
+	case isDirectory(rinfo) && isEmpty(r.RepoPath) && isDry(f):
+		r.RepoPathVerified = false
+		r.RepoPathError = "No repository found."
+	case os.IsNotExist(rerr) && os.IsNotExist(gerr) && isActive(f):
+		r.RepoPathVerified = false
+		r.RepoPathError = "No repository found."
+	case isDirectory(rinfo) && isDirectory(ginfo):
+		r.RepoPathVerified = true
+		r.RepoPathError = ""
+		r.GitPathVerified = true
+		r.GitPathError = ""
+	}
 
-	// switch {
+	// check if RepoPath and GitPath are accessible for cloned repos
 
-	// case err == nil:
-	// 	r.GitPathVerified = true
-	// 	r.GitPathError = ""
-	// }
+	if r.RepoCloned == true {
+		rinfo, rerr = os.Stat(r.RepoPath)
+		ginfo, gerr = os.Stat(r.GitPath)
 
-	// if os.IsNotExist(err) {
-	// 	// cool! can clone if active
-	// } else {
-	// already a directory at that path
-	// r.RepoPathVerified = true
-	// r.RepoPathError = ""
-	// }
+		if isDirectory(rinfo) && isDirectory(ginfo) {
+			r.RepoPathVerified = true
+			r.RepoPathError = ""
+			r.GitPathVerified = true
+			r.GitPathError = ""
+		}
+	}
+}
 
-	// targetPrint(f, "%v cloning %v {%v}", e.Box, r.RepoName, r.DivName)
+func (r *Repo) gitClone(e Emoji, f Flags) {
+	// print
+	targetPrint(f, "%v cloning %v {%v}", e.Box, r.RepoName, r.ZoneDivision)
 
 	args := []string{"clone", r.RepoURL, r.RepoPath}
 	cmd := exec.Command("git", args...)
 	var out bytes.Buffer
 	cmd.Stdout = &out
 	cmd.Run()
-
 }
 
 // repo fns here
@@ -961,9 +993,9 @@ func (rs Repos) verifyDivs(e Emoji, f Flags, t *Timer) {
 	targetPrint(f, "%v  verifying divs [%v]", e.FileCabinet, len(dvs))
 
 	// track created, verified and missing divs
-	var cd []string  // created divs
-	var vfd []string // verified divs
-	var md []string  // missing divs
+	var cd []string // created divs
+	var vd []string // verified divs
+	var id []string // inaccessible divs
 
 	for _, r := range rs {
 
@@ -983,23 +1015,23 @@ func (rs Repos) verifyDivs(e Emoji, f Flags, t *Timer) {
 		case noPermission(info):
 			r.DivPathVerified = false
 			r.DivPathError = "No permission"
-			md = append(md, r.DivPath)
+			id = append(id, r.DivPath)
 		case !info.IsDir():
 			r.DivPathVerified = false
 			r.DivPathError = "File occupying path"
-			md = append(md, r.DivPath)
+			id = append(id, r.DivPath)
 		case os.IsNotExist(err):
 			r.DivPathVerified = false
 			r.DivPathError = "No directory"
-			md = append(md, r.DivPath)
+			id = append(id, r.DivPath)
 		case err != nil:
 			r.DivPathVerified = false
 			r.DivPathError = "No directory"
-			md = append(md, r.DivPath)
+			id = append(id, r.DivPath)
 		default:
 			r.DivPathVerified = true
 			r.DivPathError = ""
-			vfd = append(vfd, r.DivPath)
+			vd = append(vd, r.DivPath)
 		}
 	}
 
@@ -1007,20 +1039,20 @@ func (rs Repos) verifyDivs(e Emoji, f Flags, t *Timer) {
 	t.markMoment("verify-divs")
 
 	// remove duplicates from slices
-	vfd = removeDuplicates(vfd)
-	md = removeDuplicates(md)
+	vd = removeDuplicates(vd)
+	id = removeDuplicates(id)
 
 	// summary
 	var b bytes.Buffer
 
-	if len(dvs) == len(vfd) {
+	if len(dvs) == len(vd) {
 		b.WriteString(e.ThumbsUp)
 	} else {
 		b.WriteString(e.Slash)
 	}
 
 	b.WriteString(" [")
-	b.WriteString(strconv.Itoa(len(vfd)))
+	b.WriteString(strconv.Itoa(len(vd)))
 	b.WriteString("/")
 	b.WriteString(strconv.Itoa(len(dvs)))
 	b.WriteString("] divs verified")
@@ -1092,13 +1124,78 @@ func clearScreen(f Flags) {
 }
 
 func noPermission(info os.FileInfo) bool {
+
+	if info == nil {
+		return false
+	}
+
+	if len(info.Mode().String()) <= 4 {
+		return true
+	}
+
 	s := info.Mode().String()[1:4]
+
 	if s != "rwx" {
 		return true
 	} else {
 		return false
 	}
+}
 
+func isDirectory(info os.FileInfo) bool {
+	if info == nil {
+		return false
+	}
+
+	if info.IsDir() {
+		return true
+	} else {
+		return false
+	}
+}
+
+func isEmpty(p string) bool {
+	f, err := os.Open(p)
+
+	if err != nil {
+		return false
+	}
+
+	_, err = f.Readdir(1)
+
+	if err == io.EOF {
+		return true
+	}
+
+	return false
+}
+
+func notEmpty(p string) bool {
+	f, err := os.Open(p)
+
+	if err != nil {
+		return false
+	}
+
+	_, err = f.Readdir(1)
+
+	if err == io.EOF {
+		return false
+	}
+
+	return true
+}
+
+func isFile(info os.FileInfo) bool {
+	if info == nil {
+		return false
+	}
+
+	if info.IsDir() {
+		return false
+	} else {
+		return true
+	}
 }
 
 func validatePath(p string) string {

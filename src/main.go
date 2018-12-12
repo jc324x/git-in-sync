@@ -456,6 +456,7 @@ type Repo struct {
 	DivPathError    string // error if DivPathVerified is false
 
 	// rs.verifyRepos -> gitVerify -> gitClone
+	RepoVerified     bool   // true if Repo continues to pass verification
 	RepoPathVerified bool   // true if RepoPath verified
 	RepoPathError    string // error if RepoPathVerified is false
 	GitPathVerified  bool   // true if GitPath verified
@@ -582,6 +583,7 @@ func (r *Repo) gitVerify(e Emoji, f Flags) {
 		r.RepoPathError = "Div inaccessible."
 		r.GitPathVerified = false
 		r.GitPathError = "Div inaccessible."
+		r.RepoVerified = false
 		return
 	}
 
@@ -595,16 +597,19 @@ func (r *Repo) gitVerify(e Emoji, f Flags) {
 		r.RepoPathError = "File occupying repository path."
 		r.GitPathVerified = false
 		r.GitPathError = "File occupying repository path."
+		r.RepoVerified = false
 	case isDirectory(rinfo) && notEmpty(r.RepoPath) && os.IsNotExist(gerr):
 		r.RepoPathVerified = false
 		r.RepoPathError = "Directory occupying repository path."
 		r.GitPathVerified = false
 		r.GitPathError = "Directory occupying repository path."
+		r.RepoVerified = false
 	case isDirectory(rinfo) && isEmpty(r.RepoPath) && isActive(f):
 		r.RepoPathVerified = false
 		r.RepoPathError = "No repository found; pending Git Clone."
 		r.GitPathVerified = false
 		r.GitPathError = "No repository found; pending Git Clone."
+		r.RepoVerified = false
 		r.gitClone(e, f)
 		r.RepoCloned = true
 	case os.IsNotExist(rerr) && os.IsNotExist(gerr) && isActive(f):
@@ -612,19 +617,23 @@ func (r *Repo) gitVerify(e Emoji, f Flags) {
 		r.RepoPathError = "No repository found; pending Git Clone."
 		r.GitPathVerified = false
 		r.GitPathError = "No repository found; pending Git Clone."
+		r.RepoVerified = false
 		r.gitClone(e, f)
 		r.RepoCloned = true
 	case isDirectory(rinfo) && isEmpty(r.RepoPath) && isDry(f):
 		r.RepoPathVerified = false
 		r.RepoPathError = "No repository found."
+		r.RepoVerified = false
 	case os.IsNotExist(rerr) && os.IsNotExist(gerr) && isActive(f):
 		r.RepoPathVerified = false
 		r.RepoPathError = "No repository found."
+		r.RepoVerified = false
 	case isDirectory(rinfo) && isDirectory(ginfo):
 		r.RepoPathVerified = true
 		r.RepoPathError = ""
 		r.GitPathVerified = true
 		r.GitPathError = ""
+		r.RepoVerified = true
 	}
 
 	// check if RepoPath and GitPath are accessible for cloned repos
@@ -638,6 +647,7 @@ func (r *Repo) gitVerify(e Emoji, f Flags) {
 			r.RepoPathError = ""
 			r.GitPathVerified = true
 			r.GitPathError = ""
+			r.RepoVerified = true
 		}
 	}
 }
@@ -651,6 +661,26 @@ func (r *Repo) gitClone(e Emoji, f Flags) {
 	var out bytes.Buffer
 	cmd.Stdout = &out
 	cmd.Run()
+}
+
+// need to handle empty clone and content clone
+func (r *Repo) gitConfigOriginURL() {
+	if r.Verified {
+		args := []string{r.GitDir, "config", "--get", "remote.origin.url"}
+		cmd := exec.Command("git", args...)
+		var out bytes.Buffer
+		cmd.Stdout = &out
+		cmd.Run()
+		s := out.String()
+		s = strings.TrimSuffix(s, "\n")
+		r.VerifiedURL = s
+
+		if r.VerifiedURL == r.URL {
+			r.Verified = true
+		} else {
+			r.Verified = false
+		}
+	}
 }
 
 // repo fns here

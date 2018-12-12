@@ -476,19 +476,24 @@ type Repo struct {
 	// rs.verifyRepos -> gitStatusPorcelain
 	IsClean bool // true if `git status --porcelain` returns ""
 
-	// rs.verifyRepos -> gitAbbrevRef (deprecated?)
+	// rs.verifyRepos -> gitAbbrevRef (?)
 	RepoLocalBranch string // `git rev-parse --abbrev-ref HEAD`, "master"
+
+	// rs.verifyRepos -> gitLocalSHA
+	RepoLocalSHA string // `git rev-parse @`, "l00000ngSHA1slong324"
+
+	// rs.verifyRepos -> gitUpstreamSHA
+	RepoUpstreamSHA string // `git rev-parse @{u}`, "l00000ngSHA1slong324"
+
+	// rs.verifyRepos -> gitMergeBaseSHA
+	RepoMergeSHA string // `git merge-base @ @{u}`, "l00000ngSHA1slong324"
+
+	// rs.verifyRepos -> gitDiffsNameOnly
+	RepoDiffsNameOnly []string // `git diff --name-only @{u}`, []string
+	RepoDiffsSummary  string   //
 
 	// --- maybe maybe not? we'll see... ---
 
-	// verify
-	VerifiedURL      string   // gitConfigOriginURL
-	RemoteUpdate     string   // gitRemoteUpdate
-	LocalSHA         string   // gitLocalSHA
-	MergeBaseSHA     string   // gitMergeBaseSHA
-	UpstreamSHA      string   // gitUpstreamSHA
-	UpstreamBranch   string   // gitRevParseUpstream
-	DiffFiles        []string // gitDiffFiles
 	DiffCount        int      // getDiffSummary
 	DiffSummary      string   // getDiffSummary
 	DiffStatus       bool     // getDiffSummary
@@ -802,11 +807,13 @@ func (r *Repo) gitAbbrevRef() {
 		return
 	}
 
+	// command
 	args := []string{r.GitDir, r.WorkTree, "rev-parse", "--abbrev-ref", "HEAD"}
 	cmd := exec.Command("git", args...)
 	var out bytes.Buffer
 	cmd.Stdout = &out
 	cmd.Run()
+
 	if str := out.String(); str != "" {
 		r.RepoLocalBranch = trim(out.String())
 	}
@@ -819,13 +826,15 @@ func (r *Repo) gitLocalSHA() {
 		return
 	}
 
+	// command
 	args := []string{r.GitDir, r.WorkTree, "rev-parse", "@"}
 	cmd := exec.Command("git", args...)
 	var out bytes.Buffer
 	cmd.Stdout = &out
 	cmd.Run()
+
 	if str := out.String(); str != "" {
-		r.LocalSHA = trim(out.String())
+		r.RepoLocalSHA = trim(out.String())
 	}
 }
 
@@ -836,13 +845,15 @@ func (r *Repo) gitUpstreamSHA() {
 		return
 	}
 
+	// command
 	args := []string{r.GitDir, r.WorkTree, "rev-parse", "@{u}"}
 	cmd := exec.Command("git", args...)
 	var out bytes.Buffer
 	cmd.Stdout = &out
 	cmd.Run()
+
 	if str := out.String(); str != "" {
-		r.UpstreamSHA = trim(out.String())
+		r.RepoUpstreamSHA = trim(out.String())
 	}
 }
 
@@ -853,13 +864,15 @@ func (r *Repo) gitMergeBaseSHA() {
 		return
 	}
 
+	// command
 	args := []string{r.GitDir, r.WorkTree, "merge-base", "@", "@{u}"}
 	cmd := exec.Command("git", args...)
 	var out bytes.Buffer
 	cmd.Stdout = &out
 	cmd.Run()
+
 	if str := out.String(); str != "" {
-		r.MergeBaseSHA = trim(out.String())
+		r.RepoMergeSHA = trim(out.String())
 	}
 }
 
@@ -870,15 +883,19 @@ func (r *Repo) gitDiffsNameOnly() {
 		return
 	}
 
+	// command
 	args := []string{r.GitDir, r.WorkTree, "diff", "--name-only", "@{u}"}
 	cmd := exec.Command("git", args...)
 	var out bytes.Buffer
 	cmd.Stdout = &out
 	cmd.Run()
+
 	if str := out.String(); str != "" {
-		r.DiffFiles = strings.Fields(str)
+		r.RepoDiffsNameOnly = strings.Fields(str)
+		r.RepoDiffsSummary = sliceSummary(r.RepoDiffsNameOnly, 12)
 	} else {
-		r.DiffFiles = make([]string, 0)
+		r.RepoDiffsNameOnly = make([]string, 0)
+		r.RepoDiffsSummary = ""
 	}
 }
 
@@ -1032,11 +1049,11 @@ func (r *Repo) getUpstreamStatus() {
 	}
 
 	switch {
-	case r.LocalSHA == r.UpstreamSHA:
+	case r.RepoLocalSHA == r.RepoUpstreamSHA:
 		r.Upstream = "Up-To-Date"
-	case r.LocalSHA == r.MergeBaseSHA:
+	case r.RepoLocalSHA == r.RepoMergeSHA:
 		r.Upstream = "Behind"
-	case r.UpstreamSHA == r.MergeBaseSHA:
+	case r.RepoUpstreamSHA == r.RepoMergeSHA:
 		r.Upstream = "Ahead"
 	}
 }
@@ -1085,15 +1102,15 @@ func isUpToDate(r *Repo) bool {
 	}
 
 	switch {
-	case r.LocalSHA == "":
+	case r.RepoLocalSHA == "":
 		r.InfoVerified = false
 	case r.RemoteUpdateVerified == true:
 		r.InfoVerified = false
-	case r.MergeBaseSHA == "":
+	case r.RepoMergeSHA == "":
 		r.InfoVerified = false
-	case r.UpstreamSHA == "":
+	case r.RepoUpstreamSHA == "":
 		r.InfoVerified = false
-	case r.UpstreamBranch == "":
+	case r.RepoUpstreamSHA == "":
 		r.InfoVerified = false
 	case r.Phase == "":
 		r.InfoVerified = false
@@ -1236,6 +1253,12 @@ func (rs Repos) verifyRepos(e Emoji, f Flags, t *Timer) {
 			r.gitVerify(e, f)
 			r.gitConfigOriginURL(e, f)
 			r.gitRemoteUpdate(e, f)
+			r.gitStatusPorcelain()
+			r.gitAbbrevRef()
+			r.gitLocalSHA()
+			r.gitUpstreamSHA()
+			r.gitMergeBaseSHA()
+			r.gitDiffsNameOnly()
 		}(rs[i])
 	}
 	wg.Wait()
@@ -1416,6 +1439,33 @@ func firstLine(s string) string {
 	} else {
 		return ""
 	}
+}
+
+func sliceSummary(sl []string, l int) string {
+	if len(sl) == 0 {
+		return ""
+	}
+
+	var csl []string // check slice
+	var b bytes.Buffer
+
+	for _, s := range sl {
+		lc := len(strings.Join(csl, ", ")) // (l)ength(c)heck
+		switch {
+		case lc <= l-10 && len(s) <= 20: //
+			csl = append(csl, s)
+		case lc <= l && len(s) <= 12:
+			csl = append(csl, s)
+		}
+	}
+
+	b.WriteString(strings.Join(csl, ", "))
+
+	if len(sl) != len(csl) {
+		b.WriteString("...")
+	}
+
+	return b.String()
 }
 
 // --> Main functions

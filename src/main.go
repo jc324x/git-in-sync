@@ -463,7 +463,10 @@ type Repo struct {
 	GitPathError     string // error if GitPathVerified is false
 	RepoCloned       bool   // true if Repo was cloned
 
-	// rs.verifyRepos -> git
+	// rs.verifyRepos -> gitConfigOriginURL
+	OriginURL         string // output of
+	OriginURLVerified bool   // true if RepoURL is verified
+	OriginURLError    string // error if URLVerified is false
 
 	// --- maybe maybe not? we'll see... ---
 
@@ -573,6 +576,14 @@ func initRepo(zd string, zu string, zr string, bp string, rn string) *Repo {
 	return r
 }
 
+func notVerified(r *Repo) bool {
+	if r.RepoVerified == false {
+		return true
+	} else {
+		return false
+	}
+}
+
 // swoop
 
 func (r *Repo) gitVerify(e Emoji, f Flags) {
@@ -584,6 +595,7 @@ func (r *Repo) gitVerify(e Emoji, f Flags) {
 		r.GitPathVerified = false
 		r.GitPathError = "Div inaccessible."
 		r.RepoVerified = false
+		targetPrint(f, "%v div is inaccessible", e.Slash)
 		return
 	}
 
@@ -594,40 +606,44 @@ func (r *Repo) gitVerify(e Emoji, f Flags) {
 	switch {
 	case isFile(rinfo):
 		r.RepoPathVerified = false
-		r.RepoPathError = "File occupying repository path."
+		r.RepoPathError = "file occupying path"
 		r.GitPathVerified = false
-		r.GitPathError = "File occupying repository path."
+		r.GitPathError = "file occupying path"
 		r.RepoVerified = false
+		targetPrint(f, "%v %v (%v)", e.Slash, r.RepoName, r.RepoPathError)
 	case isDirectory(rinfo) && notEmpty(r.RepoPath) && os.IsNotExist(gerr):
 		r.RepoPathVerified = false
-		r.RepoPathError = "Directory occupying repository path."
+		r.RepoPathError = "directory occupying path"
 		r.GitPathVerified = false
-		r.GitPathError = "Directory occupying repository path."
+		r.GitPathError = "directory occupying path"
 		r.RepoVerified = false
+		targetPrint(f, "%v %v (%v)", e.Slash, r.RepoName, r.RepoPathError)
 	case isDirectory(rinfo) && isEmpty(r.RepoPath) && isActive(f):
 		r.RepoPathVerified = false
-		r.RepoPathError = "No repository found; pending Git Clone."
+		r.RepoPathError = "pending git clone"
 		r.GitPathVerified = false
-		r.GitPathError = "No repository found; pending Git Clone."
+		r.GitPathError = "pending git clone"
 		r.RepoVerified = false
 		r.gitClone(e, f)
 		r.RepoCloned = true
 	case os.IsNotExist(rerr) && os.IsNotExist(gerr) && isActive(f):
 		r.RepoPathVerified = false
-		r.RepoPathError = "No repository found; pending Git Clone."
+		r.RepoPathError = "pending git clone"
 		r.GitPathVerified = false
-		r.GitPathError = "No repository found; pending Git Clone."
+		r.GitPathError = "pending git clone"
 		r.RepoVerified = false
 		r.gitClone(e, f)
 		r.RepoCloned = true
 	case isDirectory(rinfo) && isEmpty(r.RepoPath) && isDry(f):
 		r.RepoPathVerified = false
-		r.RepoPathError = "No repository found."
+		r.RepoPathError = "pending git clone (dry run)"
 		r.RepoVerified = false
+		targetPrint(f, "%v %v (%v)", r.RepoName, e.Slash, r.RepoPathError)
 	case os.IsNotExist(rerr) && os.IsNotExist(gerr) && isActive(f):
 		r.RepoPathVerified = false
-		r.RepoPathError = "No repository found."
+		r.RepoPathError = "pending git clone (dry run)"
 		r.RepoVerified = false
+		targetPrint(f, "%v %v (%v)", r.RepoName, e.Slash, r.RepoPathError)
 	case isDirectory(rinfo) && isDirectory(ginfo):
 		r.RepoPathVerified = true
 		r.RepoPathError = ""
@@ -663,23 +679,32 @@ func (r *Repo) gitClone(e Emoji, f Flags) {
 	cmd.Run()
 }
 
-// need to handle empty clone and content clone
 func (r *Repo) gitConfigOriginURL() {
-	if r.Verified {
-		args := []string{r.GitDir, "config", "--get", "remote.origin.url"}
-		cmd := exec.Command("git", args...)
-		var out bytes.Buffer
-		cmd.Stdout = &out
-		cmd.Run()
-		s := out.String()
-		s = strings.TrimSuffix(s, "\n")
-		r.VerifiedURL = s
+	// return if not verified
+	if notVerified(r) {
+		return
+	}
 
-		if r.VerifiedURL == r.URL {
-			r.Verified = true
-		} else {
-			r.Verified = false
-		}
+	// command
+	args := []string{r.GitDir, "config", "--get", "remote.origin.url"}
+	cmd := exec.Command("git", args...)
+	var out bytes.Buffer
+	cmd.Stdout = &out
+	cmd.Run()
+
+	// trim "\n" from command output
+	s := out.String()
+	s = strings.TrimSuffix(s, "\n")
+
+	// set OriginURL
+	r.OriginURL = s
+
+	// compare OriginURL and RepoURL
+	if r.OriginURL == r.RepoURL {
+		r.OriginURLVerified = true
+	} else {
+		r.OriginURLError = "OriginURL doesn't match RepoURL"
+		r.RepoVerified = false
 	}
 }
 
@@ -1114,6 +1139,7 @@ func (rs Repos) verifyRepos(e Emoji, f Flags, t *Timer) {
 		go func(r *Repo) {
 			defer wg.Done()
 			r.gitVerify(e, f)
+			r.gitConfigOriginURL()
 		}(rs[i])
 	}
 	wg.Wait()

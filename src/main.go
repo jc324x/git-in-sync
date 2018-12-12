@@ -490,16 +490,13 @@ type Repo struct {
 
 	// rs.verifyRepos -> gitDiffsNameOnly
 	RepoDiffsNameOnly []string // `git diff --name-only @{u}`, []string
-	RepoDiffsSummary  string   //
+	RepoDiffsSummary  string   // ...
 
-	// --- maybe maybe not? we'll see... ---
+	// rs.verifyRepos -> gitShortstat
+	RepoShortStat  string // ...
+	RepoShortPlus  int    // ...
+	RepoShortMinus int    // ...
 
-	DiffCount        int      // getDiffSummary
-	DiffSummary      string   // getDiffSummary
-	DiffStatus       bool     // getDiffSummary
-	ShortStat        string   // gitShortstat
-	ShortStatPlus    int      // getShortInts
-	ShortStatMinus   int      // getShortInts
 	Upstream         string   // getUpstreamStatus
 	UntrackedFiles   []string // gitUntracked
 	UntrackedCount   int      // getUntrackedSummary
@@ -899,84 +896,38 @@ func (r *Repo) gitDiffsNameOnly() {
 	}
 }
 
-// func (r *Repo) getDiffSummary() {
-// 	if r.Verified && len(r.DiffFiles) > 0 {
-// 		r.DiffCount = len(r.DiffFiles)
-// 		// var b bytes.Buffer
-
-// 		// for _, d := range r.DiffFiles {
-// 		// 	ld := len(strings.Join(r.DiffFiles, ", ")) // length of diff string
-
-// 		// }
-
-// 		switch {
-// 		case r.DiffCount == 0:
-// 			r.DiffSummary = "" // r.DiffSummary = "No diffs"
-// 			r.DiffStatus = false
-// 		case r.DiffCount == 1:
-// 			r.DiffSummary = fmt.Sprintf(r.DiffFiles[0])
-// 			r.DiffStatus = true
-// 		case r.DiffCount >= 2:
-// 			var b bytes.Buffer
-// 			t := 0
-// 			for _, d := range r.DiffFiles {
-// 				if b.Len() <= 25 {
-// 					d = fmt.Sprintf("%v, ", d)
-// 					b.WriteString(d)
-// 					t++
-// 				} else {
-// 					break
-// 				}
-// 			}
-// 			s := b.String()
-// 			s = strings.TrimSuffix(s, ", ")
-// 			if t != len(r.DiffFiles) {
-// 				s = fmt.Sprintf("%v...", s)
-// 			}
-// 			r.DiffSummary = s
-// 			r.DiffStatus = true
-// 		}
-// 	}
-// }
-
-// func (r *Repo) gitShortstat() {
-// 	if r.Verified {
-// 		args := []string{r.GitDir, r.WorkTree, "diff", "--shortstat"}
-// 		cmd := exec.Command("git", args...)
-// 		var out bytes.Buffer
-// 		cmd.Stdout = &out
-// 		cmd.Run()
-// 		if str := out.String(); str != "" {
-// 			r.ShortStat = trim(str)
-// 		}
-// 	}
-// }
-
-func (r *Repo) getShortInts() {
-
+func (r *Repo) gitShortstat() {
 	// return if not verified
 	if notVerified(r) {
 		return
 	}
 
-	if r.ShortStat != "" {
+	// command
+	args := []string{r.GitDir, r.WorkTree, "diff", "--shortstat"}
+	cmd := exec.Command("git", args...)
+	var out bytes.Buffer
+	cmd.Stdout = &out
+	cmd.Run()
+
+	// out
+	if str := out.String(); str != "" {
+		r.RepoShortStat = trim(str)
+
 		rxi := regexp.MustCompile(`changed, (.*)? insertions`)
-		rxs := rxi.FindStringSubmatch(r.ShortStat)
+		rxs := rxi.FindStringSubmatch(r.RepoShortStat)
 		if len(rxs) == 2 {
 			s := rxs[1]
 			if i, err := strconv.Atoi(s); err == nil {
-				r.ShortStatPlus = i // FLAG: r.PlusCount
-			} else {
-				fmt.Println(err)
+				r.RepoShortPlus = i
 			}
 		}
 
 		rxd := regexp.MustCompile(`\(\+\), (.*)? deletions`)
-		rxs = rxd.FindStringSubmatch(r.ShortStat)
+		rxs = rxd.FindStringSubmatch(r.RepoShortStat)
 		if len(rxs) == 2 {
 			s := rxs[1]
 			if i, err := strconv.Atoi(s); err == nil {
-				r.ShortStatMinus = i // FLAG: r.MinusCount
+				r.RepoShortMinus = i
 			}
 		}
 	}

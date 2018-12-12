@@ -18,7 +18,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	// "sync"
+	"sync"
 	"time"
 )
 
@@ -902,7 +902,7 @@ func (rs Repos) verifyDivs(e Emoji, f Flags, t *Timer) {
 	// sort
 	rs.sortByPath()
 
-	// total divs
+	// get all divs, then remove duplicates
 	var dvs []string // divs
 
 	for _, r := range rs {
@@ -914,7 +914,7 @@ func (rs Repos) verifyDivs(e Emoji, f Flags, t *Timer) {
 	// print
 	targetPrint(f, "%v  verifying divs [%v]", e.FileCabinet, len(dvs))
 
-	// created, verified and missing divs
+	// track created, verified and missing divs
 	var cd []string  // created divs
 	var vfd []string // verified divs
 	var md []string  // missing divs
@@ -923,12 +923,14 @@ func (rs Repos) verifyDivs(e Emoji, f Flags, t *Timer) {
 
 		_, err := os.Stat(r.DivPath)
 
+		// create div if missing and active run
 		if os.IsNotExist(err) && isActive(f) {
 			targetPrint(f, "%v creating %v", e.Folder, r.DivPath)
 			os.MkdirAll(r.DivPath, 0777)
 			cd = append(cd, r.DivPath)
 		}
 
+		// check div status
 		info, err := os.Stat(r.DivPath)
 
 		switch {
@@ -996,6 +998,17 @@ func (rs Repos) verifyRepos(e Emoji, f Flags, t *Timer) {
 
 	// print
 	targetPrint(f, "%v verifying repos [%v]", e.Truck, len(rs))
+
+	// asynchronously verify each repo
+	var wg sync.WaitGroup
+	for i := range rs {
+		wg.Add(1)
+		go func(r *Repo) {
+			defer wg.Done()
+			fmt.Println(r.RepoName)
+		}(rs[i])
+	}
+	wg.Wait()
 }
 
 func initRepos(c Config, e Emoji, f Flags, t *Timer) (rs Repos) {

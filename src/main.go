@@ -455,6 +455,10 @@ type Repo struct {
 	DivPathError    string // error if DivPathVerified is false
 
 	// rs.verifyRepos
+	RepoPathVerified bool   // true if RepoPath verified
+	RepoPathError    string // error if RepoPathVerified is false
+	GitPathVerified  bool   // true if GitPath verified
+	GitPathError     string // error if GitPathVerified is false
 
 	// --- maybe maybe not? we'll see... ---
 
@@ -564,18 +568,60 @@ func initRepo(zd string, zu string, zr string, bp string, rn string) *Repo {
 	return r
 }
 
-// repo fns here
+// swoop
 
-func isMissing(r *Repo) bool {
-	_, err := os.Stat(r.GitPath)
+func (r *Repo) gitVerify(e Emoji, f Flags) {
 
-	if os.IsNotExist(err) {
-		return true
-	} else {
-		r.Verified = true
-		return false
+	// check if RepoPath exists
+	info, rerr := os.Stat(r.RepoPath)
+	_, gerr := os.Stat(r.GitPath)
+
+	switch {
+	case os.IsNotExist(rerr) && os.IsNotExist(gerr) && isActive(f):
+		fmt.Printf("cool! wide open. go ahead and clone %v\n", r.RepoName)
+		// case noPermission(info):
+		// 	fmt.Println("whoa! hold up. can't access the repo directory")
+	case !info.IsDir():
+		fmt.Println("whoa! hold up. file occupying the path")
 	}
+
+	// switch {
+	// case os.IsNotExist(err) && isActive(f):
+	// 	// cool! go ahead and clone
+	// case os.IsNotExist(err) && isDry(f):
+	// 	r.RepoPathVerified = true
+	// 	r.RepoPathError = ""
+	// }
+
+	// check if GitPath exists
+	// _, err = os.Stat(r.RepoPath)
+
+	// switch {
+
+	// case err == nil:
+	// 	r.GitPathVerified = true
+	// 	r.GitPathError = ""
+	// }
+
+	// if os.IsNotExist(err) {
+	// 	// cool! can clone if active
+	// } else {
+	// already a directory at that path
+	// r.RepoPathVerified = true
+	// r.RepoPathError = ""
+	// }
+
+	// targetPrint(f, "%v cloning %v {%v}", e.Box, r.RepoName, r.DivName)
+
+	args := []string{"clone", r.RepoURL, r.RepoPath}
+	cmd := exec.Command("git", args...)
+	var out bytes.Buffer
+	cmd.Stdout = &out
+	cmd.Run()
+
 }
+
+// repo fns here
 
 func isUpToDate(r *Repo) bool {
 	if r.Verified == true {
@@ -940,7 +986,7 @@ func (rs Repos) verifyDivs(e Emoji, f Flags, t *Timer) {
 			md = append(md, r.DivPath)
 		case !info.IsDir():
 			r.DivPathVerified = false
-			r.DivPathError = "File blocking path"
+			r.DivPathError = "File occupying path"
 			md = append(md, r.DivPath)
 		case os.IsNotExist(err):
 			r.DivPathVerified = false
@@ -1005,7 +1051,7 @@ func (rs Repos) verifyRepos(e Emoji, f Flags, t *Timer) {
 		wg.Add(1)
 		go func(r *Repo) {
 			defer wg.Done()
-			fmt.Println(r.RepoName)
+			r.gitVerify(e, f)
 		}(rs[i])
 	}
 	wg.Wait()
@@ -1052,6 +1098,7 @@ func noPermission(info os.FileInfo) bool {
 	} else {
 		return false
 	}
+
 }
 
 func validatePath(p string) string {

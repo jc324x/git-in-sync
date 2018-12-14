@@ -986,9 +986,11 @@ func (r *Repo) setStatus(e Emoji, f Flags) {
 		r.Status = "UntrackedBehind"
 	case (r.Clean == true && r.Untracked == false && r.Status == "Up-To-Date"):
 		r.Status = "Up-To-Date"
+		targetPrint(f, "%v %v is up to date!", e.Checkmark, r.Name)
 	default:
 		r.markError(e, f, "wtf", "setStatus")
 	}
+
 }
 
 // --> Repos: Collection of Repos
@@ -1347,6 +1349,8 @@ func (rs Repos) verifyRepos(e Emoji, f Flags, t *Timer) {
 		}(rs[i])
 	}
 	wg.Wait()
+
+	fmt.Println("summary of verify repos here")
 }
 
 func (rs Repos) verifyChanges(e Emoji, f Flags, t *Timer) {

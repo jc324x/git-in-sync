@@ -484,9 +484,9 @@ type Repo struct {
 	RepoDiffsSummary  string   // ...
 
 	// rs.verifyRepos -> gitShortstat
-	RepoShortStat  string // `git diff shortstat`, "x files changed, y insertions(+), z deletions(-)"
-	RepoShortPlus  int    // y
-	RepoShortMinus int    // z
+	ShortStat  string // `git diff shortstat`, "x files changed, y insertions(+), z deletions(-)"
+	Insertions int    // y
+	Deletions  int    // z
 
 	// rs.verifyRepos -> gitUntracked
 	RepoUntrackedFiles   []string // ...
@@ -860,6 +860,7 @@ func (r *Repo) gitDiffsNameOnly(e Emoji, f Flags) {
 	cmd.Stderr = &err
 	cmd.Run()
 
+	// check error, set value(s)
 	if err := err.String(); err != "" {
 		r.markError(e, f, err, "gitUpstreamSHA")
 	}
@@ -873,7 +874,8 @@ func (r *Repo) gitDiffsNameOnly(e Emoji, f Flags) {
 	}
 }
 
-func (r *Repo) gitShortstat() {
+func (r *Repo) gitShortstat(e Emoji, f Flags) {
+
 	// return if not verified
 	if notVerified(r) {
 		return
@@ -883,44 +885,58 @@ func (r *Repo) gitShortstat() {
 	args := []string{r.GitDir, r.WorkTree, "diff", "--shortstat"}
 	cmd := exec.Command("git", args...)
 	var out bytes.Buffer
+	var err bytes.Buffer
 	cmd.Stdout = &out
+	cmd.Stderr = &err
 	cmd.Run()
 
-	// out
-	if str := out.String(); str != "" {
-		r.RepoShortStat = trim(str)
+	// check error, set value(s)
+	if err := err.String(); err != "" {
+		r.markError(e, f, err, "gitShortstat")
+	} else {
+		r.ShortStat = markOut(out)
+	}
 
-		rxi := regexp.MustCompile(`changed, (.*)? insertions`)
-		rxs := rxi.FindStringSubmatch(r.RepoShortStat)
-		if len(rxs) == 2 {
-			s := rxs[1]
-			if i, err := strconv.Atoi(s); err == nil {
-				r.RepoShortPlus = i
-			}
+	rxi := regexp.MustCompile(`changed, (.*)? insertions`)
+	rxs := rxi.FindStringSubmatch(r.ShortStat)
+	if len(rxs) == 2 {
+		s := rxs[1]
+		if i, err := strconv.Atoi(s); err == nil {
+			r.Insertions = i
 		}
+	}
 
-		rxd := regexp.MustCompile(`\(\+\), (.*)? deletions`)
-		rxs = rxd.FindStringSubmatch(r.RepoShortStat)
-		if len(rxs) == 2 {
-			s := rxs[1]
-			if i, err := strconv.Atoi(s); err == nil {
-				r.RepoShortMinus = i
-			}
+	rxd := regexp.MustCompile(`\(\+\), (.*)? deletions`)
+	rxs = rxd.FindStringSubmatch(r.ShortStat)
+	if len(rxs) == 2 {
+		s := rxs[1]
+		if i, err := strconv.Atoi(s); err == nil {
+			r.Deletions = i
 		}
 	}
 }
 
-func (r *Repo) gitUntracked() {
+func (r *Repo) gitUntracked(e Emoji, f Flags) {
+
 	// return if not verified
 	if notVerified(r) {
 		return
 	}
 
+	// command
 	args := []string{r.GitDir, r.WorkTree, "ls-files", "--others", "--exclude-standard"}
 	cmd := exec.Command("git", args...)
 	var out bytes.Buffer
+	var err bytes.Buffer
 	cmd.Stdout = &out
+	cmd.Stderr = &err
 	cmd.Run()
+
+	// check error, set value(s)
+	if err := err.String(); err != "" {
+		r.markError(e, f, err, "gitUntracked")
+	}
+
 	if str := out.String(); str != "" {
 		ufr := strings.Fields(str) // untracked files raw
 		for _, f := range ufr {
@@ -939,6 +955,7 @@ func (r *Repo) getUntrackedSummary() {
 	if notVerified(r) {
 		return
 	}
+
 	r.UntrackedCount = len(r.UntrackedFiles)
 	switch {
 	case r.UntrackedCount == 0:

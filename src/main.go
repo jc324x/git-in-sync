@@ -480,28 +480,23 @@ type Repo struct {
 	MergeSHA string // `git merge-base @ @{u}`, "l00000ngSHA1slong324"
 
 	// rs.verifyRepos -> gitDiffsNameOnly
-	RepoDiffsNameOnly []string // `git diff --name-only @{u}`, []string
-	RepoDiffsSummary  string   // ...
+	DiffsNameOnly []string // `git diff --name-only @{u}`, []string
+	DiffsSummary  string   // ...
 
 	// rs.verifyRepos -> gitShortstat
 	ShortStat  string // `git diff shortstat`, "x files changed, y insertions(+), z deletions(-)"
 	Insertions int    // y
 	Deletions  int    // z
 
-	// rs.verifyRepos -> gitUntracked
-	RepoUntrackedFiles   []string // ...
-	RepoUntrackedSummary string   // ...
-
 	// rs.verifyRepos -> gitUpstream
+	Upstream string // getUpstreamStatus
 
-	Upstream         string   // getUpstreamStatus
-	UntrackedFiles   []string // gitUntracked
-	UntrackedCount   int      // getUntrackedSummary
-	UntrackedSummary string   // getUntrackedSummary
-	UntrackedStatus  bool     // getUntrackedSummary
-	Summary          string   // getSummary
-	Phase            string   // getPhase
-	InfoVerified     bool     // verifyProjectInfo // deprecate
+	// rs.verifyRepos -> gitUntracked
+	UntrackedFiles   []string
+	UntrackedSummary string
+	Untracked        bool
+
+	// rs.
 
 	// setActions
 	Status       string
@@ -866,11 +861,11 @@ func (r *Repo) gitDiffsNameOnly(e Emoji, f Flags) {
 	}
 
 	if str := out.String(); str != "" {
-		r.RepoDiffsNameOnly = strings.Fields(str)
-		r.RepoDiffsSummary = sliceSummary(r.RepoDiffsNameOnly)
+		r.DiffsNameOnly = strings.Fields(str)
+		r.DiffsSummary = sliceSummary(r.DiffsNameOnly)
 	} else {
-		r.RepoDiffsNameOnly = make([]string, 0)
-		r.RepoDiffsSummary = ""
+		r.DiffsNameOnly = make([]string, 0)
+		r.DiffsSummary = ""
 	}
 }
 
@@ -944,10 +939,14 @@ func (r *Repo) gitUntracked(e Emoji, f Flags) {
 			r.UntrackedFiles = append(r.UntrackedFiles, f)
 			r.UntrackedSummary = sliceSummary(r.UntrackedFiles)
 		}
-
 	} else {
 		r.UntrackedFiles = make([]string, 0)
 	}
+
+	if len(r.UntrackedFiles) >= 1 {
+		r.Untracked = true
+	}
+
 }
 
 func (r *Repo) setStatus(e Emoji, f Flags) {
@@ -967,35 +966,58 @@ func (r *Repo) setStatus(e Emoji, f Flags) {
 	}
 
 	switch {
-	case (r.Clean == true && r.UntrackedStatus == false && r.Status == "Ahead"):
+	case (r.Clean == true && r.Untracked == false && r.Status == "Ahead"):
 		r.Status = "Ahead"
-	case (r.Clean == true && r.UntrackedStatus == false && r.Status == "Behind"):
+	case (r.Clean == true && r.Untracked == false && r.Status == "Behind"):
 		r.Status = "Behind"
-	case (r.Clean == false && r.UntrackedStatus == false && r.Status == "Up-To-Date"):
+	case (r.Clean == false && r.Untracked == false && r.Status == "Up-To-Date"):
 		r.Status = "Dirty"
-	case (r.Clean == false && r.UntrackedStatus == true && r.Status == "Up-To-Date"):
+	case (r.Clean == false && r.Untracked == true && r.Status == "Up-To-Date"):
 		r.Status = "DirtyUntracked"
-	case (r.Clean == false && r.UntrackedStatus == false && r.Status == "Ahead"):
+	case (r.Clean == false && r.Untracked == false && r.Status == "Ahead"):
 		r.Status = "DirtyAhead"
-	case (r.Clean == false && r.UntrackedStatus == false && r.Status == "Behind"):
+	case (r.Clean == false && r.Untracked == false && r.Status == "Behind"):
 		r.Status = "DirtyBehind"
-	case (r.Clean == false && r.UntrackedStatus == true && r.Status == "Up-To-Date"):
+	case (r.Clean == false && r.Untracked == true && r.Status == "Up-To-Date"):
 		r.Status = "Untracked"
-	case (r.Clean == false && r.UntrackedStatus == true && r.Status == "Ahead"):
+	case (r.Clean == false && r.Untracked == true && r.Status == "Ahead"):
 		r.Status = "UntrackedAhead"
-	case (r.Clean == false && r.UntrackedStatus == true && r.Status == "Behind"):
+	case (r.Clean == false && r.Untracked == true && r.Status == "Behind"):
 		r.Status = "UntrackedBehind"
-	case (r.Clean == true && r.UntrackedStatus == false && r.Status == "Up-To-Date"):
+	case (r.Clean == true && r.Untracked == false && r.Status == "Up-To-Date"):
 		r.Status = "Up-To-Date"
 	default:
 		r.markError(e, f, "wtf", "setStatus")
 	}
-
 }
 
 // --> Repos: Collection of Repos
 
 type Repos []*Repo
+
+func initRepos(c Config, e Emoji, f Flags, t *Timer) (rs Repos) {
+
+	// print
+	targetPrint(f, "%v parsing repos", e.Pager)
+
+	// initialize Repos from Config
+	for _, bl := range c.Bundles {
+		for _, z := range bl.Zones {
+			for _, rn := range z.Repos {
+				r := initRepo(z.Division, z.User, z.Remote, bl.Path, rn)
+				rs = append(rs, r)
+			}
+		}
+	}
+
+	// timer
+	t.markMoment("init-repos")
+
+	// print
+	targetPrint(f, "%v [%v] repos {%v / %v}", e.FaxMachine, len(rs), t.getSplit(), t.getTime())
+
+	return rs
+}
 
 // sort A-Z by r.Name
 func (rs Repos) sortByName() {
@@ -1006,6 +1028,205 @@ func (rs Repos) sortByName() {
 func (rs Repos) sortByPath() {
 	sort.SliceStable(rs, func(i, j int) bool { return rs[i].Name < rs[j].Name })
 	sort.SliceStable(rs, func(i, j int) bool { return rs[i].DivPath < rs[j].DivPath })
+}
+
+// Utility functions. Repackage and clarify someday.
+
+func clearScreen(f Flags) {
+	if isClear(f) || hasEmoji(f) {
+		cmd := exec.Command("clear")
+		cmd.Stdout = os.Stdout
+		cmd.Run()
+	}
+}
+
+func noPermission(info os.FileInfo) bool {
+
+	if info == nil {
+		return false
+	}
+
+	if len(info.Mode().String()) <= 4 {
+		return true
+	}
+
+	s := info.Mode().String()[1:4]
+
+	if s != "rwx" {
+		return true
+	} else {
+		return false
+	}
+}
+
+func isDirectory(info os.FileInfo) bool {
+	if info == nil {
+		return false
+	}
+
+	if info.IsDir() {
+		return true
+	} else {
+		return false
+	}
+}
+
+func isEmpty(p string) bool {
+	f, err := os.Open(p)
+
+	if err != nil {
+		return false
+	}
+
+	_, err = f.Readdir(1)
+
+	if err == io.EOF {
+		return true
+	}
+
+	return false
+}
+
+func notEmpty(p string) bool {
+	f, err := os.Open(p)
+
+	if err != nil {
+		return false
+	}
+
+	_, err = f.Readdir(1)
+
+	if err == io.EOF {
+		return false
+	}
+
+	return true
+}
+
+func isFile(info os.FileInfo) bool {
+	if info == nil {
+		return false
+	}
+
+	if info.IsDir() {
+		return false
+	} else {
+		return true
+	}
+}
+
+func validatePath(p string) string {
+	if t := strings.TrimPrefix(p, "~/"); t != p {
+		u, err := user.Current()
+
+		if err != nil {
+			log.Fatalf("Unable to identify the current user")
+		}
+
+		t := strings.Join([]string{u.HomeDir, "/", t}, "")
+		return strings.TrimSuffix(t, "/")
+	}
+	return strings.TrimSuffix(p, "/")
+}
+
+func lastPathSelection(p string) string {
+	if strings.Contains(p, "/") == true {
+		sp := strings.SplitAfter(p, "/") // split path
+		lp := sp[len(sp)-1]              // last path
+		return lp
+	} else {
+		return p
+	}
+}
+
+func targetPrint(f Flags, s string, z ...interface{}) {
+	var p string
+	switch {
+	case oneLine(f):
+	case isVerbose(f) && hasEmoji(f):
+		p = fmt.Sprintf(s, z...)
+		fmt.Println(p)
+	case isVerbose(f) && noEmoji(f):
+		p = fmt.Sprintf(s, z...)
+		p = strings.TrimPrefix(p, " ")
+		p = strings.TrimPrefix(p, " ")
+		fmt.Println(p)
+	}
+}
+
+func removeDuplicates(ssl []string) (sl []string) {
+
+	smap := make(map[string]bool)
+
+	for i := range ssl {
+		if smap[ssl[i]] == true {
+		} else {
+			smap[ssl[i]] = true
+			sl = append(sl, ssl[i])
+		}
+	}
+
+	return sl
+}
+
+func firstLine(s string) string {
+	lines := strings.Split(strings.TrimSuffix(s, "\n"), "\n")
+
+	if len(lines) >= 1 {
+		return lines[0]
+	} else {
+		return ""
+	}
+}
+
+func sliceSummary(sl []string) string {
+	l := 25 // limit
+
+	if len(sl) == 0 {
+		return ""
+	}
+
+	var csl []string // check slice
+	var b bytes.Buffer
+
+	for _, s := range sl {
+		lc := len(strings.Join(csl, ", ")) // (l)ength(c)heck
+		switch {
+		case lc <= l-10 && len(s) <= 20: //
+			csl = append(csl, s)
+		case lc <= l && len(s) <= 12:
+			csl = append(csl, s)
+		}
+	}
+
+	b.WriteString(strings.Join(csl, ", "))
+
+	if len(sl) != len(csl) {
+		b.WriteString("...")
+	}
+
+	return b.String()
+}
+
+// --> Main functions
+
+func initRun() (e Emoji, f Flags, rs Repos, t *Timer) {
+
+	// initialize Timer, Flags and Emoji
+	t = initTimer()
+	f = initFlags(e, t)
+	e = initEmoji(f, t)
+
+	// clear screen, early messaging
+	initPrint(e, f, t)
+
+	// read ~/.gisrc.json, initialize Config
+	c := initConfig(e, f, t)
+
+	// initialize Repos
+	rs = initRepos(c, e, f, t)
+
+	return e, f, rs, t
 }
 
 func (rs Repos) verifyDivs(e Emoji, f Flags, t *Timer) {
@@ -1128,237 +1349,13 @@ func (rs Repos) verifyRepos(e Emoji, f Flags, t *Timer) {
 	wg.Wait()
 }
 
-func initRepos(c Config, e Emoji, f Flags, t *Timer) (rs Repos) {
+func (rs Repos) verifyChanges(e Emoji, f Flags, t *Timer) {
 
-	// print
-	targetPrint(f, "%v parsing repos", e.Pager)
-
-	// initialize Repos from Config
-	for _, bl := range c.Bundles {
-		for _, z := range bl.Zones {
-			for _, rn := range z.Repos {
-				r := initRepo(z.Division, z.User, z.Remote, bl.Path, rn)
-				rs = append(rs, r)
-			}
-		}
-	}
-
-	// timer
-	t.markMoment("init-repos")
-
-	// print
-	targetPrint(f, "%v [%v] repos {%v / %v}", e.FaxMachine, len(rs), t.getSplit(), t.getTime())
-
-	return rs
-}
-
-// Utility functions. Repackage and clarify someday.
-
-func clearScreen(f Flags) {
-	if isClear(f) || hasEmoji(f) {
-		cmd := exec.Command("clear")
-		cmd.Stdout = os.Stdout
-		cmd.Run()
-	}
-}
-
-func noPermission(info os.FileInfo) bool {
-
-	if info == nil {
-		return false
-	}
-
-	if len(info.Mode().String()) <= 4 {
-		return true
-	}
-
-	s := info.Mode().String()[1:4]
-
-	if s != "rwx" {
-		return true
-	} else {
-		return false
-	}
-}
-
-func isDirectory(info os.FileInfo) bool {
-	if info == nil {
-		return false
-	}
-
-	if info.IsDir() {
-		return true
-	} else {
-		return false
-	}
-}
-
-func isEmpty(p string) bool {
-	f, err := os.Open(p)
-
-	if err != nil {
-		return false
-	}
-
-	_, err = f.Readdir(1)
-
-	if err == io.EOF {
-		return true
-	}
-
-	return false
-}
-
-func notEmpty(p string) bool {
-	f, err := os.Open(p)
-
-	if err != nil {
-		return false
-	}
-
-	_, err = f.Readdir(1)
-
-	if err == io.EOF {
-		return false
-	}
-
-	return true
-}
-
-func isFile(info os.FileInfo) bool {
-	if info == nil {
-		return false
-	}
-
-	if info.IsDir() {
-		return false
-	} else {
-		return true
-	}
-}
-
-func validatePath(p string) string {
-	if t := strings.TrimPrefix(p, "~/"); t != p {
-		u, err := user.Current()
-
-		if err != nil {
-			log.Fatalf("Unable to identify the current user")
-		}
-
-		t := strings.Join([]string{u.HomeDir, "/", t}, "")
-		return strings.TrimSuffix(t, "/")
-	}
-	return strings.TrimSuffix(p, "/")
-}
-
-func lastPathSelection(p string) string {
-	if strings.Contains(p, "/") == true {
-		sp := strings.SplitAfter(p, "/") // split path
-		lp := sp[len(sp)-1]              // last path
-		return lp
-	} else {
-		return p
-	}
-}
-
-// FLAG: rename to trimNewLineSuffix?
-func trim(s string) string {
-	return strings.TrimSuffix(s, "\n")
-}
-
-func targetPrint(f Flags, s string, z ...interface{}) {
-	var p string
-	switch {
-	case oneLine(f):
-	case isVerbose(f) && hasEmoji(f):
-		p = fmt.Sprintf(s, z...)
-		fmt.Println(p)
-	case isVerbose(f) && noEmoji(f):
-		p = fmt.Sprintf(s, z...)
-		p = strings.TrimPrefix(p, " ")
-		p = strings.TrimPrefix(p, " ")
-		fmt.Println(p)
-	}
-}
-
-func removeDuplicates(ssl []string) (sl []string) {
-
-	smap := make(map[string]bool)
-
-	for i := range ssl {
-		if smap[ssl[i]] == true {
-		} else {
-			smap[ssl[i]] = true
-			sl = append(sl, ssl[i])
-		}
-	}
-
-	return sl
-}
-
-func firstLine(s string) string {
-	lines := strings.Split(strings.TrimSuffix(s, "\n"), "\n")
-
-	if len(lines) >= 1 {
-		return lines[0]
-	} else {
-		return ""
-	}
-}
-
-func sliceSummary(sl []string) string {
-	l := 25 // limit
-
-	if len(sl) == 0 {
-		return ""
-	}
-
-	var csl []string // check slice
-	var b bytes.Buffer
-
-	for _, s := range sl {
-		lc := len(strings.Join(csl, ", ")) // (l)ength(c)heck
-		switch {
-		case lc <= l-10 && len(s) <= 20: //
-			csl = append(csl, s)
-		case lc <= l && len(s) <= 12:
-			csl = append(csl, s)
-		}
-	}
-
-	b.WriteString(strings.Join(csl, ", "))
-
-	if len(sl) != len(csl) {
-		b.WriteString("...")
-	}
-
-	return b.String()
-}
-
-// --> Main functions
-
-func initRun() (e Emoji, f Flags, rs Repos, t *Timer) {
-
-	// initialize Timer, Flags and Emoji
-	t = initTimer()
-	f = initFlags(e, t)
-	e = initEmoji(f, t)
-
-	// clear screen, early messaging
-	initPrint(e, f, t)
-
-	// read ~/.gisrc.json, initialize Config
-	c := initConfig(e, f, t)
-
-	// initialize Repos
-	rs = initRepos(c, e, f, t)
-
-	return e, f, rs, t
 }
 
 func main() {
 	e, f, rs, t := initRun()
 	rs.verifyDivs(e, f, t)
 	rs.verifyRepos(e, f, t)
-	// rs.verifyChanges(e, f, t)
+	rs.verifyChanges(e, f, t)
 }

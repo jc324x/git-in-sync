@@ -462,6 +462,7 @@ type Repo struct {
 	GitPathVerified  bool   // true if GitPath verified
 	GitPathError     string // error if GitPathVerified is false
 	RepoCloned       bool   // true if Repo was cloned
+	RepoCloneError   string
 
 	// rs.verifyRepos -> gitConfigOriginURL
 	OriginURL         string // "https://github.com/jychri/git-in-sync"
@@ -683,15 +684,53 @@ func (r *Repo) gitVerify(e Emoji, f Flags) {
 	}
 }
 
-// this should really handle errors...
+func (r *Repo) evaluateErrorBuff(err bytes.Buffer, name string) {
+	// if strings.Contains(r.RepoCloneError, "warning") {
+	// 	targetPrint(f, "%v %v (%v)", e.Warning, r.RepoName, firstLine(r.RemoteUpdateError))
+	// 	r.RemoteUpdateVerified = true
+	// }
+
+	// if strings.Contains(r.RepoCloneError, "fatal") {
+	// 	targetPrint(f, "%v %v (%v)", e.Slash, r.RepoName, firstLine(r.RemoteUpdateError))
+	// 	r.RemoteUpdateVerified = false
+	// }
+
+}
+
 func (r *Repo) gitClone(e Emoji, f Flags) {
 	// print
 	targetPrint(f, "%v cloning %v {%v}", e.Box, r.RepoName, r.ZoneDivision)
 
+	// command
 	args := []string{"clone", r.RepoURL, r.RepoPath}
 	cmd := exec.Command("git", args...)
-	var out bytes.Buffer
-	cmd.Stdout = &out
+
+	var err bytes.Buffer
+	cmd.Stderr = &err
+
+	if str := err.String(); str != "" {
+		r.evaluateErrorBuff(err, "git-clone")
+	}
+
+	// -------
+
+	if str := err.String(); str != "" {
+		r.RepoCloneError = firstLine(err.String())
+	}
+
+	if r.RepoCloneError != "" {
+
+		if strings.Contains(r.RepoCloneError, "warning") {
+			targetPrint(f, "%v %v (%v)", e.Warning, r.RepoName, firstLine(r.RemoteUpdateError))
+			r.RemoteUpdateVerified = true
+		}
+
+		if strings.Contains(r.RepoCloneError, "fatal") {
+			targetPrint(f, "%v %v (%v)", e.Slash, r.RepoName, firstLine(r.RemoteUpdateError))
+			r.RemoteUpdateVerified = false
+		}
+	}
+
 	cmd.Run()
 }
 
@@ -1202,7 +1241,7 @@ func (rs Repos) verifyRepos(e Emoji, f Flags, t *Timer) {
 	// print
 	targetPrint(f, "%v verifying repos [%v]", e.Truck, len(rs))
 
-	// asynchronously verify each repo
+	// verify each repo (async)
 	var wg sync.WaitGroup
 	for i := range rs {
 		wg.Add(1)

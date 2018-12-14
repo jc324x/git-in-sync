@@ -443,7 +443,7 @@ type Repo struct {
 	ZoneDivision string // "main" or "go-lang"
 	ZoneUser     string // "jychri"
 	ZoneRemote   string // "github" or "gitlab"
-	RepoName     string // "git-in-sync"
+	Name         string // "git-in-sync"
 	DivPath      string // "/Users/jychri/dev/go-lang/"
 	RepoPath     string // "/Users/jychri/dev/go-lang/git-in-sync"
 	GitPath      string // "/Users/jychri/dev/go-lang/git-in-sync/.git"
@@ -451,41 +451,31 @@ type Repo struct {
 	WorkTree     string // "--work-tree=/Users/jychri/dev/go-lang/git-in-sync"
 	RepoURL      string // "https://github.com/jychri/git-in-sync"
 
-	// rs.verifyDivs
-	DivPathVerified bool   // true if DivPath verified
-	DivPathError    string // error if DivPathVerified is false
+	// rs.verifyDivs, rs.verifyRepos
+	Verified     bool   // true if Repo continues to pass verification
+	ErrorMessage string // the last error message
+	ShortError   string // first line of the last error message
+	ErrorName    string // name of the last error
 
 	// rs.verifyRepos -> gitVerify -> gitClone
-	RepoVerified     bool   // true if Repo continues to pass verification
-	RepoPathVerified bool   // true if RepoPath verified
-	RepoPathError    string // error if RepoPathVerified is false
-	GitPathVerified  bool   // true if GitPath verified
-	GitPathError     string // error if GitPathVerified is false
-	RepoCloned       bool   // true if Repo was cloned
-	GitError         string // &err.String()
-	GitError1        string // first line of r.GitError
-	GitErrorName     string // name of GitError, "git-clone"
+	Cloned bool // true if Repo was cloned
 
 	// rs.verifyRepos -> gitConfigOriginURL
-	OriginURL      string // "https://github.com/jychri/git-in-sync"
-	OriginURLError string // error if URLVerified is false
-
-	// rs.verifyRepos -> gitRemoteUpdate
-	RemoteUpdateOut      string // output of `git fetch origin`
-	RemoteUpdateError    string // error out of `git fetch origin`
-	RemoteUpdateVerified bool   // true if RemoteUpdateError is "" or "warning: *"
+	OriginURL string // "https://github.com/jychri/git-in-sync"
 
 	// rs.verifyRepos -> gitStatusPorcelain
-	IsClean bool // true if `git status --porcelain` returns ""
+	Clean bool // true if `git status --porcelain` returns ""
 
-	// rs.verifyRepos -> gitAbbrevRef (?)
-	RepoLocalBranch string // `git rev-parse --abbrev-ref HEAD`, "master"
+	// rs.verifyRepos -> gitAbbrevRef
+	LocalBranch string // `git rev-parse --abbrev-ref HEAD`, "master"
 
 	// rs.verifyRepos -> gitLocalSHA
-	RepoLocalSHA string // `git rev-parse @`, "l00000ngSHA1slong324"
+	LocalSHA string // `git rev-parse @`, "l00000ngSHA1slong324"
 
 	// rs.verifyRepos -> gitUpstreamSHA
-	RepoUpstreamSHA string // `git rev-parse @{u}`, "l00000ngSHA1slong324"
+	UpstreamSHA string // `git rev-parse @{u}`, "l00000ngSHA1slong324"
+
+	// ---------------------------------- old pattern below
 
 	// rs.verifyRepos -> gitMergeBaseSHA
 	RepoMergeSHA string // `git merge-base @ @{u}`, "l00000ngSHA1slong324"
@@ -540,7 +530,7 @@ func initRepo(zd string, zu string, zr string, bp string, rn string) *Repo {
 	r.ZoneRemote = zr
 
 	// "git-in-sync", (r)epo(n)ame
-	r.RepoName = rn
+	r.Name = rn
 
 	var b bytes.Buffer
 
@@ -556,7 +546,7 @@ func initRepo(zd string, zu string, zr string, bp string, rn string) *Repo {
 	b.Reset()
 	b.WriteString(r.DivPath)
 	b.WriteString("/")
-	b.WriteString(r.RepoName)
+	b.WriteString(r.Name)
 	r.RepoPath = b.String()
 
 	// "/Users/jychri/dev/go-lang/git-in-sync/.git"
@@ -587,32 +577,44 @@ func initRepo(zd string, zu string, zr string, bp string, rn string) *Repo {
 	}
 	b.WriteString(r.ZoneUser)
 	b.WriteString("/")
-	b.WriteString(r.RepoName)
+	b.WriteString(r.Name)
 	r.RepoURL = b.String()
 
 	return r
 }
 
 func notVerified(r *Repo) bool {
-	if r.RepoVerified == false {
+	if r.Verified == false {
 		return true
 	} else {
 		return false
 	}
 }
 
-// swoop
+func (r *Repo) markError(e Emoji, f Flags, err string, name string) {
+	r.ErrorMessage = err
+	r.ErrorName = name
+	r.ShortError = firstLine(err)
+
+	if strings.Contains(r.ShortError, "warning") {
+		targetPrint(f, "%v %v (%v)", e.Warning, r.Name, r.ShortError)
+		r.Verified = true
+	}
+
+	if strings.Contains(r.ShortError, "fatal") {
+		targetPrint(f, "%v %v (%v)", e.Slash, r.Name, r.ShortError)
+		r.Verified = false
+	}
+}
+
+func markOut(b bytes.Buffer) string {
+	return strings.TrimSuffix(b.String(), "\n")
+}
 
 func (r *Repo) gitVerify(e Emoji, f Flags) {
 
-	// check if DivPath is accessible
-	if r.DivPathVerified == false || r.DivPathError != "" {
-		r.RepoPathVerified = false
-		r.RepoPathError = "Div inaccessible."
-		r.GitPathVerified = false
-		r.GitPathError = "Div inaccessible."
-		r.RepoVerified = false
-		targetPrint(f, "%v div is inaccessible", e.Slash)
+	// return if not verified
+	if notVerified(r) {
 		return
 	}
 
@@ -622,88 +624,37 @@ func (r *Repo) gitVerify(e Emoji, f Flags) {
 
 	switch {
 	case isFile(rinfo):
-		r.RepoPathVerified = false
-		r.RepoPathError = "file occupying path"
-		r.GitPathVerified = false
-		r.GitPathError = "file occupying path"
-		r.RepoVerified = false
-		targetPrint(f, "%v %v (%v)", e.Slash, r.RepoName, r.RepoPathError)
+		r.markError(e, f, "fatal: file occupying path", "git-verify")
 	case isDirectory(rinfo) && notEmpty(r.RepoPath) && os.IsNotExist(gerr):
-		r.RepoPathVerified = false
-		r.RepoPathError = "directory occupying path"
-		r.GitPathVerified = false
-		r.GitPathError = "directory occupying path"
-		r.RepoVerified = false
-		targetPrint(f, "%v %v (%v)", e.Slash, r.RepoName, r.RepoPathError)
+		r.markError(e, f, "fatal: directory occupying path", "git-verify")
 	case isDirectory(rinfo) && isEmpty(r.RepoPath) && isActive(f):
-		r.RepoPathVerified = false
-		r.RepoPathError = "pending git clone"
-		r.GitPathVerified = false
-		r.GitPathError = "pending git clone"
-		r.RepoVerified = false
 		r.gitClone(e, f)
-		r.RepoCloned = true
 	case os.IsNotExist(rerr) && os.IsNotExist(gerr) && isActive(f):
-		r.RepoPathVerified = false
-		r.RepoPathError = "pending git clone"
-		r.GitPathVerified = false
-		r.GitPathError = "pending git clone"
-		r.RepoVerified = false
 		r.gitClone(e, f)
-		r.RepoCloned = true
 	case isDirectory(rinfo) && isEmpty(r.RepoPath) && isDry(f):
-		r.RepoPathVerified = false
-		r.RepoPathError = "pending git clone (dry run)"
-		r.RepoVerified = false
-		targetPrint(f, "%v %v (%v)", r.RepoName, e.Slash, r.RepoPathError)
+		r.markError(e, f, "fatal: git clone (dry run)", "git-verify")
 	case os.IsNotExist(rerr) && os.IsNotExist(gerr) && isActive(f):
-		r.RepoPathVerified = false
-		r.RepoPathError = "pending git clone (dry run)"
-		r.RepoVerified = false
-		targetPrint(f, "%v %v (%v)", r.RepoName, e.Slash, r.RepoPathError)
+		r.markError(e, f, "fatal: git clone (dry run)", "git-verify")
 	case isDirectory(rinfo) && isDirectory(ginfo):
-		r.RepoPathVerified = true
-		r.RepoPathError = ""
-		r.GitPathVerified = true
-		r.GitPathError = ""
-		r.RepoVerified = true
+		r.Verified = true
 	}
 
 	// check if RepoPath and GitPath are accessible for cloned repos
 
-	if r.RepoCloned == true {
+	if r.Cloned == true {
 		rinfo, rerr = os.Stat(r.RepoPath)
 		ginfo, gerr = os.Stat(r.GitPath)
 
 		if isDirectory(rinfo) && isDirectory(ginfo) {
-			r.RepoPathVerified = true
-			r.RepoPathError = ""
-			r.GitPathVerified = true
-			r.GitPathError = ""
-			r.RepoVerified = true
+			r.Verified = true
 		}
 	}
 }
 
-func (r *Repo) evalBuffError(e Emoji, f Flags, err bytes.Buffer, name string) {
-	r.GitErrorName = name
-	r.GitError = err.String()
-	r.GitError1 = firstLine(err.String())
-
-	if strings.Contains(r.GitError1, "warning") {
-		targetPrint(f, "%v %v (%v)", e.Warning, r.RepoName, r.GitError1)
-		r.RepoVerified = true
-	}
-
-	if strings.Contains(r.GitError1, "fatal") {
-		targetPrint(f, "%v %v (%v)", e.Slash, r.RepoName, r.GitError1)
-		r.RepoVerified = false
-	}
-}
-
 func (r *Repo) gitClone(e Emoji, f Flags) {
+
 	// print
-	targetPrint(f, "%v cloning %v {%v}", e.Box, r.RepoName, r.ZoneDivision)
+	targetPrint(f, "%v cloning %v {%v}", e.Box, r.Name, r.ZoneDivision)
 
 	// command
 	args := []string{"clone", r.RepoURL, r.RepoPath}
@@ -712,9 +663,11 @@ func (r *Repo) gitClone(e Emoji, f Flags) {
 	cmd.Stderr = &err
 	cmd.Run()
 
-	// error check
-	if str := err.String(); str != "" {
-		r.evalBuffError(e, f, err, "git-clone")
+	// check error, set value(s)
+	if err := err.String(); err != "" {
+		r.markError(e, f, err, "gitClone")
+	} else {
+		r.Cloned = true
 	}
 }
 
@@ -739,27 +692,12 @@ func (r *Repo) gitConfigOriginURL(e Emoji, f Flags) {
 	// set OriginURL
 	r.OriginURL = s
 
-	// switch
+	// check error, set value(s)
 	switch {
-	case r.OriginURL == r.RepoURL:
-		r.RepoVerified = true
 	case r.OriginURL == "":
-		r.OriginURLError = "fatal: 'origin' does not appear to be a git repository"
-		r.RepoVerified = false
+		r.markError(e, f, "fatal: 'origin' does not appear to be a git repository", "gitConfigOriginURL")
 	case r.OriginURL != r.RepoURL:
-		r.OriginURLError = "warning: RepoURL != OriginURL"
-		r.RepoVerified = false
-	}
-
-	if r.OriginURLError != "" {
-		if strings.Contains(r.OriginURLError, "warning") {
-			targetPrint(f, "%v %v (%v)", e.Warning, r.RepoName, r.OriginURLError)
-		}
-
-		if strings.Contains(r.OriginURLError, "fatal") {
-			targetPrint(f, "%v %v (%v)", e.Slash, r.RepoName, r.OriginURLError)
-		}
-
+		r.markError(e, f, "warning: RepoURL != OriginURL", "gitConfigOriginURL")
 	}
 }
 
@@ -773,39 +711,17 @@ func (r *Repo) gitRemoteUpdate(e Emoji, f Flags) {
 	// command
 	args := []string{r.GitDir, r.WorkTree, "fetch", "origin"}
 	cmd := exec.Command("git", args...)
-	var out bytes.Buffer
 	var err bytes.Buffer
-	cmd.Stdout = &out
 	cmd.Stderr = &err
 	cmd.Run()
 
-	if str := out.String(); str != "" {
-		r.RemoteUpdateOut = trim(out.String())
+	// check error, set value(s)
+	if err := err.String(); err != "" {
+		r.markError(e, f, err, "gitRemoteUpdate")
 	}
-
-	if str := err.String(); str != "" {
-		r.RemoteUpdateError = trim(err.String())
-	}
-
-	if r.RemoteUpdateError != "" {
-		if strings.Contains(r.RemoteUpdateError, "warning") {
-			targetPrint(f, "%v %v (%v)", e.Warning, r.RepoName, firstLine(r.RemoteUpdateError))
-			r.RemoteUpdateVerified = true
-		}
-
-		if strings.Contains(r.RemoteUpdateError, "fatal") {
-			targetPrint(f, "%v %v (%v)", e.Slash, r.RepoName, firstLine(r.RemoteUpdateError))
-			r.RemoteUpdateVerified = false
-		}
-	}
-
-	if r.RemoteUpdateError == "" {
-		r.RemoteUpdateVerified = true
-	}
-
 }
 
-func (r *Repo) gitStatusPorcelain() {
+func (r *Repo) gitStatusPorcelain(e Emoji, f Flags) {
 
 	// return if not verified
 	if notVerified(r) {
@@ -816,17 +732,24 @@ func (r *Repo) gitStatusPorcelain() {
 	args := []string{r.GitDir, r.WorkTree, "status", "--porcelain"}
 	cmd := exec.Command("git", args...)
 	var out bytes.Buffer
+	var err bytes.Buffer
 	cmd.Stdout = &out
+	cmd.Stderr = &err
 	cmd.Run()
 
+	// check error, set value(s)
+	if err := err.String(); err != "" {
+		r.markError(e, f, err, "gitStatusPorcelain")
+	}
+
 	if str := out.String(); str != "" {
-		r.IsClean = false
+		r.Clean = false
 	} else {
-		r.IsClean = true
+		r.Clean = true
 	}
 }
 
-func (r *Repo) gitAbbrevRef() {
+func (r *Repo) gitAbbrevRef(e Emoji, f Flags) {
 
 	// return if not verified
 	if notVerified(r) {
@@ -837,15 +760,20 @@ func (r *Repo) gitAbbrevRef() {
 	args := []string{r.GitDir, r.WorkTree, "rev-parse", "--abbrev-ref", "HEAD"}
 	cmd := exec.Command("git", args...)
 	var out bytes.Buffer
+	var err bytes.Buffer
 	cmd.Stdout = &out
+	cmd.Stderr = &err
 	cmd.Run()
 
-	if str := out.String(); str != "" {
-		r.RepoLocalBranch = trim(out.String())
+	// check error, set value(s)
+	if err := err.String(); err != "" {
+		r.markError(e, f, err, "gitAbbrevRef")
+	} else {
+		r.LocalBranch = markOut(out)
 	}
 }
 
-func (r *Repo) gitLocalSHA() {
+func (r *Repo) gitLocalSHA(e Emoji, f Flags) {
 
 	// return if not verified
 	if notVerified(r) {
@@ -856,15 +784,20 @@ func (r *Repo) gitLocalSHA() {
 	args := []string{r.GitDir, r.WorkTree, "rev-parse", "@"}
 	cmd := exec.Command("git", args...)
 	var out bytes.Buffer
+	var err bytes.Buffer
 	cmd.Stdout = &out
+	cmd.Stderr = &err
 	cmd.Run()
 
-	if str := out.String(); str != "" {
-		r.RepoLocalSHA = trim(out.String())
+	// check error, set value(s)
+	if err := err.String(); err != "" {
+		r.markError(e, f, err, "gitLocalSHA")
+	} else {
+		r.LocalSHA = markOut(out)
 	}
 }
 
-func (r *Repo) gitUpstreamSHA() {
+func (r *Repo) gitUpstreamSHA(e Emoji, f Flags) {
 
 	// return if not verified
 	if notVerified(r) {
@@ -875,11 +808,16 @@ func (r *Repo) gitUpstreamSHA() {
 	args := []string{r.GitDir, r.WorkTree, "rev-parse", "@{u}"}
 	cmd := exec.Command("git", args...)
 	var out bytes.Buffer
+	var err bytes.Buffer
 	cmd.Stdout = &out
+	cmd.Stderr = &err
 	cmd.Run()
 
-	if str := out.String(); str != "" {
-		r.RepoUpstreamSHA = trim(out.String())
+	// check error, set value(s)
+	if err := err.String(); err != "" {
+		r.markError(e, f, err, "gitUpstreamSHA")
+	} else {
+		r.UpstreamSHA = markOut(out)
 	}
 }
 
@@ -1030,9 +968,9 @@ func (r *Repo) getUpstreamStatus() {
 	}
 
 	switch {
-	case r.RepoLocalSHA == r.RepoUpstreamSHA:
+	case r.LocalSHA == r.RepoUpstreamSHA:
 		r.Upstream = "Up-To-Date"
-	case r.RepoLocalSHA == r.RepoMergeSHA:
+	case r.LocalSHA == r.RepoMergeSHA:
 		r.Upstream = "Behind"
 	case r.RepoUpstreamSHA == r.RepoMergeSHA:
 		r.Upstream = "Ahead"
@@ -1047,79 +985,46 @@ func (r *Repo) getPhase() {
 	}
 
 	switch {
-	case (r.IsClean == true && r.UntrackedStatus == false && r.Upstream == "Ahead"):
+	case (r.Clean == true && r.UntrackedStatus == false && r.Upstream == "Ahead"):
 		r.Phase = "Ahead"
-	case (r.IsClean == true && r.UntrackedStatus == false && r.Upstream == "Behind"):
+	case (r.Clean == true && r.UntrackedStatus == false && r.Upstream == "Behind"):
 		r.Phase = "Behind"
-	case (r.IsClean == false && r.UntrackedStatus == false && r.Upstream == "Up-To-Date"):
+	case (r.Clean == false && r.UntrackedStatus == false && r.Upstream == "Up-To-Date"):
 		r.Phase = "Dirty"
-	case (r.IsClean == false && r.UntrackedStatus == true && r.Upstream == "Up-To-Date"):
+	case (r.Clean == false && r.UntrackedStatus == true && r.Upstream == "Up-To-Date"):
 		r.Phase = "DirtyUntracked"
-	case (r.IsClean == false && r.UntrackedStatus == false && r.Upstream == "Ahead"):
+	case (r.Clean == false && r.UntrackedStatus == false && r.Upstream == "Ahead"):
 		r.Phase = "DirtyAhead"
-	case (r.IsClean == false && r.UntrackedStatus == false && r.Upstream == "Behind"):
+	case (r.Clean == false && r.UntrackedStatus == false && r.Upstream == "Behind"):
 		r.Phase = "DirtyBehind"
-	case (r.IsClean == false && r.UntrackedStatus == true && r.Upstream == "Up-To-Date"):
+	case (r.Clean == false && r.UntrackedStatus == true && r.Upstream == "Up-To-Date"):
 		r.Phase = "Untracked"
-	case (r.IsClean == false && r.UntrackedStatus == true && r.Upstream == "Ahead"):
+	case (r.Clean == false && r.UntrackedStatus == true && r.Upstream == "Ahead"):
 		r.Phase = "UntrackedAhead"
-	case (r.IsClean == false && r.UntrackedStatus == true && r.Upstream == "Behind"):
+	case (r.Clean == false && r.UntrackedStatus == true && r.Upstream == "Behind"):
 		r.Phase = "UntrackedBehind"
-	case (r.IsClean == true && r.UntrackedStatus == false && r.Upstream == "Up-To-Date"):
+	case (r.Clean == true && r.UntrackedStatus == false && r.Upstream == "Up-To-Date"):
 		r.Phase = "Up-To-Date"
 	default:
 		r.Phase = "wtf"
-		fmt.Printf("%v %v %v", r.IsClean, r.UntrackedStatus, r.Upstream)
+		fmt.Printf("%v %v %v", r.Clean, r.UntrackedStatus, r.Upstream)
 	}
 }
 
 // still needed? or just point back to existing Verified?
 
-func isUpToDate(r *Repo) bool {
-
-	// return if not verified
-	if notVerified(r) {
-		return false
-	}
-
-	switch {
-	case r.RepoLocalSHA == "":
-		r.InfoVerified = false
-	case r.RemoteUpdateVerified == true:
-		r.InfoVerified = false
-	case r.RepoMergeSHA == "":
-		r.InfoVerified = false
-	case r.RepoUpstreamSHA == "":
-		r.InfoVerified = false
-	case r.RepoUpstreamSHA == "":
-		r.InfoVerified = false
-	case r.Phase == "":
-		r.InfoVerified = false
-	}
-	r.InfoVerified = true
-
-	// return if not verified
-	if notVerified(r) {
-		return false
-	} else if r.Phase == "Up-To-Date" {
-		return true
-	}
-
-	return false
-}
-
 // --> Repos: Collection of Repos
 
 type Repos []*Repo
 
-// sort A-Z by r.RepoName
+// sort A-Z by r.Name
 func (rs Repos) sortByName() {
-	sort.SliceStable(rs, func(i, j int) bool { return rs[i].RepoName < rs[j].RepoName })
+	sort.SliceStable(rs, func(i, j int) bool { return rs[i].Name < rs[j].Name })
 }
 
-// sort A-Z by r.DivPath, then r.RepoName
+// sort A-Z by r.DivPath, then r.Name
 func (rs Repos) sortByPath() {
-	sort.SliceStable(rs, func(i, j int) bool { return rs[i].RepoName < rs[j].RepoName })
+	sort.SliceStable(rs, func(i, j int) bool { return rs[i].Name < rs[j].Name })
 	sort.SliceStable(rs, func(i, j int) bool { return rs[i].DivPath < rs[j].DivPath })
 }
 
@@ -1128,7 +1033,7 @@ func (rs Repos) verifyDivs(e Emoji, f Flags, t *Timer) {
 	// sort
 	rs.sortByPath()
 
-	// get all divs, then remove duplicates
+	// get all divs, remove duplicates
 	var dvs []string // divs
 
 	for _, r := range rs {
@@ -1161,24 +1066,19 @@ func (rs Repos) verifyDivs(e Emoji, f Flags, t *Timer) {
 
 		switch {
 		case noPermission(info):
-			r.DivPathVerified = false
-			r.DivPathError = "No permission"
+			r.markError(e, f, "fatal: No permsission", "verify-divs")
 			id = append(id, r.DivPath)
 		case !info.IsDir():
-			r.DivPathVerified = false
-			r.DivPathError = "File occupying path"
+			r.markError(e, f, "fatal: File occupying path", "verify-divs")
 			id = append(id, r.DivPath)
 		case os.IsNotExist(err):
-			r.DivPathVerified = false
-			r.DivPathError = "No directory"
+			r.markError(e, f, "fatal: No directory", "verify-divs")
 			id = append(id, r.DivPath)
 		case err != nil:
-			r.DivPathVerified = false
-			r.DivPathError = "No directory"
+			r.markError(e, f, "fatal: No directory", "verify-divs")
 			id = append(id, r.DivPath)
 		default:
-			r.DivPathVerified = true
-			r.DivPathError = ""
+			r.Verified = true
 			vd = append(vd, r.DivPath)
 		}
 	}
@@ -1234,9 +1134,9 @@ func (rs Repos) verifyRepos(e Emoji, f Flags, t *Timer) {
 			r.gitVerify(e, f)
 			r.gitConfigOriginURL(e, f)
 			r.gitRemoteUpdate(e, f)
-			r.gitStatusPorcelain()
-			r.gitAbbrevRef()
-			r.gitLocalSHA()
+			r.gitStatusPorcelain(e, f)
+			r.gitAbbrevRef(e, f)
+			r.gitLocalSHA(e, f)
 			r.gitUpstreamSHA()
 			r.gitMergeBaseSHA()
 			r.gitDiffsNameOnly()
@@ -1378,6 +1278,7 @@ func lastPathSelection(p string) string {
 	}
 }
 
+// FLAG: rename to trimNewLineSuffix?
 func trim(s string) string {
 	return strings.TrimSuffix(s, "\n")
 }

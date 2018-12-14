@@ -862,7 +862,7 @@ func (r *Repo) gitDiffsNameOnly(e Emoji, f Flags) {
 
 	// check error, set value(s)
 	if err := err.String(); err != "" {
-		r.markError(e, f, err, "gitUpstreamSHA")
+		r.markError(e, f, err, "gitDiffsNameOnly")
 	}
 
 	if str := out.String(); str != "" {
@@ -942,6 +942,7 @@ func (r *Repo) gitUntracked(e Emoji, f Flags) {
 		for _, f := range ufr {
 			f = lastPathSelection(f)
 			r.UntrackedFiles = append(r.UntrackedFiles, f)
+			r.UntrackedSummary = sliceSummary(r.UntrackedFiles)
 		}
 
 	} else {
@@ -949,45 +950,7 @@ func (r *Repo) gitUntracked(e Emoji, f Flags) {
 	}
 }
 
-func (r *Repo) getUntrackedSummary() {
-
-	// return if not verified
-	if notVerified(r) {
-		return
-	}
-
-	r.UntrackedCount = len(r.UntrackedFiles)
-	switch {
-	case r.UntrackedCount == 0:
-		r.UntrackedSummary = "No untracked files"
-		r.UntrackedStatus = false
-	case r.UntrackedCount == 1:
-		r.UntrackedSummary = fmt.Sprintf(r.UntrackedFiles[0])
-		r.UntrackedStatus = true
-	case r.UntrackedCount >= 2:
-		var b bytes.Buffer
-		t := 0
-		// FLAG: also limit the size of file names?
-		for _, d := range r.UntrackedFiles {
-			if b.Len() <= 25 {
-				d = fmt.Sprintf("%v, ", d)
-				b.WriteString(d)
-				t++
-			} else {
-				break
-			}
-		}
-		s := b.String()
-		s = strings.TrimSuffix(s, ", ")
-		if t != r.UntrackedCount {
-			s = fmt.Sprintf("%v...", s)
-		}
-		r.UntrackedSummary = s
-		r.UntrackedStatus = true
-	}
-}
-
-func (r *Repo) getUpstreamStatus() {
+func (r *Repo) setStatus(e Emoji, f Flags) {
 
 	// return if not verified
 	if notVerified(r) {
@@ -996,49 +959,39 @@ func (r *Repo) getUpstreamStatus() {
 
 	switch {
 	case r.LocalSHA == r.UpstreamSHA:
-		r.Upstream = "Up-To-Date"
+		r.Status = "Up-To-Date"
 	case r.LocalSHA == r.MergeSHA:
-		r.Upstream = "Behind"
+		r.Status = "Behind"
 	case r.UpstreamSHA == r.MergeSHA:
-		r.Upstream = "Ahead"
-	}
-}
-
-func (r *Repo) getPhase() {
-
-	// return if not verified
-	if notVerified(r) {
-		return
+		r.Status = "Ahead"
 	}
 
 	switch {
-	case (r.Clean == true && r.UntrackedStatus == false && r.Upstream == "Ahead"):
-		r.Phase = "Ahead"
-	case (r.Clean == true && r.UntrackedStatus == false && r.Upstream == "Behind"):
-		r.Phase = "Behind"
-	case (r.Clean == false && r.UntrackedStatus == false && r.Upstream == "Up-To-Date"):
-		r.Phase = "Dirty"
-	case (r.Clean == false && r.UntrackedStatus == true && r.Upstream == "Up-To-Date"):
-		r.Phase = "DirtyUntracked"
-	case (r.Clean == false && r.UntrackedStatus == false && r.Upstream == "Ahead"):
-		r.Phase = "DirtyAhead"
-	case (r.Clean == false && r.UntrackedStatus == false && r.Upstream == "Behind"):
-		r.Phase = "DirtyBehind"
-	case (r.Clean == false && r.UntrackedStatus == true && r.Upstream == "Up-To-Date"):
-		r.Phase = "Untracked"
-	case (r.Clean == false && r.UntrackedStatus == true && r.Upstream == "Ahead"):
-		r.Phase = "UntrackedAhead"
-	case (r.Clean == false && r.UntrackedStatus == true && r.Upstream == "Behind"):
-		r.Phase = "UntrackedBehind"
-	case (r.Clean == true && r.UntrackedStatus == false && r.Upstream == "Up-To-Date"):
-		r.Phase = "Up-To-Date"
+	case (r.Clean == true && r.UntrackedStatus == false && r.Status == "Ahead"):
+		r.Status = "Ahead"
+	case (r.Clean == true && r.UntrackedStatus == false && r.Status == "Behind"):
+		r.Status = "Behind"
+	case (r.Clean == false && r.UntrackedStatus == false && r.Status == "Up-To-Date"):
+		r.Status = "Dirty"
+	case (r.Clean == false && r.UntrackedStatus == true && r.Status == "Up-To-Date"):
+		r.Status = "DirtyUntracked"
+	case (r.Clean == false && r.UntrackedStatus == false && r.Status == "Ahead"):
+		r.Status = "DirtyAhead"
+	case (r.Clean == false && r.UntrackedStatus == false && r.Status == "Behind"):
+		r.Status = "DirtyBehind"
+	case (r.Clean == false && r.UntrackedStatus == true && r.Status == "Up-To-Date"):
+		r.Status = "Untracked"
+	case (r.Clean == false && r.UntrackedStatus == true && r.Status == "Ahead"):
+		r.Status = "UntrackedAhead"
+	case (r.Clean == false && r.UntrackedStatus == true && r.Status == "Behind"):
+		r.Status = "UntrackedBehind"
+	case (r.Clean == true && r.UntrackedStatus == false && r.Status == "Up-To-Date"):
+		r.Status = "Up-To-Date"
 	default:
-		r.Phase = "wtf"
-		fmt.Printf("%v %v %v", r.Clean, r.UntrackedStatus, r.Upstream)
+		r.markError(e, f, "wtf", "setStatus")
 	}
-}
 
-// still needed? or just point back to existing Verified?
+}
 
 // --> Repos: Collection of Repos
 
@@ -1167,6 +1120,9 @@ func (rs Repos) verifyRepos(e Emoji, f Flags, t *Timer) {
 			r.gitUpstreamSHA(e, f)
 			r.gitMergeBaseSHA(e, f)
 			r.gitDiffsNameOnly(e, f)
+			r.gitShortstat(e, f)
+			r.gitUntracked(e, f)
+			r.setStatus(e, f)
 		}(rs[i])
 	}
 	wg.Wait()

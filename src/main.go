@@ -1350,7 +1350,57 @@ func (rs Repos) verifyRepos(e Emoji, f Flags, t *Timer) {
 	}
 	wg.Wait()
 
-	fmt.Println("summary of verify repos here")
+	// track created, verified and missing divs
+	var cr []string // cloned repos
+	var vr []string // verified repos
+	var ir []string // inaccessible repos
+
+	for _, r := range rs {
+		if r.Cloned == true {
+			cr = append(cr, r.Name)
+		}
+
+		if r.Verified == true {
+			vr = append(vr, r.Name)
+		}
+
+		if r.Verified == false {
+			ir = append(ir, r.Name)
+		}
+
+	}
+
+	// timer
+	t.markMoment("verify-divs")
+
+	// summary
+	var b bytes.Buffer
+
+	if len(vr) == len(rs) {
+		b.WriteString(e.ThumbsUp)
+	} else {
+		b.WriteString(e.Slash)
+	}
+
+	b.WriteString(" [")
+	b.WriteString(strconv.Itoa(len(vr)))
+	b.WriteString("/")
+	b.WriteString(strconv.Itoa(len(rs)))
+	b.WriteString("] repos verified")
+
+	if len(cr) >= 1 {
+		b.WriteString(", created (")
+		b.WriteString(strconv.Itoa(len(cr)))
+		b.WriteString(")")
+	}
+
+	b.WriteString(" {")
+	b.WriteString(t.getSplit().String())
+	b.WriteString(" / ")
+	b.WriteString(t.getTime().String())
+	b.WriteString("}")
+
+	targetPrint(f, b.String())
 }
 
 func (rs Repos) verifyChanges(e Emoji, f Flags, t *Timer) {

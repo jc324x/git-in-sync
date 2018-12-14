@@ -199,6 +199,7 @@ func printEmoji(n int) string {
 
 // --> Flags: struct collecting flag values
 
+// FLAG: silent error / warning flag?
 type Flags struct {
 	Mode    string
 	Clear   bool
@@ -475,10 +476,8 @@ type Repo struct {
 	// rs.verifyRepos -> gitUpstreamSHA
 	UpstreamSHA string // `git rev-parse @{u}`, "l00000ngSHA1slong324"
 
-	// ---------------------------------- old pattern below
-
 	// rs.verifyRepos -> gitMergeBaseSHA
-	RepoMergeSHA string // `git merge-base @ @{u}`, "l00000ngSHA1slong324"
+	MergeSHA string // `git merge-base @ @{u}`, "l00000ngSHA1slong324"
 
 	// rs.verifyRepos -> gitDiffsNameOnly
 	RepoDiffsNameOnly []string // `git diff --name-only @{u}`, []string
@@ -821,7 +820,7 @@ func (r *Repo) gitUpstreamSHA(e Emoji, f Flags) {
 	}
 }
 
-func (r *Repo) gitMergeBaseSHA() {
+func (r *Repo) gitMergeBaseSHA(e Emoji, f Flags) {
 
 	// return if not verified
 	if notVerified(r) {
@@ -832,15 +831,20 @@ func (r *Repo) gitMergeBaseSHA() {
 	args := []string{r.GitDir, r.WorkTree, "merge-base", "@", "@{u}"}
 	cmd := exec.Command("git", args...)
 	var out bytes.Buffer
+	var err bytes.Buffer
 	cmd.Stdout = &out
+	cmd.Stderr = &err
 	cmd.Run()
 
-	if str := out.String(); str != "" {
-		r.RepoMergeSHA = trim(out.String())
+	// check error, set value(s)
+	if err := err.String(); err != "" {
+		r.markError(e, f, err, "gitUpstreamSHA")
+	} else {
+		r.MergeSHA = markOut(out)
 	}
 }
 
-func (r *Repo) gitDiffsNameOnly() {
+func (r *Repo) gitDiffsNameOnly(e Emoji, f Flags) {
 
 	// return if not verified
 	if notVerified(r) {
@@ -851,12 +855,18 @@ func (r *Repo) gitDiffsNameOnly() {
 	args := []string{r.GitDir, r.WorkTree, "diff", "--name-only", "@{u}"}
 	cmd := exec.Command("git", args...)
 	var out bytes.Buffer
+	var err bytes.Buffer
 	cmd.Stdout = &out
+	cmd.Stderr = &err
 	cmd.Run()
+
+	if err := err.String(); err != "" {
+		r.markError(e, f, err, "gitUpstreamSHA")
+	}
 
 	if str := out.String(); str != "" {
 		r.RepoDiffsNameOnly = strings.Fields(str)
-		r.RepoDiffsSummary = sliceSummary(r.RepoDiffsNameOnly, 12)
+		r.RepoDiffsSummary = sliceSummary(r.RepoDiffsNameOnly)
 	} else {
 		r.RepoDiffsNameOnly = make([]string, 0)
 		r.RepoDiffsSummary = ""
@@ -968,11 +978,11 @@ func (r *Repo) getUpstreamStatus() {
 	}
 
 	switch {
-	case r.LocalSHA == r.RepoUpstreamSHA:
+	case r.LocalSHA == r.UpstreamSHA:
 		r.Upstream = "Up-To-Date"
-	case r.LocalSHA == r.RepoMergeSHA:
+	case r.LocalSHA == r.MergeSHA:
 		r.Upstream = "Behind"
-	case r.RepoUpstreamSHA == r.RepoMergeSHA:
+	case r.UpstreamSHA == r.MergeSHA:
 		r.Upstream = "Ahead"
 	}
 }
@@ -1137,9 +1147,9 @@ func (rs Repos) verifyRepos(e Emoji, f Flags, t *Timer) {
 			r.gitStatusPorcelain(e, f)
 			r.gitAbbrevRef(e, f)
 			r.gitLocalSHA(e, f)
-			r.gitUpstreamSHA()
-			r.gitMergeBaseSHA()
-			r.gitDiffsNameOnly()
+			r.gitUpstreamSHA(e, f)
+			r.gitMergeBaseSHA(e, f)
+			r.gitDiffsNameOnly(e, f)
 		}(rs[i])
 	}
 	wg.Wait()
@@ -1323,7 +1333,9 @@ func firstLine(s string) string {
 	}
 }
 
-func sliceSummary(sl []string, l int) string {
+func sliceSummary(sl []string) string {
+	l := 25 // limit
+
 	if len(sl) == 0 {
 		return ""
 	}

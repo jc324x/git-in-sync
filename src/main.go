@@ -653,16 +653,18 @@ func (r *Repo) gitClone(e Emoji, f Flags) {
 	// command
 	args := []string{"clone", r.RepoURL, r.RepoPath}
 	cmd := exec.Command("git", args...)
+	var out bytes.Buffer
 	var err bytes.Buffer
 	cmd.Stderr = &err
+	cmd.Stdout = &out
 	cmd.Run()
 
 	// check error, set value(s)
 	if err := err.String(); err != "" {
 		r.markError(e, f, err, "gitClone")
-	} else {
-		r.Cloned = true
 	}
+
+	r.Cloned = true
 }
 
 func (r *Repo) gitConfigOriginURL(e Emoji, f Flags) {
@@ -1350,10 +1352,11 @@ func (rs Repos) verifyRepos(e Emoji, f Flags, t *Timer) {
 	}
 	wg.Wait()
 
-	// track created, verified and missing divs
+	// track cloned, verified, inaccessible, up-to-date, pending
 	var cr []string // cloned repos
 	var vr []string // verified repos
 	var ir []string // inaccessible repos
+	// var utd []string // up-to-date
 
 	for _, r := range rs {
 		if r.Cloned == true {
@@ -1386,10 +1389,10 @@ func (rs Repos) verifyRepos(e Emoji, f Flags, t *Timer) {
 	b.WriteString(strconv.Itoa(len(vr)))
 	b.WriteString("/")
 	b.WriteString(strconv.Itoa(len(rs)))
-	b.WriteString("] repos verified")
+	b.WriteString("] repos up-to-date")
 
 	if len(cr) >= 1 {
-		b.WriteString(", created (")
+		b.WriteString(", cloned (")
 		b.WriteString(strconv.Itoa(len(cr)))
 		b.WriteString(")")
 	}

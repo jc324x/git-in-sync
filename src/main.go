@@ -462,12 +462,13 @@ type Repo struct {
 	GitPathVerified  bool   // true if GitPath verified
 	GitPathError     string // error if GitPathVerified is false
 	RepoCloned       bool   // true if Repo was cloned
-	RepoCloneError   string
+	GitError         string // &err.String()
+	GitError1        string // first line of r.GitError
+	GitErrorName     string // name of GitError, "git-clone"
 
 	// rs.verifyRepos -> gitConfigOriginURL
-	OriginURL         string // "https://github.com/jychri/git-in-sync"
-	OriginURLVerified bool   // true if RepoURL is verified
-	OriginURLError    string // error if URLVerified is false
+	OriginURL      string // "https://github.com/jychri/git-in-sync"
+	OriginURLError string // error if URLVerified is false
 
 	// rs.verifyRepos -> gitRemoteUpdate
 	RemoteUpdateOut      string // output of `git fetch origin`
@@ -684,17 +685,20 @@ func (r *Repo) gitVerify(e Emoji, f Flags) {
 	}
 }
 
-func (r *Repo) evaluateErrorBuff(err bytes.Buffer, name string) {
-	// if strings.Contains(r.RepoCloneError, "warning") {
-	// 	targetPrint(f, "%v %v (%v)", e.Warning, r.RepoName, firstLine(r.RemoteUpdateError))
-	// 	r.RemoteUpdateVerified = true
-	// }
+func (r *Repo) evalBuffError(e Emoji, f Flags, err bytes.Buffer, name string) {
+	r.GitErrorName = name
+	r.GitError = err.String()
+	r.GitError1 = firstLine(err.String())
 
-	// if strings.Contains(r.RepoCloneError, "fatal") {
-	// 	targetPrint(f, "%v %v (%v)", e.Slash, r.RepoName, firstLine(r.RemoteUpdateError))
-	// 	r.RemoteUpdateVerified = false
-	// }
+	if strings.Contains(r.GitError1, "warning") {
+		targetPrint(f, "%v %v (%v)", e.Warning, r.RepoName, r.GitError1)
+		r.RepoVerified = true
+	}
 
+	if strings.Contains(r.GitError1, "fatal") {
+		targetPrint(f, "%v %v (%v)", e.Slash, r.RepoName, r.GitError1)
+		r.RepoVerified = false
+	}
 }
 
 func (r *Repo) gitClone(e Emoji, f Flags) {
@@ -704,34 +708,14 @@ func (r *Repo) gitClone(e Emoji, f Flags) {
 	// command
 	args := []string{"clone", r.RepoURL, r.RepoPath}
 	cmd := exec.Command("git", args...)
-
 	var err bytes.Buffer
 	cmd.Stderr = &err
-
-	if str := err.String(); str != "" {
-		r.evaluateErrorBuff(err, "git-clone")
-	}
-
-	// -------
-
-	if str := err.String(); str != "" {
-		r.RepoCloneError = firstLine(err.String())
-	}
-
-	if r.RepoCloneError != "" {
-
-		if strings.Contains(r.RepoCloneError, "warning") {
-			targetPrint(f, "%v %v (%v)", e.Warning, r.RepoName, firstLine(r.RemoteUpdateError))
-			r.RemoteUpdateVerified = true
-		}
-
-		if strings.Contains(r.RepoCloneError, "fatal") {
-			targetPrint(f, "%v %v (%v)", e.Slash, r.RepoName, firstLine(r.RemoteUpdateError))
-			r.RemoteUpdateVerified = false
-		}
-	}
-
 	cmd.Run()
+
+	// error check
+	if str := err.String(); str != "" {
+		r.evalBuffError(e, f, err, "git-clone")
+	}
 }
 
 func (r *Repo) gitConfigOriginURL(e Emoji, f Flags) {
@@ -758,7 +742,7 @@ func (r *Repo) gitConfigOriginURL(e Emoji, f Flags) {
 	// switch
 	switch {
 	case r.OriginURL == r.RepoURL:
-		r.OriginURLVerified = true
+		r.RepoVerified = true
 	case r.OriginURL == "":
 		r.OriginURLError = "fatal: 'origin' does not appear to be a git repository"
 		r.RepoVerified = false

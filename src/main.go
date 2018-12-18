@@ -489,13 +489,17 @@ type Repo struct {
 	Deletions  int    // z
 
 	// rs.verifyRepos -> gitUpstream
-	Upstream string // getUpstreamStatus
+	Upstream string // ...
 
 	// rs.verifyRepos -> gitUntracked
 	UntrackedFiles   []string
 	UntrackedSummary string
 	Untracked        bool
 
+	// rs.verifyRepos -> setStatus
+	Category string // Complete, Pending, Skipped
+
+	// ----------------
 	// rs.
 
 	// setActions
@@ -591,12 +595,12 @@ func (r *Repo) markError(e Emoji, f Flags, err string, name string) {
 	r.ShortError = firstLine(err)
 
 	if strings.Contains(r.ShortError, "warning") {
-		targetPrint(f, "%v %v (%v)", e.Warning, r.Name, r.ShortError)
+		// targetPrint(f, "%v %v (%v)", e.Warning, r.Name, r.ShortError)
 		r.Verified = true
 	}
 
 	if strings.Contains(r.ShortError, "fatal") {
-		targetPrint(f, "%v %v (%v)", e.Slash, r.Name, r.ShortError)
+		// targetPrint(f, "%v %v (%v)", e.Slash, r.Name, r.ShortError)
 		r.Verified = false
 	}
 }
@@ -693,7 +697,7 @@ func (r *Repo) gitConfigOriginURL(e Emoji, f Flags) {
 	case r.OriginURL == "":
 		r.markError(e, f, "fatal: 'origin' does not appear to be a git repository", "gitConfigOriginURL")
 	case r.OriginURL != r.RepoURL:
-		r.markError(e, f, "warning: RepoURL != OriginURL", "gitConfigOriginURL")
+		r.markError(e, f, "fatal: RepoURL != OriginURL", "gitConfigOriginURL")
 	}
 }
 
@@ -711,9 +715,13 @@ func (r *Repo) gitRemoteUpdate(e Emoji, f Flags) {
 	cmd.Stderr = &err
 	cmd.Run()
 
-	// check error, set value(s)
-	if err := err.String(); err != "" {
-		r.markError(e, f, err, "gitRemoteUpdate")
+	// Ignore diff between final "/" and "/.git" in URLs, catch other errors
+	eval := err.String()
+
+	switch {
+	case strings.Contains(eval, "warning: redirecting") && strings.Contains(eval, ".git"):
+	case eval != "":
+		r.markError(e, f, eval, "gitRemoteUpdate")
 	}
 }
 
@@ -953,11 +961,6 @@ func (r *Repo) gitUntracked(e Emoji, f Flags) {
 
 func (r *Repo) setStatus(e Emoji, f Flags) {
 
-	// return if not verified
-	if notVerified(r) {
-		return
-	}
-
 	switch {
 	case r.LocalSHA == r.UpstreamSHA:
 		r.Status = "Up-To-Date"
@@ -968,6 +971,9 @@ func (r *Repo) setStatus(e Emoji, f Flags) {
 	}
 
 	switch {
+	case r.Verified == false:
+		r.Status = "Unverified"
+		r.Category = "Skipped"
 	case (r.Clean == true && r.Untracked == false && r.Status == "Ahead"):
 		r.Status = "Ahead"
 	case (r.Clean == true && r.Untracked == false && r.Status == "Behind"):
@@ -986,11 +992,30 @@ func (r *Repo) setStatus(e Emoji, f Flags) {
 		r.Status = "UntrackedAhead"
 	case (r.Clean == false && r.Untracked == true && r.Status == "Behind"):
 		r.Status = "UntrackedBehind"
+		r.Category = "Pending"
 	case (r.Clean == true && r.Untracked == false && r.Status == "Up-To-Date"):
 		r.Status = "Up-To-Date"
-		targetPrint(f, "%v %v is up to date!", e.Checkmark, r.Name)
+		r.Category = "Complete"
 	default:
-		r.markError(e, f, "wtf", "setStatus")
+		r.Status = "Diverged"
+		r.Category = "Skipped"
+	}
+
+	if r.ErrorName != "" {
+		fmt.Println(r.Name)
+		fmt.Println(r.Category)
+		fmt.Println(r.Verified)
+		fmt.Println(r.ErrorMessage)
+	}
+
+	switch r.Category {
+	case "Complete":
+		targetPrint(f, "%v %v is up to date!", e.Checkmark, r.Name)
+	case "Pending":
+		targetPrint(f, "%v %v needs attention...", e.Warning, r.Name)
+	case "Skipped":
+		targetPrint(f, "%v %v is inaccessible", e.Slash, r.Name)
+
 	}
 
 }
@@ -1212,7 +1237,7 @@ func sliceSummary(sl []string) string {
 	return b.String()
 }
 
-// --> Main functions
+// --> main fns
 
 func initRun() (e Emoji, f Flags, rs Repos, t *Timer) {
 
@@ -1253,7 +1278,7 @@ func (rs Repos) verifyDivs(e Emoji, f Flags, t *Timer) {
 	// track created, verified and missing divs
 	var cd []string // created divs
 	var vd []string // verified divs
-	var id []string // inaccessible divs
+	var id []string // inaccessible divs // --> FLAG: change to unverified?
 
 	for _, r := range rs {
 
@@ -1348,6 +1373,7 @@ func (rs Repos) verifyRepos(e Emoji, f Flags, t *Timer) {
 			r.gitShortstat(e, f)
 			r.gitUntracked(e, f)
 			r.setStatus(e, f)
+			// TESTING: fmt.Printf("%v - %v:%v\n", r.Name, r.ErrorName, r.ShortError)
 		}(rs[i])
 	}
 	wg.Wait()

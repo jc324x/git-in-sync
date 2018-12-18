@@ -372,13 +372,13 @@ func initPrint(e Emoji, f Flags, t *Timer) {
 	}
 
 	// print flag init
-	if ft, err := t.getMoment("flags"); err == nil {
+	if ft, err := t.getMoment("init-flags"); err == nil {
 		targetPrint(f, "%v parsing flags", e.FlagInHole)
 		targetPrint(f, "%v [%v] flags (%v) {%v / %v}", e.Flag, f.Count, f.Summary, ft.Split, ft.Start)
 	}
 
 	// print emoji init
-	if et, err := t.getMoment("emoji"); err == nil {
+	if et, err := t.getMoment("init-emoji"); err == nil {
 		targetPrint(f, "%v initializing emoji", e.CrystalBall)
 		targetPrint(f, "%v [%v] emoji {%v / %v}", e.DirectHit, e.Count, et.Split, et.Start)
 	}
@@ -1035,7 +1035,7 @@ type Repos []*Repo
 func initRepos(c Config, e Emoji, f Flags, t *Timer) (rs Repos) {
 
 	// print
-	targetPrint(f, "%v parsing repos", e.Pager)
+	targetPrint(f, "%v parsing divs|repos", e.Pager)
 
 	// initialize Repos from Config
 	for _, bl := range c.Bundles {
@@ -1050,8 +1050,20 @@ func initRepos(c Config, e Emoji, f Flags, t *Timer) (rs Repos) {
 	// timer
 	t.markMoment("init-repos")
 
+	// sort
+	rs.sortByPath()
+
+	// get all divs, remove duplicates
+	var dvs []string // divs
+
+	for _, r := range rs {
+		dvs = append(dvs, r.DivPath)
+	}
+
+	dvs = removeDuplicates(dvs)
+
 	// print
-	targetPrint(f, "%v [%v] repos {%v / %v}", e.FaxMachine, len(rs), t.getSplit(), t.getTime())
+	targetPrint(f, "%v [%v|%v] divs|repos {%v / %v}", e.FaxMachine, len(dvs), len(rs), t.getSplit(), t.getTime())
 
 	return rs
 }
@@ -1177,7 +1189,7 @@ func lastPathSelection(p string) string {
 }
 
 func targetPrint(f Flags, s string, z ...interface{}) {
-	var p string
+	var p string // print
 	switch {
 	case oneLine(f):
 	case isVerbose(f) && hasEmoji(f):

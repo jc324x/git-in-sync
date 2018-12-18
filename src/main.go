@@ -1375,6 +1375,11 @@ func (rs Repos) verifyDivs(e Emoji, f Flags, t *Timer) {
 
 func (rs Repos) verifyRepos(e Emoji, f Flags, t *Timer) {
 
+	// check for clone-able first?
+	// clone here...
+
+	// verify only present?
+
 	// print
 	targetPrint(f, "%v verifying repos [%v]", e.Truck, len(rs))
 

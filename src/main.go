@@ -450,13 +450,14 @@ type Repo struct {
 	GitPath      string // "/Users/jychri/dev/go-lang/git-in-sync/.git"
 	GitDir       string // "--git-dir=/Users/jychri/dev/go-lang/git-in-sync/.git"
 	WorkTree     string // "--work-tree=/Users/jychri/dev/go-lang/git-in-sync"
-	RepoURL      string // "https://github.com/jychri/git-in-sync"
+	URL          string // "https://github.com/jychri/git-in-sync"
 
 	// rs.verifyDivs, rs.verifyRepos
 	Verified     bool   // true if Repo continues to pass verification
 	ErrorMessage string // the last error message
-	ShortError   string // first line of the last error message
 	ErrorName    string // name of the last error
+	ErrorFirst   string // first line of the last error message
+	ErrorShort   string // message in matched short form
 
 	// rs.verifyRepos -> gitVerify -> gitClone
 	Cloned bool // true if Repo was cloned
@@ -576,7 +577,7 @@ func initRepo(zd string, zu string, zr string, bp string, rn string) *Repo {
 	b.WriteString(r.ZoneUser)
 	b.WriteString("/")
 	b.WriteString(r.Name)
-	r.RepoURL = b.String()
+	r.URL = b.String()
 
 	return r
 }
@@ -592,15 +593,13 @@ func notVerified(r *Repo) bool {
 func (r *Repo) markError(e Emoji, f Flags, err string, name string) {
 	r.ErrorMessage = err
 	r.ErrorName = name
-	r.ShortError = firstLine(err)
+	r.ErrorFirst = firstLine(err)
 
-	if strings.Contains(r.ShortError, "warning") {
-		// targetPrint(f, "%v %v (%v)", e.Warning, r.Name, r.ShortError)
+	if strings.Contains(r.ErrorFirst, "warning") {
 		r.Verified = true
 	}
 
-	if strings.Contains(r.ShortError, "fatal") {
-		// targetPrint(f, "%v %v (%v)", e.Slash, r.Name, r.ShortError)
+	if strings.Contains(r.ErrorFirst, "fatal") {
 		r.Verified = false
 	}
 }
@@ -655,7 +654,7 @@ func (r *Repo) gitClone(e Emoji, f Flags) {
 	targetPrint(f, "%v cloning %v {%v}", e.Box, r.Name, r.ZoneDivision)
 
 	// command
-	args := []string{"clone", r.RepoURL, r.RepoPath}
+	args := []string{"clone", r.URL, r.RepoPath}
 	cmd := exec.Command("git", args...)
 	var out bytes.Buffer
 	var err bytes.Buffer
@@ -696,8 +695,8 @@ func (r *Repo) gitConfigOriginURL(e Emoji, f Flags) {
 	switch {
 	case r.OriginURL == "":
 		r.markError(e, f, "fatal: 'origin' does not appear to be a git repository", "gitConfigOriginURL")
-	case r.OriginURL != r.RepoURL:
-		r.markError(e, f, "fatal: RepoURL != OriginURL", "gitConfigOriginURL")
+	case r.OriginURL != r.URL:
+		r.markError(e, f, "fatal: URL != OriginURL", "gitConfigOriginURL")
 	}
 }
 
@@ -715,11 +714,13 @@ func (r *Repo) gitRemoteUpdate(e Emoji, f Flags) {
 	cmd.Stderr = &err
 	cmd.Run()
 
-	// Ignore diff between final "/" and "/.git" in URLs, catch other errors
+	// Warnings for redirects to "*./git" can be ignored.
 	eval := err.String()
+	wgit := strings.Join([]string{r.URL}, "/.git") // (w)ith .(git)
 
 	switch {
-	case strings.Contains(eval, "warning: redirecting") && strings.Contains(eval, ".git"):
+	case strings.Contains(eval, "warning: redirecting") && strings.Contains(eval, wgit):
+		// fmt.Printf("%v - redirect to .git\n", r.Name)
 	case eval != "":
 		r.markError(e, f, eval, "gitRemoteUpdate")
 	}
@@ -1001,21 +1002,26 @@ func (r *Repo) setStatus(e Emoji, f Flags) {
 		r.Category = "Skipped"
 	}
 
-	if r.ErrorName != "" {
-		fmt.Println(r.Name)
-		fmt.Println(r.Category)
-		fmt.Println(r.Verified)
-		fmt.Println(r.ErrorMessage)
+	if r.ErrorMessage != "" {
+		err := r.ErrorMessage
+		switch {
+		case strings.Contains(err, "fatal: ambiguous argument 'HEAD'"):
+			r.ErrorShort = "fatal: empty repository"
+		case strings.Contains(err, "fatal: 'origin' does not appear to be a git repository"):
+			r.ErrorShort = "fatal: 'origin' not set"
+		case strings.Contains(err, "fatal: URL != OriginURL"):
+			r.ErrorShort = "fatal: URL mismatch"
+		}
 	}
 
 	switch r.Category {
 	case "Complete":
-		targetPrint(f, "%v %v is up to date!", e.Checkmark, r.Name)
+		targetPrint(f, "%v %v", e.Checkmark, r.Name)
+		// targetPrint(f, "%v %v is up to date!", e.Checkmark, r.Name)
 	case "Pending":
 		targetPrint(f, "%v %v needs attention...", e.Warning, r.Name)
 	case "Skipped":
-		targetPrint(f, "%v %v is inaccessible", e.Slash, r.Name)
-
+		targetPrint(f, "%v %v %v", e.Slash, r.Name, r.ErrorShort)
 	}
 
 }
@@ -1408,14 +1414,14 @@ func (rs Repos) verifyRepos(e Emoji, f Flags, t *Timer) {
 	if len(vr) == len(rs) {
 		b.WriteString(e.ThumbsUp)
 	} else {
-		b.WriteString(e.Slash)
+		b.WriteString(e.Traffic)
 	}
 
 	b.WriteString(" [")
 	b.WriteString(strconv.Itoa(len(vr)))
 	b.WriteString("/")
 	b.WriteString(strconv.Itoa(len(rs)))
-	b.WriteString("] repos up-to-date")
+	b.WriteString("] repos complete")
 
 	if len(cr) >= 1 {
 		b.WriteString(", cloned (")

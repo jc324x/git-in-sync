@@ -454,6 +454,9 @@ type Repo struct {
 	WorkTree     string // "--work-tree=/Users/jychri/dev/go-lang/git-in-sync"
 	URL          string // "https://github.com/jychri/git-in-sync"
 
+	// rs.verifyRepos
+	PendingClone bool // true if RepoPath or GitPath are empty
+
 	// rs.verifyDivs, rs.verifyRepos
 	Verified     bool   // true if Repo continues to pass verification
 	ErrorMessage string // the last error message
@@ -610,7 +613,7 @@ func markOut(b bytes.Buffer) string {
 	return strings.TrimSuffix(b.String(), "\n")
 }
 
-func (r *Repo) gitVerify(e Emoji, f Flags) {
+func (r *Repo) gitMarkClone(e Emoji, f Flags) {
 
 	// return if not verified
 	if notVerified(r) {
@@ -627,9 +630,11 @@ func (r *Repo) gitVerify(e Emoji, f Flags) {
 	case isDirectory(rinfo) && notEmpty(r.RepoPath) && os.IsNotExist(gerr):
 		r.markError(e, f, "fatal: directory occupying path", "git-verify")
 	case isDirectory(rinfo) && isEmpty(r.RepoPath) && isActive(f):
-		r.gitClone(e, f)
+		// r.gitClone(e, f)
+		r.PendingClone = true
 	case os.IsNotExist(rerr) && os.IsNotExist(gerr) && isActive(f):
-		r.gitClone(e, f)
+		// r.gitClone(e, f)
+		r.PendingClone = true
 	case isDirectory(rinfo) && isEmpty(r.RepoPath) && isDry(f):
 		r.markError(e, f, "fatal: git clone (dry run)", "git-verify")
 	case os.IsNotExist(rerr) && os.IsNotExist(gerr) && isActive(f):
@@ -640,36 +645,40 @@ func (r *Repo) gitVerify(e Emoji, f Flags) {
 
 	// check if RepoPath and GitPath are accessible for cloned repos
 
-	if r.Cloned == true {
-		rinfo, rerr = os.Stat(r.RepoPath)
-		ginfo, gerr = os.Stat(r.GitPath)
+	// if r.Cloned == true {
+	// 	rinfo, rerr = os.Stat(r.RepoPath)
+	// 	ginfo, gerr = os.Stat(r.GitPath)
 
-		if isDirectory(rinfo) && isDirectory(ginfo) {
-			r.Verified = true
-		}
-	}
+	// 	if isDirectory(rinfo) && isDirectory(ginfo) {
+	// 		r.Verified = true
+	// 	}
+	// }
 }
 
 func (r *Repo) gitClone(e Emoji, f Flags) {
 
-	// print
-	targetPrint(f, "%v cloning %v {%v}", e.Box, r.Name, r.ZoneDivision)
+	if r.PendingClone == true {
+		// print
+		targetPrint(f, "%v cloning %v {%v}", e.Box, r.Name, r.ZoneDivision)
 
-	// command
-	args := []string{"clone", r.URL, r.RepoPath}
-	cmd := exec.Command("git", args...)
-	var out bytes.Buffer
-	var err bytes.Buffer
-	cmd.Stderr = &err
-	cmd.Stdout = &out
-	cmd.Run()
+		// command
+		args := []string{"clone", r.URL, r.RepoPath}
+		cmd := exec.Command("git", args...)
+		var out bytes.Buffer
+		var err bytes.Buffer
+		cmd.Stderr = &err
+		cmd.Stdout = &out
+		cmd.Run()
 
-	// check error, set value(s)
-	if err := err.String(); err != "" {
-		r.markError(e, f, err, "gitClone")
+		// check error, set value(s)
+		if err := err.String(); err != "" {
+			r.markError(e, f, err, "gitClone")
+		}
+
+		r.Cloned = true
+
 	}
 
-	r.Cloned = true
 }
 
 func (r *Repo) gitConfigOriginURL(e Emoji, f Flags) {
@@ -1016,15 +1025,15 @@ func (r *Repo) setStatus(e Emoji, f Flags) {
 		}
 	}
 
-	switch r.Category {
-	case "Complete":
-		targetPrint(f, "%v %v", e.Checkmark, r.Name)
-		// targetPrint(f, "%v %v is up to date!", e.Checkmark, r.Name)
-	case "Pending":
-		targetPrint(f, "%v %v needs attention...", e.Warning, r.Name)
-	case "Skipped":
-		targetPrint(f, "%v %v %v", e.Slash, r.Name, r.ErrorShort)
-	}
+	// switch r.Category {
+	// case "Complete":
+	// 	targetPrint(f, "%v %v", e.Checkmark, r.Name)
+	// 	// targetPrint(f, "%v %v is up to date!", e.Checkmark, r.Name)
+	// case "Pending":
+	// 	targetPrint(f, "%v %v needs attention...", e.Warning, r.Name)
+	// case "Skipped":
+	// 	targetPrint(f, "%v %v %v", e.Slash, r.Name, r.ErrorShort)
+	// }
 
 }
 
@@ -1374,6 +1383,23 @@ func (rs Repos) verifyDivs(e Emoji, f Flags, t *Timer) {
 }
 
 func (rs Repos) verifyRepos(e Emoji, f Flags, t *Timer) {
+	var pcr []string // pending clone repos
+
+	for _, r := range rs {
+		r.gitMarkClone(e, f)
+
+		if r.PendingClone == true {
+			pcr = append(pcr, r.Name)
+		}
+	}
+
+	if len(pcr) >= 1 {
+		targetPrint(f, "%v cloning %v", e.Sheep, len(pcr))
+	}
+
+	// targetPrint(f, ))
+
+	// getSpace()
 
 	// check for clone-able first?
 	// clone here...
@@ -1389,7 +1415,8 @@ func (rs Repos) verifyRepos(e Emoji, f Flags, t *Timer) {
 		wg.Add(1)
 		go func(r *Repo) {
 			defer wg.Done()
-			r.gitVerify(e, f)
+			// r.gitVerify(e, f)
+			r.gitClone(e, f)
 			r.gitConfigOriginURL(e, f)
 			r.gitRemoteUpdate(e, f)
 			r.gitStatusPorcelain(e, f)
@@ -1401,7 +1428,6 @@ func (rs Repos) verifyRepos(e Emoji, f Flags, t *Timer) {
 			r.gitShortstat(e, f)
 			r.gitUntracked(e, f)
 			r.setStatus(e, f)
-			// TESTING: fmt.Printf("%v - %v:%v\n", r.Name, r.ErrorName, r.ShortError)
 		}(rs[i])
 	}
 	wg.Wait()
@@ -1410,7 +1436,6 @@ func (rs Repos) verifyRepos(e Emoji, f Flags, t *Timer) {
 	var cr []string // cloned repos
 	var vr []string // verified repos
 	var ir []string // inaccessible repos
-	// var utd []string // up-to-date
 
 	for _, r := range rs {
 		if r.Cloned == true {

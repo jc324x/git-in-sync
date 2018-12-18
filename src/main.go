@@ -1444,6 +1444,8 @@ func (rs Repos) verifyRepos(e Emoji, f Flags, t *Timer) {
 	b.WriteString("}")
 
 	targetPrint(f, b.String())
+
+	b.Reset()
 }
 
 func (rs Repos) verifyChanges(e Emoji, f Flags, t *Timer) {

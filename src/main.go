@@ -1383,18 +1383,51 @@ func (rs Repos) verifyDivs(e Emoji, f Flags, t *Timer) {
 }
 
 func (rs Repos) verifyRepos(e Emoji, f Flags, t *Timer) {
-	var pcr []string // pending clone repos
+	var pc []string // pending clone repos
 
 	for _, r := range rs {
 		r.gitMarkClone(e, f)
 
 		if r.PendingClone == true {
-			pcr = append(pcr, r.Name)
+			pc = append(pc, r.Name)
 		}
 	}
 
-	if len(pcr) >= 1 {
-		targetPrint(f, "%v cloning %v", e.Sheep, len(pcr))
+	if len(pc) >= 1 {
+		targetPrint(f, "%v cloning [%v]", e.Sheep, len(pc))
+	}
+
+	// verify each repo (async)
+	var wg sync.WaitGroup
+	for i := range rs {
+		wg.Add(1)
+		go func(r *Repo) {
+			defer wg.Done()
+			// r.gitVerify(e, f)
+			r.gitClone(e, f)
+		}(rs[i])
+	}
+	wg.Wait()
+
+	var cr []string // cloned repos
+
+	for _, r := range rs {
+		if r.Cloned == true {
+			cr = append(cr, r.Name)
+		}
+	}
+
+	// summary
+	var b bytes.Buffer
+
+	if len(cr) >= 1 {
+		b.WriteString(e.Sheep)
+		b.WriteString(" [")
+		b.WriteString(strconv.Itoa(len(cr)))
+		b.WriteString("/")
+		b.WriteString(strconv.Itoa(len(rs)))
+		b.WriteString("] cloned")
+		targetPrint(f, b.String())
 	}
 
 	// targetPrint(f, ))
@@ -1410,13 +1443,13 @@ func (rs Repos) verifyRepos(e Emoji, f Flags, t *Timer) {
 	targetPrint(f, "%v verifying repos [%v]", e.Truck, len(rs))
 
 	// verify each repo (async)
-	var wg sync.WaitGroup
+	// var wg sync.WaitGroup
 	for i := range rs {
 		wg.Add(1)
 		go func(r *Repo) {
 			defer wg.Done()
 			// r.gitVerify(e, f)
-			r.gitClone(e, f)
+			// r.gitClone(e, f)
 			r.gitConfigOriginURL(e, f)
 			r.gitRemoteUpdate(e, f)
 			r.gitStatusPorcelain(e, f)
@@ -1433,14 +1466,13 @@ func (rs Repos) verifyRepos(e Emoji, f Flags, t *Timer) {
 	wg.Wait()
 
 	// track cloned, verified, inaccessible, up-to-date, pending
-	var cr []string // cloned repos
 	var vr []string // verified repos
 	var ir []string // inaccessible repos
 
 	for _, r := range rs {
-		if r.Cloned == true {
-			cr = append(cr, r.Name)
-		}
+		// if r.Cloned == true {
+		// 	cr = append(cr, r.Name)
+		// }
 
 		if r.Verified == true {
 			vr = append(vr, r.Name)
@@ -1454,17 +1486,6 @@ func (rs Repos) verifyRepos(e Emoji, f Flags, t *Timer) {
 
 	// timer
 	t.markMoment("verify-divs")
-
-	// summary
-	var b bytes.Buffer
-
-	if len(cr) >= 1 {
-		b.WriteString(e.Sheep)
-		b.WriteString(" [")
-		b.WriteString(strconv.Itoa(len(cr)))
-		b.WriteString("] cloned")
-		targetPrint(f, b.String())
-	}
 
 	b.Reset()
 	if len(vr) == len(rs) {

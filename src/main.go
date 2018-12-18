@@ -119,6 +119,7 @@ type Emoji struct {
 	Satellite            string
 	SatelliteDish        string
 	Ship                 string
+	Sheep                string
 	Slash                string
 	Squirrel             string
 	Telescope            string
@@ -173,6 +174,7 @@ func initEmoji(f Flags, t *Timer) (e Emoji) {
 	e.SatelliteDish = printEmoji(128225)
 	e.Slash = printEmoji(128683)
 	e.Ship = printEmoji(128674)
+	e.Sheep = printEmoji(128017)
 	e.Squirrel = printEmoji(128063)
 	e.Telescope = printEmoji(128301)
 	e.Text = printEmoji(128172)

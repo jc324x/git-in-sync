@@ -1331,6 +1331,15 @@ func (rs Repos) verifyDivs(e Emoji, f Flags, t *Timer) {
 	// summary
 	var b bytes.Buffer
 
+	if len(cd) >= 1 {
+		b.WriteString(e.Outbox)
+		b.WriteString(" [")
+		b.WriteString(strconv.Itoa(len(cd)))
+		b.WriteString("] divs created")
+		targetPrint(f, b.String())
+	}
+
+	b.Reset()
 	if len(dvs) == len(vd) {
 		b.WriteString(e.ThumbsUp)
 	} else {
@@ -1342,12 +1351,6 @@ func (rs Repos) verifyDivs(e Emoji, f Flags, t *Timer) {
 	b.WriteString("/")
 	b.WriteString(strconv.Itoa(len(dvs)))
 	b.WriteString("] divs verified")
-
-	if len(cd) >= 1 {
-		b.WriteString(", created (")
-		b.WriteString(strconv.Itoa(len(cd)))
-		b.WriteString(")")
-	}
 
 	b.WriteString(" {")
 	b.WriteString(t.getSplit().String())
@@ -1413,6 +1416,15 @@ func (rs Repos) verifyRepos(e Emoji, f Flags, t *Timer) {
 	// summary
 	var b bytes.Buffer
 
+	if len(cr) >= 1 {
+		b.WriteString(e.Sheep)
+		b.WriteString(" [")
+		b.WriteString(strconv.Itoa(len(cr)))
+		b.WriteString("] cloned")
+		targetPrint(f, b.String())
+	}
+
+	b.Reset()
 	if len(vr) == len(rs) {
 		b.WriteString(e.ThumbsUp)
 	} else {
@@ -1424,12 +1436,6 @@ func (rs Repos) verifyRepos(e Emoji, f Flags, t *Timer) {
 	b.WriteString("/")
 	b.WriteString(strconv.Itoa(len(rs)))
 	b.WriteString("] repos complete")
-
-	if len(cr) >= 1 {
-		b.WriteString(", cloned (")
-		b.WriteString(strconv.Itoa(len(cr)))
-		b.WriteString(")")
-	}
 
 	b.WriteString(" {")
 	b.WriteString(t.getSplit().String())

@@ -1072,6 +1072,28 @@ func (r *Repo) setStatus(e Emoji, f Flags) {
 	}
 }
 
+// in, err := rdr.ReadString('\n')
+
+func (r *Repo) checkConfirmed(in string, err error) {
+	// return if error
+	if err != nil {
+		r.GitConfirmed = false
+		return
+	}
+
+	// trim trailing new line
+	in = strings.TrimSuffix(in, "\n")
+
+	switch in {
+	case "please", "y", "yes", "ys", "1", "ok", "push", "pull", "sure", "you betcha", "do it":
+		r.GitConfirmed = true
+	case "n", "no", "nah", "0", "stop", "skip", "abort", "halt", "quit":
+		r.GitConfirmed = false
+	default:
+		r.GitConfirmed = false
+	}
+}
+
 // --> Repos: Collection of Repos
 
 type Repos []*Repo
@@ -1606,14 +1628,10 @@ func (rs Repos) verifyChanges(e Emoji, f Flags, t *Timer) {
 
 	if len(prs) >= 1 {
 		for _, r := range prs {
-			// fmt.Printf("%v: clean (%v) untracked:(%v) status: (%v) \n", r.Name, r.Clean, r.Untracked, r.Status)
-			// case (r.Clean == false && r.Untracked == true && r.Status == "Up-To-Date"):
-			// fmt.Println(r.Name)
-			// fmt.Println(r.Status)
-			// fmt.Println(r.Category)
 
 			var b bytes.Buffer
 
+			// print - 1 of 2
 			switch r.Status {
 			case "Ahead":
 				b.WriteString(e.Bunny)
@@ -1678,10 +1696,10 @@ func (rs Repos) verifyChanges(e Emoji, f Flags, t *Timer) {
 				b.WriteString(r.UpstreamBranch)
 			}
 
-			// print prompt (part 1)
 			targetPrint(f, b.String())
 
-			// print prompt (part 2)
+			// print - 2 of 2
+
 			switch r.Status {
 			case "Ahead":
 				r.GitAction = "push"
@@ -1715,9 +1733,13 @@ func (rs Repos) verifyChanges(e Emoji, f Flags, t *Timer) {
 			rdr := bufio.NewReader(os.Stdin)
 			in, err := rdr.ReadString('\n')
 
+			r.checkConfirmed(in, err)
+			// r.checkMessage(in, err)
+
 			if err != nil {
 				r.GitConfirmed = false
 			} else {
+				// r.checkInput(in)
 				in = strings.TrimSuffix(in, "\n")
 				switch in {
 				case "please", "y", "yes", "ys", "1", "ok", "push", "pull", "sure", "you betcha", "do it":
@@ -1730,11 +1752,7 @@ func (rs Repos) verifyChanges(e Emoji, f Flags, t *Timer) {
 			}
 
 			if r.GitConfirmed == true && strings.Contains(r.GitAction, "commit") {
-				if hasEmoji(f) {
-					fmt.Printf("%v commit message: ", e.Memo)
-				} else {
-					fmt.Printf("commit message: ")
-				}
+				targetPrint(f, "%v commit message: ", e.Memo)
 
 				rdr := bufio.NewReader(os.Stdin)
 				in, _ := rdr.ReadString('\n')

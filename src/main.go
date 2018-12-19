@@ -1290,7 +1290,7 @@ func (rs Repos) verifyDivs(e Emoji, f Flags, t *Timer) {
 	dvs = removeDuplicates(dvs)
 	zdvs = removeDuplicates(zdvs)
 
-	zds := sliceSummary(zdvs, 20) // zone division summary
+	zds := sliceSummary(zdvs, 25) // zone division summary
 
 	// print
 	targetPrint(f, "%v  verifying divs [%v](%v)", e.FileCabinet, len(dvs), zds)
@@ -1343,15 +1343,6 @@ func (rs Repos) verifyDivs(e Emoji, f Flags, t *Timer) {
 	// summary
 	var b bytes.Buffer
 
-	if len(cd) >= 1 {
-		b.WriteString(e.Outbox)
-		b.WriteString(" [")
-		b.WriteString(strconv.Itoa(len(cd)))
-		b.WriteString("] divs created")
-		targetPrint(f, b.String())
-	}
-
-	b.Reset()
 	if len(dvs) == len(vd) {
 		b.WriteString(e.Briefcase)
 	} else {
@@ -1363,6 +1354,12 @@ func (rs Repos) verifyDivs(e Emoji, f Flags, t *Timer) {
 	b.WriteString("/")
 	b.WriteString(strconv.Itoa(len(dvs)))
 	b.WriteString("] divs verified")
+
+	if len(cd) >= 1 {
+		b.WriteString(", created (")
+		b.WriteString(strconv.Itoa(len(cd)))
+		b.WriteString(")")
+	}
 
 	b.WriteString(" {")
 	b.WriteString(t.getSplit().String())
@@ -1436,9 +1433,16 @@ func (rs Repos) verifyCloned(e Emoji, f Flags, t *Timer) {
 }
 
 func (rs Repos) verifyRepos(e Emoji, f Flags, t *Timer) {
+	var rn []string // repo names
+
+	for _, r := range rs {
+		rn = append(rn, r.Name)
+	}
+
+	rns := sliceSummary(rn, 25)
 
 	// print
-	targetPrint(f, "%v  verifying repos [%v]", e.Satellite, len(rs))
+	targetPrint(f, "%v  verifying repos [%v](%v)", e.Satellite, len(rs), rns)
 
 	// verify each repo (async)
 	var wg sync.WaitGroup
@@ -1487,7 +1491,7 @@ func (rs Repos) verifyRepos(e Emoji, f Flags, t *Timer) {
 	var b bytes.Buffer
 
 	if len(cr) == len(rs) {
-		b.WriteString(e.ThumbsUp)
+		b.WriteString(e.Checkmark)
 	} else {
 		b.WriteString(e.Traffic)
 	}
@@ -1496,14 +1500,9 @@ func (rs Repos) verifyRepos(e Emoji, f Flags, t *Timer) {
 	b.WriteString(strconv.Itoa(len(cr)))
 	b.WriteString("/")
 	b.WriteString(strconv.Itoa(len(rs)))
-	b.WriteString("] complete (")
-
-	crs := sliceSummary(cr, 15)
-	b.WriteString(crs)
+	b.WriteString("] complete {")
 
 	tr := time.Millisecond // truncate
-
-	b.WriteString(") {")
 	b.WriteString(t.getSplit().Truncate(tr).String())
 	b.WriteString(" / ")
 	b.WriteString(t.getTime().Truncate(tr).String())

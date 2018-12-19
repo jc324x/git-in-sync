@@ -1736,23 +1736,8 @@ func (rs Repos) verifyChanges(e Emoji, f Flags, t *Timer) {
 			r.checkConfirmed(in, err)
 			// r.checkMessage(in, err)
 
-			if err != nil {
-				r.GitConfirmed = false
-			} else {
-				// r.checkInput(in)
-				in = strings.TrimSuffix(in, "\n")
-				switch in {
-				case "please", "y", "yes", "ys", "1", "ok", "push", "pull", "sure", "you betcha", "do it":
-					r.GitConfirmed = true
-				case "n", "no", "nah", "0", "stop", "skip", "abort", "halt", "quit":
-					r.GitConfirmed = false
-				default:
-					r.GitConfirmed = false
-				}
-			}
-
 			if r.GitConfirmed == true && strings.Contains(r.GitAction, "commit") {
-				targetPrint(f, "%v commit message: ", e.Memo)
+				targetPrint(f, "%v commit message: ", e.Memo) // have to do diff print here...
 
 				rdr := bufio.NewReader(os.Stdin)
 				in, _ := rdr.ReadString('\n')

@@ -512,16 +512,12 @@ type Repo struct {
 
 	// rs.verifyRepos -> setStatus
 	Category string // Complete, Pending, Skipped
-
-	// ----------------
-	// rs.
+	Status   string // better term?
 
 	// setActions
-	Status string // better term?
-
-	GitAction    string
-	GitMessage   string
-	GitConfirmed bool
+	GitAction    string // "..."
+	GitMessage   string //
+	GitConfirmed bool   //
 }
 
 // initRepo returns a *Repo with initial values set.
@@ -1074,7 +1070,15 @@ func (r *Repo) setStatus(e Emoji, f Flags) {
 
 // in, err := rdr.ReadString('\n')
 
-func (r *Repo) checkConfirmed(in string, err error) {
+func (r *Repo) checkConfirmed() {
+
+	// r.Category = "Pending"
+	// If not Confirmed...put in Category:Skipped?
+
+	// setup reader
+	rdr := bufio.NewReader(os.Stdin)
+	in, err := rdr.ReadString('\n')
+
 	// return if error
 	if err != nil {
 		r.GitConfirmed = false
@@ -1091,6 +1095,28 @@ func (r *Repo) checkConfirmed(in string, err error) {
 		r.GitConfirmed = false
 	default:
 		r.GitConfirmed = false
+	}
+}
+
+func (r *Repo) checkCommitMessage() {
+
+	// setup reader
+	rdr := bufio.NewReader(os.Stdin)
+	in, err := rdr.ReadString('\n')
+
+	// return if error
+	if err != nil {
+		r.GitConfirmed = false
+		return
+	}
+
+	switch in {
+	case "n", "no", "nah", "0", "stop", "skip", "abort", "halt", "quit", "exit", "":
+		r.GitConfirmed = false
+		r.GitMessage = ""
+	default:
+		r.GitConfirmed = true
+		r.GitMessage = in
 	}
 }
 
@@ -1624,14 +1650,12 @@ func (rs Repos) verifyRepos(e Emoji, f Flags, t *Timer) {
 func (rs Repos) verifyChanges(e Emoji, f Flags, t *Timer) {
 
 	prs := initPendingRepos(rs)
-	// fmt.Println(len(prs))
 
 	if len(prs) >= 1 {
 		for _, r := range prs {
 
 			var b bytes.Buffer
 
-			// print - 1 of 2
 			switch r.Status {
 			case "Ahead":
 				b.WriteString(e.Bunny)
@@ -1698,8 +1722,6 @@ func (rs Repos) verifyChanges(e Emoji, f Flags, t *Timer) {
 
 			targetPrint(f, b.String())
 
-			// print - 2 of 2
-
 			switch r.Status {
 			case "Ahead":
 				r.GitAction = "push"
@@ -1730,180 +1752,15 @@ func (rs Repos) verifyChanges(e Emoji, f Flags, t *Timer) {
 				fmt.Printf("%v stash all files, pull changes, commit and push to %v? ", e.Clipboard, r.ZoneRemote)
 			}
 
-			rdr := bufio.NewReader(os.Stdin)
-			in, err := rdr.ReadString('\n')
-
-			r.checkConfirmed(in, err)
-			// r.checkMessage(in, err)
+			r.checkConfirmed()
 
 			if r.GitConfirmed == true && strings.Contains(r.GitAction, "commit") {
-				targetPrint(f, "%v commit message: ", e.Memo) // have to do diff print here...
-
-				rdr := bufio.NewReader(os.Stdin)
-				in, _ := rdr.ReadString('\n')
-				switch in {
-				case "n", "no", "nah", "0", "stop", "skip", "abort", "halt", "quit":
-					r.GitConfirmed = false
-					r.GitMessage = ""
-					// d.SkippedRepos = append(d.SkippedRepos, r)
-				default:
-					r.GitConfirmed = true
-					r.GitMessage = in
-					// d.ScheduledRepos = append(d.ScheduledRepos, r)
-				}
-			} else if r.GitConfirmed == true {
-				// d.ScheduledRepos = append(d.ScheduledRepos, r)
-			} else if r.GitConfirmed == false {
-				// d.SkippedRepos = append(d.SkippedRepos, r)
+				fmt.Printf("%v commit message: ", e.Memo)
+				r.checkCommitMessage()
 			}
+
 		}
-
 	}
-
-	// for _, r := range d.PendingRepos {
-	// 	var b bytes.Buffer
-
-	// 	switch r.Phase {
-	// 	case "Ahead":
-	// 		b.WriteString(e.Bunny)
-	// 		b.WriteString(" ")
-	// 		b.WriteString(r.Name)
-	// 		b.WriteString(" is ahead of ")
-	// 		b.WriteString(r.UpstreamBranch)
-	// 	case "Behind":
-	// 		b.WriteString(e.Turtle)
-	// 		b.WriteString(" ")
-	// 		b.WriteString(r.Name)
-	// 		b.WriteString(" is behind")
-	// 		b.WriteString(r.UpstreamBranch)
-	// 	case "Dirty", "DirtyUntracked", "DirtyAhead", "DirtyBehind":
-	// 		b.WriteString(e.Pig)
-	// 		b.WriteString(" ")
-	// 		b.WriteString(r.Name)
-	// 		b.WriteString(" is dirty [")
-	// 		b.WriteString(strconv.Itoa((r.DiffCount)))
-	// 		b.WriteString("]{")
-	// 		b.WriteString(r.DiffSummary)
-	// 		b.WriteString("}(+")
-	// 		b.WriteString(strconv.Itoa(r.ShortStatPlus))
-	// 		b.WriteString("|-")
-	// 		b.WriteString(strconv.Itoa(r.ShortStatMinus))
-	// 		b.WriteString(")")
-	// 	case "Untracked", "UntrackedAhead", "UntrackedBehind":
-	// 		b.WriteString(e.Pig)
-	// 		b.WriteString(" ")
-	// 		b.WriteString(r.Name)
-	// 		b.WriteString(" has untracked files[")
-	// 		b.WriteString(strconv.Itoa(r.UntrackedCount))
-	// 		b.WriteString("]{")
-	// 		b.WriteString(r.UntrackedSummary)
-	// 		b.WriteString("}")
-	// 	case "Up-To-Date":
-	// 		b.WriteString(e.Checkmark)
-	// 		b.WriteString(" ")
-	// 		b.WriteString(r.Name)
-	// 		b.WriteString(" is up to date with ")
-	// 		b.WriteString(r.UpstreamBranch)
-	// 	}
-
-	// 	switch r.Phase {
-	// 	case "DirtyUntracked":
-	// 		b.WriteString(" with untracked files [")
-	// 		b.WriteString(strconv.Itoa(r.UntrackedCount))
-	// 		b.WriteString("]{")
-	// 		b.WriteString(r.UntrackedSummary)
-	// 		b.WriteString("}")
-	// 	case "DirtyAhead":
-	// 		b.WriteString(" & ahead of ")
-	// 		b.WriteString(r.UpstreamBranch)
-	// 	case "DirtyBehind":
-	// 		b.WriteString(" & behind")
-	// 		b.WriteString(r.UpstreamBranch)
-	// 	case "UntrackedAhead":
-	// 		b.WriteString(" & is ahead of ")
-	// 		b.WriteString(r.UpstreamBranch)
-	// 	case "UntrackedBehind":
-	// 		b.WriteString(" & is behind")
-	// 		b.WriteString(r.UpstreamBranch)
-	// 	}
-
-	// 	// print prompt (part 1)
-	// 	targetPrint(f, b.String())
-
-	// 	// print prompt (part 2)
-	// 	switch {
-	// 	case r.Phase == "Ahead":
-	// 		r.GitAction = "push"
-	// 		fmt.Printf("%v push changes to %v? ", e.Rocket, r.Remote)
-	// 	case r.Phase == "Behind":
-	// 		r.GitAction = "pull"
-	// 		fmt.Printf("%v pull changes from %v? ", e.Ship, r.Remote)
-	// 	case r.Phase == "Dirty":
-	// 		r.GitAction = "add-commit-push"
-	// 		fmt.Printf("%v add all files, commit and push to %v? ", e.Clipboard, r.Remote)
-	// 	case r.Phase == "DirtyUntracked":
-	// 		r.GitAction = "add-commit-push"
-	// 		fmt.Printf("%v add all files, commit and push to %v? ", e.Clipboard, r.Remote)
-	// 	case r.Phase == "DirtyAhead":
-	// 		r.GitAction = "add-commit-push"
-	// 		fmt.Printf("%v add all files, commit and push to %v? ", e.Clipboard, r.Remote)
-	// 	case r.Phase == "DirtyBehind":
-	// 		r.GitAction = "stash-pull-pop-commit-push"
-	// 		fmt.Printf("%v stash all files, pull changes, commit and push to %v? ", e.Clipboard, r.Remote)
-	// 	case r.Phase == "Untracked":
-	// 		r.GitAction = "add-commit-push"
-	// 		fmt.Printf("%v add all files, commit and push to %v? ", e.Clipboard, r.Remote)
-	// 	case r.Phase == "UntrackedAhead":
-	// 		r.GitAction = "add-commit-push"
-	// 		fmt.Printf("%v add all files, commit and push to %v? ", e.Clipboard, r.Remote)
-	// 	case r.Phase == "UntrackedBehind":
-	// 		r.GitAction = "stash-pull-pop-commit-push"
-	// 		fmt.Printf("%v stash all files, pull changes, commit and push to %v? ", e.Clipboard, r.Remote)
-	// 	}
-
-	// 	rdr := bufio.NewReader(os.Stdin)
-	// 	in, err := rdr.ReadString('\n')
-
-	// 	if err != nil {
-	// 		r.GitConfirmed = false
-	// 	} else {
-	// 		in = strings.TrimSuffix(in, "\n")
-	// 		switch in {
-	// 		case "please", "y", "yes", "ys", "1", "ok", "push", "pull", "sure", "you betcha", "do it":
-	// 			r.GitConfirmed = true
-	// 		case "n", "no", "nah", "0", "stop", "skip", "abort", "halt", "quit":
-	// 			r.GitConfirmed = false
-	// 		default:
-	// 			r.GitConfirmed = false
-	// 		}
-	// 	}
-
-	// 	if r.GitConfirmed == true && strings.Contains(r.GitAction, "commit") {
-	// 		if hasEmoji(f) {
-	// 			fmt.Printf("%v commit message: ", e.Memo)
-	// 		} else {
-	// 			fmt.Printf("commit message: ")
-	// 		}
-
-	// 		rdr := bufio.NewReader(os.Stdin)
-	// 		in, _ := rdr.ReadString('\n')
-	// 		switch in {
-	// 		case "n", "no", "nah", "0", "stop", "skip", "abort", "halt", "quit":
-	// 			r.GitConfirmed = false
-	// 			r.GitMessage = ""
-	// 			d.SkippedRepos = append(d.SkippedRepos, r)
-	// 		default:
-	// 			r.GitConfirmed = true
-	// 			r.GitMessage = in
-	// 			d.ScheduledRepos = append(d.ScheduledRepos, r)
-	// 		}
-	// 	} else if r.GitConfirmed == true {
-	// 		d.ScheduledRepos = append(d.ScheduledRepos, r)
-	// 	} else if r.GitConfirmed == false {
-	// 		d.SkippedRepos = append(d.SkippedRepos, r)
-	// 	}
-	// }
-
 }
 
 func main() {

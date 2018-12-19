@@ -935,9 +935,8 @@ func (r *Repo) gitShortstat(e Emoji, f Flags) {
 		r.ShortStat = captureOut(out)
 	}
 
-	rxc := regexp.MustCompile(`(.*)? files`)
+	rxc := regexp.MustCompile(`(.*)? file`)
 	rxs := rxc.FindStringSubmatch(r.ShortStat)
-
 	if len(rxs) == 2 {
 		s := strings.TrimPrefix(rxs[1], " ")
 		if i, err := strconv.Atoi(s); err == nil {
@@ -1023,37 +1022,39 @@ func (r *Repo) setStatus(e Emoji, f Flags) {
 	case r.Verified == false:
 		r.Category = "Skipped"
 		r.Status = "Error"
-	case (r.Porcelain == true && r.Untracked == false && r.Status == "Ahead"):
+	case (r.Clean == true && r.Untracked == false && r.Status == "Ahead"):
 		r.Category = "Pending"
 		r.Status = "Ahead"
-	case (r.Porcelain == true && r.Untracked == false && r.Status == "Behind"):
+	case (r.Clean == true && r.Untracked == false && r.Status == "Behind"):
 		r.Category = "Pending"
 		r.Status = "Behind"
-	case (r.Porcelain == false && r.Untracked == false && r.Status == "Up-To-Date"):
+	case (r.Clean == false && r.Untracked == false && r.Status == "Up-To-Date"):
 		r.Category = "Pending"
 		r.Status = "Dirty"
-	case (r.Porcelain == false && r.Untracked == true && r.Status == "Up-To-Date"):
+	case (r.Clean == false && r.Untracked == true && r.Status == "Up-To-Date"):
 		r.Category = "Pending"
 		r.Status = "DirtyUntracked"
-	case (r.Porcelain == false && r.Untracked == false && r.Status == "Ahead"):
+		// fmt.Printf("debug: %v|%v p:%v c:%v i:%v d:%v\n", r.Name, r.Clean, r.Porcelain, r.Changed, r.Insertions, r.Deletions)
+	case (r.Clean == false && r.Untracked == false && r.Status == "Ahead"):
 		r.Category = "Pending"
 		r.Status = "DirtyAhead"
-	case (r.Porcelain == false && r.Untracked == false && r.Status == "Behind"):
+	case (r.Clean == false && r.Untracked == false && r.Status == "Behind"):
 		r.Category = "Pending"
 		r.Status = "DirtyBehind"
-	case (r.Porcelain == false && r.Untracked == true && r.Status == "Up-To-Date"):
+	case (r.Clean == true && r.Untracked == true && r.Status == "Up-To-Date"):
 		r.Category = "Pending"
 		r.Status = "Untracked"
-	case (r.Porcelain == false && r.Untracked == true && r.Status == "Ahead"):
+	case (r.Clean == false && r.Untracked == true && r.Status == "Ahead"):
 		r.Category = "Pending"
 		r.Status = "UntrackedAhead"
-	case (r.Porcelain == false && r.Untracked == true && r.Status == "Behind"):
+	case (r.Clean == false && r.Untracked == true && r.Status == "Behind"):
 		r.Category = "Pending"
 		r.Status = "UntrackedBehind"
-	case (r.Porcelain == true && r.Untracked == false && r.Status == "Up-To-Date"):
+	case (r.Clean == true && r.Untracked == false && r.Status == "Up-To-Date"):
 		r.Category = "Complete"
 		r.Status = "Up-To-Date"
 	default:
+		fmt.Printf("debug: %v|%v p:%v c:%v i:%v d:%v\n", r.Name, r.Clean, r.Porcelain, r.Changed, r.Insertions, r.Deletions)
 		r.Category = "Skipped"
 		r.Status = "Unknown"
 	}
@@ -1440,7 +1441,7 @@ func (rs Repos) verifyCloned(e Emoji, f Flags, t *Timer) {
 
 	// return if there are no pending repos
 
-	if len(pc) <= 1 {
+	if len(pc) <= 0 {
 		return
 	}
 
@@ -1624,7 +1625,7 @@ func (rs Repos) verifyChanges(e Emoji, f Flags, t *Timer) {
 				b.WriteString(e.Turtle)
 				b.WriteString(" ")
 				b.WriteString(r.Name)
-				b.WriteString(" is behind")
+				b.WriteString(" is behind ")
 				b.WriteString(r.UpstreamBranch)
 			case "Dirty", "DirtyUntracked", "DirtyAhead", "DirtyBehind":
 				b.WriteString(e.Pig)
@@ -1643,7 +1644,7 @@ func (rs Repos) verifyChanges(e Emoji, f Flags, t *Timer) {
 				b.WriteString(e.Pig)
 				b.WriteString(" ")
 				b.WriteString(r.Name)
-				b.WriteString(" has untracked files[")
+				b.WriteString(" is untracked [")
 				b.WriteString(strconv.Itoa(len(r.UntrackedFiles)))
 				b.WriteString("]{")
 				b.WriteString(r.UntrackedSummary)
@@ -1673,7 +1674,7 @@ func (rs Repos) verifyChanges(e Emoji, f Flags, t *Timer) {
 				b.WriteString(" & is ahead of ")
 				b.WriteString(r.UpstreamBranch)
 			case "UntrackedBehind":
-				b.WriteString(" & is behind")
+				b.WriteString(" & is behind ")
 				b.WriteString(r.UpstreamBranch)
 			}
 
@@ -1908,4 +1909,11 @@ func main() {
 	rs.verifyCloned(e, f, t)
 	rs.verifyRepos(e, f, t)
 	rs.verifyChanges(e, f, t)
+
+	// debugging
+	for _, r := range rs {
+		if r.ErrorShort != "" {
+			fmt.Printf("%v|%v: %v\n", r.Name, r.ErrorName, r.ErrorFirst)
+		}
+	}
 }

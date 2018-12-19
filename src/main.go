@@ -87,6 +87,7 @@ type Emoji struct {
 	Book                 string
 	Books                string
 	Box                  string
+	Briefcase            string
 	BuildingConstruction string
 	Bunny                string
 	Checkmark            string
@@ -141,6 +142,7 @@ func initEmoji(f Flags, t *Timer) (e Emoji) {
 	e.Book = printEmoji(128214)
 	e.Books = printEmoji(128218)
 	e.Box = printEmoji(128230)
+	e.Briefcase = printEmoji(128188)
 	e.BuildingConstruction = printEmoji(127959)
 	e.Bunny = printEmoji(128048)
 	e.Checkmark = printEmoji(9989)
@@ -613,7 +615,7 @@ func markOut(b bytes.Buffer) string {
 	return strings.TrimSuffix(b.String(), "\n")
 }
 
-func (r *Repo) gitMarkClone(e Emoji, f Flags) {
+func (r *Repo) gitCheckPending(e Emoji, f Flags) {
 
 	// return if not verified
 	if notVerified(r) {
@@ -630,10 +632,8 @@ func (r *Repo) gitMarkClone(e Emoji, f Flags) {
 	case isDirectory(rinfo) && notEmpty(r.RepoPath) && os.IsNotExist(gerr):
 		r.markError(e, f, "fatal: directory occupying path", "git-verify")
 	case isDirectory(rinfo) && isEmpty(r.RepoPath) && isActive(f):
-		// r.gitClone(e, f)
 		r.PendingClone = true
 	case os.IsNotExist(rerr) && os.IsNotExist(gerr) && isActive(f):
-		// r.gitClone(e, f)
 		r.PendingClone = true
 	case isDirectory(rinfo) && isEmpty(r.RepoPath) && isDry(f):
 		r.markError(e, f, "fatal: git clone (dry run)", "git-verify")
@@ -642,17 +642,6 @@ func (r *Repo) gitMarkClone(e Emoji, f Flags) {
 	case isDirectory(rinfo) && isDirectory(ginfo):
 		r.Verified = true
 	}
-
-	// check if RepoPath and GitPath are accessible for cloned repos
-
-	// if r.Cloned == true {
-	// 	rinfo, rerr = os.Stat(r.RepoPath)
-	// 	ginfo, gerr = os.Stat(r.GitPath)
-
-	// 	if isDirectory(rinfo) && isDirectory(ginfo) {
-	// 		r.Verified = true
-	// 	}
-	// }
 }
 
 func (r *Repo) gitClone(e Emoji, f Flags) {
@@ -884,7 +873,7 @@ func (r *Repo) gitDiffsNameOnly(e Emoji, f Flags) {
 
 	if str := out.String(); str != "" {
 		r.DiffsNameOnly = strings.Fields(str)
-		r.DiffsSummary = sliceSummary(r.DiffsNameOnly)
+		r.DiffsSummary = sliceSummary(r.DiffsNameOnly, 12)
 	} else {
 		r.DiffsNameOnly = make([]string, 0)
 		r.DiffsSummary = ""
@@ -959,7 +948,7 @@ func (r *Repo) gitUntracked(e Emoji, f Flags) {
 		for _, f := range ufr {
 			f = lastPathSelection(f)
 			r.UntrackedFiles = append(r.UntrackedFiles, f)
-			r.UntrackedSummary = sliceSummary(r.UntrackedFiles)
+			r.UntrackedSummary = sliceSummary(r.UntrackedFiles, 15)
 		}
 	} else {
 		r.UntrackedFiles = make([]string, 0)
@@ -984,33 +973,41 @@ func (r *Repo) setStatus(e Emoji, f Flags) {
 
 	switch {
 	case r.Verified == false:
-		r.Status = "Unverified"
 		r.Category = "Skipped"
+		r.Status = "Error"
 	case (r.Clean == true && r.Untracked == false && r.Status == "Ahead"):
+		r.Category = "Pending"
 		r.Status = "Ahead"
 	case (r.Clean == true && r.Untracked == false && r.Status == "Behind"):
+		r.Category = "Pending"
 		r.Status = "Behind"
 	case (r.Clean == false && r.Untracked == false && r.Status == "Up-To-Date"):
+		r.Category = "Pending"
 		r.Status = "Dirty"
 	case (r.Clean == false && r.Untracked == true && r.Status == "Up-To-Date"):
+		r.Category = "Pending"
 		r.Status = "DirtyUntracked"
 	case (r.Clean == false && r.Untracked == false && r.Status == "Ahead"):
+		r.Category = "Pending"
 		r.Status = "DirtyAhead"
 	case (r.Clean == false && r.Untracked == false && r.Status == "Behind"):
+		r.Category = "Pending"
 		r.Status = "DirtyBehind"
 	case (r.Clean == false && r.Untracked == true && r.Status == "Up-To-Date"):
+		r.Category = "Pending"
 		r.Status = "Untracked"
 	case (r.Clean == false && r.Untracked == true && r.Status == "Ahead"):
+		r.Category = "Pending"
 		r.Status = "UntrackedAhead"
 	case (r.Clean == false && r.Untracked == true && r.Status == "Behind"):
-		r.Status = "UntrackedBehind"
 		r.Category = "Pending"
+		r.Status = "UntrackedBehind"
 	case (r.Clean == true && r.Untracked == false && r.Status == "Up-To-Date"):
-		r.Status = "Up-To-Date"
 		r.Category = "Complete"
+		r.Status = "Up-To-Date"
 	default:
-		r.Status = "Diverged"
 		r.Category = "Skipped"
+		r.Status = "Unknown"
 	}
 
 	if r.ErrorMessage != "" {
@@ -1024,17 +1021,6 @@ func (r *Repo) setStatus(e Emoji, f Flags) {
 			r.ErrorShort = "fatal: URL mismatch"
 		}
 	}
-
-	// switch r.Category {
-	// case "Complete":
-	// 	targetPrint(f, "%v %v", e.Checkmark, r.Name)
-	// 	// targetPrint(f, "%v %v is up to date!", e.Checkmark, r.Name)
-	// case "Pending":
-	// 	targetPrint(f, "%v %v needs attention...", e.Warning, r.Name)
-	// case "Skipped":
-	// 	targetPrint(f, "%v %v %v", e.Slash, r.Name, r.ErrorShort)
-	// }
-
 }
 
 // --> Repos: Collection of Repos
@@ -1237,8 +1223,8 @@ func firstLine(s string) string {
 	}
 }
 
-func sliceSummary(sl []string) string {
-	l := 25 // limit
+func sliceSummary(sl []string, l int) string {
+	// l := 20 // limit
 
 	if len(sl) == 0 {
 		return ""
@@ -1293,16 +1279,21 @@ func (rs Repos) verifyDivs(e Emoji, f Flags, t *Timer) {
 	rs.sortByPath()
 
 	// get all divs, remove duplicates
-	var dvs []string // divs
+	var dvs []string  // divs
+	var zdvs []string // zone divisions (go, main, google-apps-script etc)
 
 	for _, r := range rs {
 		dvs = append(dvs, r.DivPath)
+		zdvs = append(zdvs, r.ZoneDivision)
 	}
 
 	dvs = removeDuplicates(dvs)
+	zdvs = removeDuplicates(zdvs)
+
+	zds := sliceSummary(zdvs, 20) // zone division summary
 
 	// print
-	targetPrint(f, "%v  verifying divs [%v]", e.FileCabinet, len(dvs))
+	targetPrint(f, "%v  verifying divs [%v](%v)", e.FileCabinet, len(dvs), zds)
 
 	// track created, verified and missing divs
 	var cd []string // created divs
@@ -1362,7 +1353,7 @@ func (rs Repos) verifyDivs(e Emoji, f Flags, t *Timer) {
 
 	b.Reset()
 	if len(dvs) == len(vd) {
-		b.WriteString(e.ThumbsUp)
+		b.WriteString(e.Briefcase)
 	} else {
 		b.WriteString(e.Slash)
 	}
@@ -1382,20 +1373,25 @@ func (rs Repos) verifyDivs(e Emoji, f Flags, t *Timer) {
 	targetPrint(f, b.String())
 }
 
-func (rs Repos) verifyRepos(e Emoji, f Flags, t *Timer) {
-	var pc []string // pending clone repos
+func (rs Repos) verifyCloned(e Emoji, f Flags, t *Timer) {
+	var pc []string // pending clone
 
 	for _, r := range rs {
-		r.gitMarkClone(e, f)
+		r.gitCheckPending(e, f)
 
 		if r.PendingClone == true {
 			pc = append(pc, r.Name)
 		}
 	}
 
-	if len(pc) >= 1 {
-		targetPrint(f, "%v cloning [%v]", e.Sheep, len(pc))
+	// return if there are no pending repos
+
+	if len(pc) <= 1 {
+		return
 	}
+
+	// if there are pending repos
+	targetPrint(f, "%v cloning [%v]", e.Sheep, len(pc))
 
 	// verify each repo (async)
 	var wg sync.WaitGroup
@@ -1403,7 +1399,6 @@ func (rs Repos) verifyRepos(e Emoji, f Flags, t *Timer) {
 		wg.Add(1)
 		go func(r *Repo) {
 			defer wg.Done()
-			// r.gitVerify(e, f)
 			r.gitClone(e, f)
 		}(rs[i])
 	}
@@ -1417,39 +1412,40 @@ func (rs Repos) verifyRepos(e Emoji, f Flags, t *Timer) {
 		}
 	}
 
+	// timer
+	t.markMoment("verify-repos")
+
 	// summary
 	var b bytes.Buffer
 
-	if len(cr) >= 1 {
-		b.WriteString(e.Sheep)
-		b.WriteString(" [")
-		b.WriteString(strconv.Itoa(len(cr)))
-		b.WriteString("/")
-		b.WriteString(strconv.Itoa(len(rs)))
-		b.WriteString("] cloned")
-		targetPrint(f, b.String())
-	}
+	b.WriteString(e.Truck)
+	b.WriteString(" [")
+	b.WriteString(strconv.Itoa(len(cr)))
+	b.WriteString("/")
+	b.WriteString(strconv.Itoa(len(pc)))
+	b.WriteString("] cloned")
 
-	// targetPrint(f, ))
+	tr := time.Millisecond // truncate
+	b.WriteString(" {")
+	b.WriteString(t.getSplit().Truncate(tr).String())
+	b.WriteString(" / ")
+	b.WriteString(t.getTime().Truncate(tr).String())
+	b.WriteString("}")
 
-	// getSpace()
+	targetPrint(f, b.String())
+}
 
-	// check for clone-able first?
-	// clone here...
-
-	// verify only present?
+func (rs Repos) verifyRepos(e Emoji, f Flags, t *Timer) {
 
 	// print
-	targetPrint(f, "%v verifying repos [%v]", e.Truck, len(rs))
+	targetPrint(f, "%v  verifying repos [%v]", e.Satellite, len(rs))
 
 	// verify each repo (async)
-	// var wg sync.WaitGroup
+	var wg sync.WaitGroup
 	for i := range rs {
 		wg.Add(1)
 		go func(r *Repo) {
 			defer wg.Done()
-			// r.gitVerify(e, f)
-			// r.gitClone(e, f)
 			r.gitConfigOriginURL(e, f)
 			r.gitRemoteUpdate(e, f)
 			r.gitStatusPorcelain(e, f)
@@ -1465,21 +1461,22 @@ func (rs Repos) verifyRepos(e Emoji, f Flags, t *Timer) {
 	}
 	wg.Wait()
 
-	// track cloned, verified, inaccessible, up-to-date, pending
-	var vr []string // verified repos
-	var ir []string // inaccessible repos
+	// track complete, pending and skipped
+	var cr []string // complete repos
+	var pr []string // pending repos
+	var sr []string // skipped repos
 
 	for _, r := range rs {
-		// if r.Cloned == true {
-		// 	cr = append(cr, r.Name)
-		// }
-
-		if r.Verified == true {
-			vr = append(vr, r.Name)
+		if r.Category == "Complete" {
+			cr = append(cr, r.Name)
 		}
 
-		if r.Verified == false {
-			ir = append(ir, r.Name)
+		if r.Category == "Pending" {
+			pr = append(pr, r.Name)
+		}
+
+		if r.Category == "Skipped" {
+			sr = append(sr, r.Name)
 		}
 
 	}
@@ -1487,37 +1484,83 @@ func (rs Repos) verifyRepos(e Emoji, f Flags, t *Timer) {
 	// timer
 	t.markMoment("verify-divs")
 
-	b.Reset()
-	if len(vr) == len(rs) {
+	var b bytes.Buffer
+
+	if len(cr) == len(rs) {
 		b.WriteString(e.ThumbsUp)
 	} else {
 		b.WriteString(e.Traffic)
 	}
 
 	b.WriteString(" [")
-	b.WriteString(strconv.Itoa(len(vr)))
+	b.WriteString(strconv.Itoa(len(cr)))
 	b.WriteString("/")
 	b.WriteString(strconv.Itoa(len(rs)))
-	b.WriteString("] repos complete")
+	b.WriteString("] complete (")
 
-	b.WriteString(" {")
-	b.WriteString(t.getSplit().String())
+	crs := sliceSummary(cr, 15)
+	b.WriteString(crs)
+
+	tr := time.Millisecond // truncate
+
+	b.WriteString(") {")
+	b.WriteString(t.getSplit().Truncate(tr).String())
 	b.WriteString(" / ")
-	b.WriteString(t.getTime().String())
+	b.WriteString(t.getTime().Truncate(tr).String())
 	b.WriteString("}")
 
 	targetPrint(f, b.String())
 
-	b.Reset()
+	// skipped repo info
+
+	if len(sr) >= 1 {
+		b.Reset()
+		srs := sliceSummary(sr, 15) // skipped repo summary
+		b.WriteString(e.Slash)
+		b.WriteString(" [")
+		b.WriteString(strconv.Itoa(len(sr)))
+		b.WriteString("] skipped (")
+		b.WriteString(srs)
+		b.WriteString(")")
+		targetPrint(f, b.String())
+	}
+
+	// pending repo info
+
+	if len(pr) >= 1 {
+		b.Reset()
+		prs := sliceSummary(pr, 15) // pending repo summary
+		b.WriteString(e.Warning)
+		b.WriteString(" [")
+		b.WriteString(strconv.Itoa(len(pr)))
+		b.WriteString("] pending (")
+		b.WriteString(prs)
+		b.WriteString(")")
+		targetPrint(f, b.String())
+	}
+
 }
 
-func (rs Repos) verifyChanges(e Emoji, f Flags, t *Timer) {
+// func (rs Repos) verifyChanges(e Emoji, f Flags, t *Timer) {
 
-}
+// 	for _, r := range rs {
+
+// 		if r.Verified == true {
+// 			vr = append(vr, r.Name)
+// 		}
+
+// 		if r.Verified == false {
+// 			ir = append(ir, r.Name)
+// 		}
+
+// 	}
+
+// }
 
 func main() {
 	e, f, rs, t := initRun()
 	rs.verifyDivs(e, f, t)
+	rs.verifyCloned(e, f, t)
 	rs.verifyRepos(e, f, t)
-	rs.verifyChanges(e, f, t)
+	// rs.verifyChanges(e, f, t)
 }

@@ -474,7 +474,7 @@ type Repo struct {
 
 	// rs.verifyRepos -> gitStatusPorcelain
 	GitStatus string // output of `git status porcelain`
-	Clean     bool   // true if `git status --porcelain` returns "" | Really should be Porcelain
+	Porcelain bool   // true if `git status --porcelain` returns ""
 
 	// rs.verifyRepos -> gitAbbrevRef
 	LocalBranch string // `git rev-parse --abbrev-ref HEAD`, "master"
@@ -500,6 +500,7 @@ type Repo struct {
 	Changed    int    // x
 	Insertions int    // y
 	Deletions  int    // z
+	Clean      bool   // true if Changed, Insertions and Deletions are all 0
 
 	// rs.verifyRepos -> gitUpstream
 	// Upstream string // ...
@@ -754,10 +755,10 @@ func (r *Repo) gitStatusPorcelain(e Emoji, f Flags) {
 	}
 
 	if str := out.String(); str != "" {
-		r.Clean = false
+		r.Porcelain = false
 		r.GitStatus = captureOut(out)
 	} else {
-		r.Clean = true
+		r.Porcelain = true
 	}
 }
 
@@ -934,8 +935,18 @@ func (r *Repo) gitShortstat(e Emoji, f Flags) {
 		r.ShortStat = captureOut(out)
 	}
 
+	rxc := regexp.MustCompile(`(.*)? files`)
+	rxs := rxc.FindStringSubmatch(r.ShortStat)
+
+	if len(rxs) == 2 {
+		s := strings.TrimPrefix(rxs[1], " ")
+		if i, err := strconv.Atoi(s); err == nil {
+			r.Changed = i
+		}
+	}
+
 	rxi := regexp.MustCompile(`changed, (.*)? insertions`)
-	rxs := rxi.FindStringSubmatch(r.ShortStat)
+	rxs = rxi.FindStringSubmatch(r.ShortStat)
 	if len(rxs) == 2 {
 		s := rxs[1]
 		if i, err := strconv.Atoi(s); err == nil {
@@ -1002,38 +1013,44 @@ func (r *Repo) setStatus(e Emoji, f Flags) {
 		r.Status = "Ahead"
 	}
 
+	if r.Changed == 0 && r.Insertions == 0 && r.Deletions == 0 {
+		r.Clean = true
+	} else {
+		r.Clean = false
+	}
+
 	switch {
 	case r.Verified == false:
 		r.Category = "Skipped"
 		r.Status = "Error"
-	case (r.Clean == true && r.Untracked == false && r.Status == "Ahead"):
+	case (r.Porcelain == true && r.Untracked == false && r.Status == "Ahead"):
 		r.Category = "Pending"
 		r.Status = "Ahead"
-	case (r.Clean == true && r.Untracked == false && r.Status == "Behind"):
+	case (r.Porcelain == true && r.Untracked == false && r.Status == "Behind"):
 		r.Category = "Pending"
 		r.Status = "Behind"
-	case (r.Clean == false && r.Untracked == false && r.Status == "Up-To-Date"):
+	case (r.Porcelain == false && r.Untracked == false && r.Status == "Up-To-Date"):
 		r.Category = "Pending"
 		r.Status = "Dirty"
-	case (r.Clean == false && r.Untracked == true && r.Status == "Up-To-Date"):
+	case (r.Porcelain == false && r.Untracked == true && r.Status == "Up-To-Date"):
 		r.Category = "Pending"
 		r.Status = "DirtyUntracked"
-	case (r.Clean == false && r.Untracked == false && r.Status == "Ahead"):
+	case (r.Porcelain == false && r.Untracked == false && r.Status == "Ahead"):
 		r.Category = "Pending"
 		r.Status = "DirtyAhead"
-	case (r.Clean == false && r.Untracked == false && r.Status == "Behind"):
+	case (r.Porcelain == false && r.Untracked == false && r.Status == "Behind"):
 		r.Category = "Pending"
 		r.Status = "DirtyBehind"
-	case (r.Clean == false && r.Untracked == true && r.Status == "Up-To-Date"):
+	case (r.Porcelain == false && r.Untracked == true && r.Status == "Up-To-Date"):
 		r.Category = "Pending"
 		r.Status = "Untracked"
-	case (r.Clean == false && r.Untracked == true && r.Status == "Ahead"):
+	case (r.Porcelain == false && r.Untracked == true && r.Status == "Ahead"):
 		r.Category = "Pending"
 		r.Status = "UntrackedAhead"
-	case (r.Clean == false && r.Untracked == true && r.Status == "Behind"):
+	case (r.Porcelain == false && r.Untracked == true && r.Status == "Behind"):
 		r.Category = "Pending"
 		r.Status = "UntrackedBehind"
-	case (r.Clean == true && r.Untracked == false && r.Status == "Up-To-Date"):
+	case (r.Porcelain == true && r.Untracked == false && r.Status == "Up-To-Date"):
 		r.Category = "Complete"
 		r.Status = "Up-To-Date"
 	default:
@@ -1588,8 +1605,7 @@ func (rs Repos) verifyChanges(e Emoji, f Flags, t *Timer) {
 
 	if len(prs) >= 1 {
 		for _, r := range prs {
-			fmt.Printf("%v: clean (%v) untracked:(%v) status: (%v) \n", r.Name, r.Clean, r.Untracked, r.Status)
-
+			// fmt.Printf("%v: clean (%v) untracked:(%v) status: (%v) \n", r.Name, r.Clean, r.Untracked, r.Status)
 			// case (r.Clean == false && r.Untracked == true && r.Status == "Up-To-Date"):
 			// fmt.Println(r.Name)
 			// fmt.Println(r.Status)

@@ -1,7 +1,7 @@
 package main
 
 import (
-	// "bufio"
+	"bufio"
 	"bytes"
 	"encoding/json"
 	"errors"
@@ -1682,77 +1682,77 @@ func (rs Repos) verifyChanges(e Emoji, f Flags, t *Timer) {
 			targetPrint(f, b.String())
 
 			// print prompt (part 2)
-			// switch {
-			// case r.Phase == "Ahead":
-			// 	r.GitAction = "push"
-			// 	fmt.Printf("%v push changes to %v? ", e.Rocket, r.Remote)
-			// case r.Phase == "Behind":
-			// 	r.GitAction = "pull"
-			// 	fmt.Printf("%v pull changes from %v? ", e.Ship, r.Remote)
-			// case r.Phase == "Dirty":
-			// 	r.GitAction = "add-commit-push"
-			// 	fmt.Printf("%v add all files, commit and push to %v? ", e.Clipboard, r.Remote)
-			// case r.Phase == "DirtyUntracked":
-			// 	r.GitAction = "add-commit-push"
-			// 	fmt.Printf("%v add all files, commit and push to %v? ", e.Clipboard, r.Remote)
-			// case r.Phase == "DirtyAhead":
-			// 	r.GitAction = "add-commit-push"
-			// 	fmt.Printf("%v add all files, commit and push to %v? ", e.Clipboard, r.Remote)
-			// case r.Phase == "DirtyBehind":
-			// 	r.GitAction = "stash-pull-pop-commit-push"
-			// 	fmt.Printf("%v stash all files, pull changes, commit and push to %v? ", e.Clipboard, r.Remote)
-			// case r.Phase == "Untracked":
-			// 	r.GitAction = "add-commit-push"
-			// 	fmt.Printf("%v add all files, commit and push to %v? ", e.Clipboard, r.Remote)
-			// case r.Phase == "UntrackedAhead":
-			// 	r.GitAction = "add-commit-push"
-			// 	fmt.Printf("%v add all files, commit and push to %v? ", e.Clipboard, r.Remote)
-			// case r.Phase == "UntrackedBehind":
-			// 	r.GitAction = "stash-pull-pop-commit-push"
-			// 	fmt.Printf("%v stash all files, pull changes, commit and push to %v? ", e.Clipboard, r.Remote)
-			// }
+			switch r.Status {
+			case "Ahead":
+				r.GitAction = "push"
+				fmt.Printf("%v push changes to %v? ", e.Rocket, r.ZoneRemote)
+			case "Behind":
+				r.GitAction = "pull"
+				fmt.Printf("%v pull changes from %v? ", e.Ship, r.ZoneRemote)
+			case "Dirty":
+				r.GitAction = "add-commit-push"
+				fmt.Printf("%v add all files, commit and push to %v? ", e.Clipboard, r.ZoneRemote)
+			case "DirtyUntracked":
+				r.GitAction = "add-commit-push"
+				fmt.Printf("%v add all files, commit and push to %v? ", e.Clipboard, r.ZoneRemote)
+			case "DirtyAhead":
+				r.GitAction = "add-commit-push"
+				fmt.Printf("%v add all files, commit and push to %v? ", e.Clipboard, r.ZoneRemote)
+			case "DirtyBehind":
+				r.GitAction = "stash-pull-pop-commit-push"
+				fmt.Printf("%v stash all files, pull changes, commit and push to %v? ", e.Clipboard, r.ZoneRemote)
+			case "Untracked":
+				r.GitAction = "add-commit-push"
+				fmt.Printf("%v add all files, commit and push to %v? ", e.Clipboard, r.ZoneRemote)
+			case "UntrackedAhead":
+				r.GitAction = "add-commit-push"
+				fmt.Printf("%v add all files, commit and push to %v? ", e.Clipboard, r.ZoneRemote)
+			case "UntrackedBehind":
+				r.GitAction = "stash-pull-pop-commit-push"
+				fmt.Printf("%v stash all files, pull changes, commit and push to %v? ", e.Clipboard, r.ZoneRemote)
+			}
 
-			// rdr := bufio.NewReader(os.Stdin)
-			// in, err := rdr.ReadString('\n')
+			rdr := bufio.NewReader(os.Stdin)
+			in, err := rdr.ReadString('\n')
 
-			// if err != nil {
-			// 	r.GitConfirmed = false
-			// } else {
-			// 	in = strings.TrimSuffix(in, "\n")
-			// 	switch in {
-			// 	case "please", "y", "yes", "ys", "1", "ok", "push", "pull", "sure", "you betcha", "do it":
-			// 		r.GitConfirmed = true
-			// 	case "n", "no", "nah", "0", "stop", "skip", "abort", "halt", "quit":
-			// 		r.GitConfirmed = false
-			// 	default:
-			// 		r.GitConfirmed = false
-			// 	}
-			// }
+			if err != nil {
+				r.GitConfirmed = false
+			} else {
+				in = strings.TrimSuffix(in, "\n")
+				switch in {
+				case "please", "y", "yes", "ys", "1", "ok", "push", "pull", "sure", "you betcha", "do it":
+					r.GitConfirmed = true
+				case "n", "no", "nah", "0", "stop", "skip", "abort", "halt", "quit":
+					r.GitConfirmed = false
+				default:
+					r.GitConfirmed = false
+				}
+			}
 
-			// if r.GitConfirmed == true && strings.Contains(r.GitAction, "commit") {
-			// 	if hasEmoji(f) {
-			// 		fmt.Printf("%v commit message: ", e.Memo)
-			// 	} else {
-			// 		fmt.Printf("commit message: ")
-			// 	}
+			if r.GitConfirmed == true && strings.Contains(r.GitAction, "commit") {
+				if hasEmoji(f) {
+					fmt.Printf("%v commit message: ", e.Memo)
+				} else {
+					fmt.Printf("commit message: ")
+				}
 
-			// 	rdr := bufio.NewReader(os.Stdin)
-			// 	in, _ := rdr.ReadString('\n')
-			// 	switch in {
-			// 	case "n", "no", "nah", "0", "stop", "skip", "abort", "halt", "quit":
-			// 		r.GitConfirmed = false
-			// 		r.GitMessage = ""
-			// 		d.SkippedRepos = append(d.SkippedRepos, r)
-			// 	default:
-			// 		r.GitConfirmed = true
-			// 		r.GitMessage = in
-			// 		d.ScheduledRepos = append(d.ScheduledRepos, r)
-			// 	}
-			// } else if r.GitConfirmed == true {
-			// 	d.ScheduledRepos = append(d.ScheduledRepos, r)
-			// } else if r.GitConfirmed == false {
-			// 	d.SkippedRepos = append(d.SkippedRepos, r)
-			// }
+				rdr := bufio.NewReader(os.Stdin)
+				in, _ := rdr.ReadString('\n')
+				switch in {
+				case "n", "no", "nah", "0", "stop", "skip", "abort", "halt", "quit":
+					r.GitConfirmed = false
+					r.GitMessage = ""
+					// d.SkippedRepos = append(d.SkippedRepos, r)
+				default:
+					r.GitConfirmed = true
+					r.GitMessage = in
+					// d.ScheduledRepos = append(d.ScheduledRepos, r)
+				}
+			} else if r.GitConfirmed == true {
+				// d.ScheduledRepos = append(d.ScheduledRepos, r)
+			} else if r.GitConfirmed == false {
+				// d.SkippedRepos = append(d.SkippedRepos, r)
+			}
 		}
 
 	}

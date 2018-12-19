@@ -1752,15 +1752,20 @@ func (rs Repos) verifyChanges(e Emoji, f Flags, t *Timer) {
 				fmt.Printf("%v stash all files, pull changes, commit and push to %v? ", e.Clipboard, r.ZoneRemote)
 			}
 
+			// prompt for approval
 			r.checkConfirmed()
 
+			// prompt for commit message
 			if r.GitConfirmed == true && strings.Contains(r.GitAction, "commit") {
 				fmt.Printf("%v commit message: ", e.Memo)
 				r.checkCommitMessage()
 			}
-
 		}
 	}
+}
+
+func (rs Repos) submitChanges(e Emoji, f Flags, t *Timer) {
+
 }
 
 func main() {
@@ -1769,6 +1774,7 @@ func main() {
 	rs.verifyCloned(e, f, t)
 	rs.verifyRepos(e, f, t)
 	rs.verifyChanges(e, f, t)
+	rs.submitChanges(e, f, t)
 
 	// debugging
 	for _, r := range rs {

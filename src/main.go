@@ -933,13 +933,25 @@ func (r *Repo) gitShortstat(e Emoji, f Flags) {
 		}
 	}
 
-	rxd := regexp.MustCompile(`\(\+\), (.*)? deletion`)
-	rxs = rxd.FindStringSubmatch(r.ShortStat)
-	if len(rxs) == 2 {
-		s := rxs[1]
-		if i, err := strconv.Atoi(s); err == nil {
-			r.Deletions = i
+	if r.Insertions >= 1 {
+		rxd := regexp.MustCompile(`\(\+\), (.*)? deletion`)
+		rxs = rxd.FindStringSubmatch(r.ShortStat)
+		if len(rxs) == 2 {
+			s := rxs[1]
+			if i, err := strconv.Atoi(s); err == nil {
+				r.Deletions = i
+			}
 		}
+	} else {
+		rxd := regexp.MustCompile(`changed, (.*)? deletion`)
+		rxs = rxd.FindStringSubmatch(r.ShortStat)
+		if len(rxs) == 2 {
+			s := rxs[1]
+			if i, err := strconv.Atoi(s); err == nil {
+				r.Deletions = i
+			}
+		}
+
 	}
 
 	// set Clean and ShortStatSummary

@@ -527,9 +527,8 @@ type Repo struct {
 	Status   string // better term?
 
 	// setActions
-	GitAction    string // "..."
-	GitMessage   string //
-	GitConfirmed bool   //
+	GitAction  string // "..."
+	GitMessage string //
 }
 
 // initRepo returns a *Repo with initial values set.
@@ -1098,7 +1097,7 @@ func (r *Repo) checkConfirmed() {
 
 	// return if error
 	if err != nil {
-		r.GitConfirmed = false
+		r.Category = "Skipped"
 		return
 	}
 
@@ -1107,13 +1106,13 @@ func (r *Repo) checkConfirmed() {
 
 	switch in {
 	case "please", "y", "ye", "yes", "ys", "1", "ok", "push", "pull":
-		r.GitConfirmed = true
+		r.Category = "Scheduled"
 	case "you may fire when ready", "do it", "just do it", "you betcha", "sure":
-		r.GitConfirmed = true
+		r.Category = "Scheduled"
 	case "n", "no", "nah", "0", "stop", "skip", "abort", "halt", "quit":
-		r.GitConfirmed = false
+		r.Category = "Skipped"
 	default:
-		r.GitConfirmed = false
+		r.Category = "Skipped"
 	}
 }
 
@@ -1125,7 +1124,7 @@ func (r *Repo) checkCommitMessage() {
 
 	// return if error
 	if err != nil {
-		r.GitConfirmed = false
+		r.Category = "Skipped"
 		return
 	}
 
@@ -1134,10 +1133,10 @@ func (r *Repo) checkCommitMessage() {
 
 	switch in {
 	case "n", "no", "nah", "0", "stop", "skip", "abort", "halt", "quit", "exit", "":
-		r.GitConfirmed = false
+		r.Category = "Skipped"
 		r.GitMessage = ""
 	default:
-		r.GitConfirmed = true
+		r.Category = "Scheduled"
 		r.GitMessage = in
 	}
 }
@@ -1189,6 +1188,15 @@ func initPendingRepos(rs Repos) (prs Repos) {
 		}
 	}
 	return prs
+}
+
+func initScheludedRepos(rs Repos) (srs Repos) {
+	for _, r := range rs {
+		if r.Category == "Scheduled" {
+			srs = append(srs, r)
+		}
+	}
+	return srs
 }
 
 // sort A-Z by r.Name
@@ -1786,7 +1794,7 @@ func (rs Repos) verifyChanges(e Emoji, f Flags, t *Timer) {
 			r.checkConfirmed()
 
 			// prompt for commit message
-			if r.GitConfirmed == true && strings.Contains(r.GitAction, "commit") {
+			if r.Category != "Skipped" && strings.Contains(r.GitAction, "commit") {
 				fmt.Printf("%v commit message: ", e.Memo)
 				r.checkCommitMessage()
 			}
@@ -1795,7 +1803,18 @@ func (rs Repos) verifyChanges(e Emoji, f Flags, t *Timer) {
 }
 
 func (rs Repos) submitChanges(e Emoji, f Flags, t *Timer) {
+	// srs := initScheludedRepos(rs)
 
+}
+
+// debugger
+func (rs Repos) debug() {
+	for _, r := range rs {
+		if r.ErrorShort != "" {
+			fmt.Printf("%v|%v (%v)\n", r.Name, r.ErrorName, r.ErrorFirst)
+			fmt.Printf("%v\n", r.ErrorShort)
+		}
+	}
 }
 
 func main() {
@@ -1805,12 +1824,4 @@ func main() {
 	rs.verifyRepos(e, f, t)
 	rs.verifyChanges(e, f, t)
 	rs.submitChanges(e, f, t)
-
-	// debugging
-	// for _, r := range rs {
-	// 	if r.ErrorShort != "" {
-	// 		fmt.Printf("%v|%v (%v)\n", r.Name, r.ErrorName, r.ErrorFirst)
-	// 		fmt.Printf("%v\n", r.ErrorShort)
-	// 	}
-	// }
 }

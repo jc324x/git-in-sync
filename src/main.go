@@ -1949,9 +1949,33 @@ func (rs Repos) verifyChanges(e Emoji, f Flags, t *Timer) {
 
 		t.markMoment("verify-changes")
 
+		// check again see how many pending remain, should be zero...
+
+		var fcp []string // count pending
+		for _, r := range rs {
+			if r.Category == "Pending" {
+				fcp = append(fcp, r.Name)
+			}
+		}
+
 		var b bytes.Buffer
 
+		if len(fcp) == 0 {
+			b.WriteString(e.Checkmark)
+			b.WriteString(" [")
+			b.WriteString(strconv.Itoa(len(prs)))
+		} else {
+			b.WriteString(e.Warning)
+			b.WriteString(" [")
+			b.WriteString(strconv.Itoa(len(fcp)))
+		}
+
+		b.WriteString("/")
+		b.WriteString(strconv.Itoa(len(prs)))
+		b.WriteString("] scheduled {")
+
 		tr := time.Millisecond // truncate
+		b.WriteString("{")
 		b.WriteString(t.getSplit().Truncate(tr).String())
 		b.WriteString(" / ")
 		b.WriteString(t.getTime().Truncate(tr).String())

@@ -522,13 +522,11 @@ type Repo struct {
 	UntrackedSummary string   // "a, b, c..."
 	Untracked        bool     // true if if len(r.UntrackedFiles) >= 1
 
-	// rs.verifyRepos -> setStatus
-	Category string // Complete, Pending, Skipped, Scheduled
-	Status   string // better term?
-
-	// setActions
+	// rs.verifyRepos -> setStatus (verify grouping)
+	Category   string // Complete, Pending, Skipped, Scheduled
+	Status     string // better term?
 	GitAction  string // "..."
-	GitMessage string //
+	GitMessage string // "..."
 }
 
 // initRepo returns a *Repo with initial values set.
@@ -941,7 +939,7 @@ func (r *Repo) gitShortstat(e Emoji, f Flags) {
 		}
 	}
 
-	// set Rlean and ShortStatSummary
+	// set Clean and ShortStatSummary
 	switch {
 	case r.Changed == 0 && r.Insertions == 0 && r.Deletions == 0:
 		r.Clean = true
@@ -1141,22 +1139,6 @@ func (r *Repo) checkCommitMessage() {
 	}
 }
 
-func (r *Repo) gitPull(e Emoji, f Flags) {
-	targetPrint(f, "%v %v pulling from %v @ %v", e.Ship, r.Name, r.UpstreamBranch, r.Remote)
-
-	args := []string{"-C", r.RepoPath, "pull"}
-	cmd := exec.Command("git", args...)
-	cmd.Run()
-}
-
-func (r *Repo) gitPush(e Emoji, f Flags) {
-	targetPrint(f, "%v %v pushing to %v @ %v", e.Rocket, r.Name, r.UpstreamBranch, r.Remote)
-
-	args := []string{"-C", r.RepoPath, "push"}
-	cmd := exec.Command("git", args...)
-	cmd.Run()
-}
-
 func (r *Repo) gitAdd(e Emoji, f Flags) {
 	switch r.Status {
 	case "Dirty", "DirtyUntracked", "DirtyAhead", "DirtyBehind":
@@ -1165,9 +1147,21 @@ func (r *Repo) gitAdd(e Emoji, f Flags) {
 		targetPrint(f, "%v %v adding new files [%v]{%v}", e.Fire, r.Name, len(r.UntrackedFiles), r.UntrackedSummary)
 	}
 
+	// command
 	args := []string{"-C", r.RepoPath, "add", "-A"}
 	cmd := exec.Command("git", args...)
 	cmd.Run()
+	var out bytes.Buffer
+	var err bytes.Buffer
+	cmd.Stderr = &err
+	cmd.Stdout = &out
+	cmd.Run()
+
+	// check error, set value(s)
+	if err := err.String(); err != "" {
+		r.markError(e, f, err, "gitAdd")
+	}
+
 }
 
 func (r *Repo) gitCommit(e Emoji, f Flags) {
@@ -1178,9 +1172,21 @@ func (r *Repo) gitCommit(e Emoji, f Flags) {
 		targetPrint(f, "%v %v committing new files [%v]{%v}", e.Fire, r.Name, len(r.UntrackedFiles), r.UntrackedSummary)
 	}
 
+	// command
 	args := []string{"-C", r.RepoPath, "commit", "-m", r.GitMessage}
 	cmd := exec.Command("git", args...)
 	cmd.Run()
+	var out bytes.Buffer
+	var err bytes.Buffer
+	cmd.Stderr = &err
+	cmd.Stdout = &out
+	cmd.Run()
+
+	// check error, set value(s)
+	if err := err.String(); err != "" {
+		r.markError(e, f, err, "gitCommit")
+	}
+
 }
 
 func (r *Repo) gitStash(e Emoji, f Flags) {
@@ -1190,6 +1196,44 @@ func (r *Repo) gitStash(e Emoji, f Flags) {
 
 func (r *Repo) gitPop(e Emoji, f Flags) {
 	targetPrint(f, "%v %v popping changes", e.Popcorn, r.Name)
+}
+
+func (r *Repo) gitPull(e Emoji, f Flags) {
+	targetPrint(f, "%v %v pulling from %v @ %v", e.Ship, r.Name, r.UpstreamBranch, r.Remote)
+
+	// command
+	args := []string{"-C", r.RepoPath, "pull"}
+	cmd := exec.Command("git", args...)
+	cmd.Run()
+	var out bytes.Buffer
+	var err bytes.Buffer
+	cmd.Stderr = &err
+	cmd.Stdout = &out
+	cmd.Run()
+
+	// check error, set value(s)
+	if err := err.String(); err != "" {
+		r.markError(e, f, err, "gitPull")
+	}
+}
+
+func (r *Repo) gitPush(e Emoji, f Flags) {
+	targetPrint(f, "%v %v pushing to %v @ %v", e.Rocket, r.Name, r.UpstreamBranch, r.Remote)
+
+	// command
+	args := []string{"-C", r.RepoPath, "push"}
+	cmd := exec.Command("git", args...)
+	cmd.Run()
+	var out bytes.Buffer
+	var err bytes.Buffer
+	cmd.Stderr = &err
+	cmd.Stdout = &out
+	cmd.Run()
+
+	// check error, set value(s)
+	if err := err.String(); err != "" {
+		r.markError(e, f, err, "gitPush")
+	}
 }
 
 // --> Repos: Collection of Repos
@@ -1900,4 +1944,6 @@ func main() {
 	rs.verifyRepos(e, f, t)
 	rs.verifyChanges(e, f, t)
 	rs.submitChanges(e, f, t)
+
+	rs.debug()
 }

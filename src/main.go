@@ -1946,7 +1946,20 @@ func (rs Repos) verifyChanges(e Emoji, f Flags, t *Timer) {
 				r.checkCommitMessage()
 			}
 		}
+
+		t.markMoment("verify-changes")
+
+		var b bytes.Buffer
+
+		tr := time.Millisecond // truncate
+		b.WriteString(t.getSplit().Truncate(tr).String())
+		b.WriteString(" / ")
+		b.WriteString(t.getTime().Truncate(tr).String())
+		b.WriteString("}")
+
+		targetPrint(f, b.String())
 	}
+
 }
 
 func (rs Repos) submitChanges(e Emoji, f Flags, t *Timer) {

@@ -1106,7 +1106,9 @@ func (r *Repo) checkConfirmed() {
 	in = strings.TrimSuffix(in, "\n")
 
 	switch in {
-	case "please", "y", "yes", "ys", "1", "ok", "push", "pull", "sure", "you betcha", "do it":
+	case "please", "y", "ye", "yes", "ys", "1", "ok", "push", "pull":
+		r.GitConfirmed = true
+	case "you may fire when ready", "do it", "just do it", "you betcha", "sure":
 		r.GitConfirmed = true
 	case "n", "no", "nah", "0", "stop", "skip", "abort", "halt", "quit":
 		r.GitConfirmed = false
@@ -1590,9 +1592,10 @@ func (rs Repos) verifyRepos(e Emoji, f Flags, t *Timer) {
 	wg.Wait()
 
 	// track Complete, Pending, Skipped and Scheduled
-	var cr []string // complete repos
-	var pr []string // pending repos
-	var sr []string // skipped repos
+	var cr []string  // complete repos
+	var pr []string  // pending repos
+	var sk []string  // skipped repos
+	var sch []string // scheduled repos
 
 	for _, r := range rs {
 		if r.Category == "Complete" {
@@ -1604,13 +1607,16 @@ func (rs Repos) verifyRepos(e Emoji, f Flags, t *Timer) {
 		}
 
 		if r.Category == "Skipped" {
-			sr = append(sr, r.Name)
+			sk = append(sk, r.Name)
 		}
 
+		if r.Category == "Scheduled" {
+			sch = append(sch, r.Name)
+		}
 	}
 
 	// timer
-	t.markMoment("verify-divs")
+	t.markMoment("verify-repos")
 
 	var b bytes.Buffer
 
@@ -1634,22 +1640,40 @@ func (rs Repos) verifyRepos(e Emoji, f Flags, t *Timer) {
 
 	targetPrint(f, b.String())
 
-	// skipped repo info
-
-	if len(sr) >= 1 {
+	// scheduled repo info
+	if len(sch) >= 1 {
 		b.Reset()
-		srs := sliceSummary(sr, 15) // skipped repo summary
+		schs := sliceSummary(sch, 15) // scheduled repo summary
+		b.WriteString(e.TimerClock)
+		b.WriteString("  [")
+		b.WriteString(strconv.Itoa(len(sch)))
+
+		if loginMode(f) {
+			b.WriteString("] pull scheduled (")
+
+		} else if logoutMode(f) {
+			b.WriteString("] push scheduled (")
+		}
+
+		b.WriteString(schs)
+		b.WriteString(")")
+		targetPrint(f, b.String())
+	}
+
+	// skipped repo info
+	if len(sk) >= 1 {
+		b.Reset()
+		sks := sliceSummary(sk, 15) // skipped repo summary
 		b.WriteString(e.Slash)
 		b.WriteString(" [")
-		b.WriteString(strconv.Itoa(len(sr)))
+		b.WriteString(strconv.Itoa(len(sk)))
 		b.WriteString("] skipped (")
-		b.WriteString(srs)
+		b.WriteString(sks)
 		b.WriteString(")")
 		targetPrint(f, b.String())
 	}
 
 	// pending repo info
-
 	if len(pr) >= 1 {
 		b.Reset()
 		prs := sliceSummary(pr, 15) // pending repo summary

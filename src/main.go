@@ -527,6 +527,9 @@ type Repo struct {
 	Status     string // better term?
 	GitAction  string // "..."
 	GitMessage string // "..."
+
+	// rs.verifyChanges -> gitPorcelain
+	Porcelain bool // true if `git status --porcelain` returns ""
 }
 
 // initRepo returns a *Repo with initial values set.
@@ -921,7 +924,7 @@ func (r *Repo) gitShortstat(e Emoji, f Flags) {
 		}
 	}
 
-	rxi := regexp.MustCompile(`changed, (.*)? insertions`)
+	rxi := regexp.MustCompile(`changed, (.*)? insertion`)
 	rxs = rxi.FindStringSubmatch(r.ShortStat)
 	if len(rxs) == 2 {
 		s := rxs[1]
@@ -930,7 +933,7 @@ func (r *Repo) gitShortstat(e Emoji, f Flags) {
 		}
 	}
 
-	rxd := regexp.MustCompile(`\(\+\), (.*)? deletions`)
+	rxd := regexp.MustCompile(`\(\+\), (.*)? deletion`)
 	rxs = rxd.FindStringSubmatch(r.ShortStat)
 	if len(rxs) == 2 {
 		s := rxs[1]
@@ -1142,9 +1145,9 @@ func (r *Repo) checkCommitMessage() {
 func (r *Repo) gitAdd(e Emoji, f Flags) {
 	switch r.Status {
 	case "Dirty", "DirtyUntracked", "DirtyAhead", "DirtyBehind":
-		targetPrint(f, "%v  %v adding changes [%v]{%v}(%v)", e.Satellite, r.Name, len(r.DiffsNameOnly), r.DiffsSummary, r.ShortStatSummary)
+		targetPrint(f, "%v %v adding changes [%v]{%v}(%v)", e.Outbox, r.Name, len(r.DiffsNameOnly), r.DiffsSummary, r.ShortStatSummary)
 	case "Untracked", "UntrackedAhead", "UntrackedBehind":
-		targetPrint(f, "%v %v adding new files [%v]{%v}", e.Fire, r.Name, len(r.UntrackedFiles), r.UntrackedSummary)
+		targetPrint(f, "%v %v adding new files [%v]{%v}", e.Outbox, r.Name, len(r.UntrackedFiles), r.UntrackedSummary)
 	}
 
 	// command
@@ -1234,6 +1237,38 @@ func (r *Repo) gitPush(e Emoji, f Flags) {
 	if err := err.String(); err != "" {
 		r.markError(e, f, err, "gitPush")
 	}
+}
+
+func (r *Repo) gitStatusPorcelain(e Emoji, f Flags) {
+
+	// return if not verified
+	if notVerified(r) {
+		return
+	}
+
+	// command
+	args := []string{r.GitDir, r.WorkTree, "status", "--porcelain"}
+	cmd := exec.Command("git", args...)
+	var out bytes.Buffer
+	var err bytes.Buffer
+	cmd.Stdout = &out
+	cmd.Stderr = &err
+	cmd.Run()
+
+	// check error, set value(s)
+	if err := err.String(); err != "" {
+		r.markError(e, f, err, "gitStatusPorcelain")
+	}
+
+	if str := out.String(); str != "" {
+		r.Porcelain = false
+		targetPrint(f, "%v commit error (%v)", e.Slash, r.ErrorFirst)
+	} else {
+		r.Category = "Complete"
+		r.Porcelain = true
+		targetPrint(f, "%v %v up to date!", e.Checkmark, r.Name)
+	}
+
 }
 
 // --> Repos: Collection of Repos
@@ -1900,6 +1935,11 @@ func (rs Repos) verifyChanges(e Emoji, f Flags, t *Timer) {
 func (rs Repos) submitChanges(e Emoji, f Flags, t *Timer) {
 	srs := initScheludedRepos(rs)
 
+	// nothing to see here...
+	if len(srs) == 0 {
+		return
+	}
+
 	var wg sync.WaitGroup
 	for i := range srs {
 		wg.Add(1)
@@ -1921,13 +1961,29 @@ func (rs Repos) submitChanges(e Emoji, f Flags, t *Timer) {
 				r.gitCommit(e, f)
 				r.gitPush(e, f)
 			}
+			r.gitRemoteUpdate(e, f)
+			r.gitStatusPorcelain(e, f)
+
 		}(srs[i])
 	}
 	wg.Wait()
 
+	var vc []string // verified complete repos
+
+	for _, r := range srs {
+		if r.Category == "Complete" {
+			vc = append(vc, r.Name)
+		}
+	}
+
+	if len(srs) == len(vc) {
+		fmt.Println("ALL GOOD!")
+	} else {
+		fmt.Println("Hmm...schedule didn't complete")
+	}
 }
 
-// debugger
+// debug spits out error info
 func (rs Repos) debug() {
 	for _, r := range rs {
 		if r.ErrorShort != "" {
@@ -1944,6 +2000,5 @@ func main() {
 	rs.verifyRepos(e, f, t)
 	rs.verifyChanges(e, f, t)
 	rs.submitChanges(e, f, t)
-
-	rs.debug()
+	// rs.debug()
 }

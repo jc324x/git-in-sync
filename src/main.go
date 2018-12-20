@@ -462,17 +462,17 @@ func initConfig(e Emoji, f Flags, t *Timer) (c Config) {
 type Repo struct {
 
 	// initRun -> initRepos -> initRepo
-	BundlePath   string // "~/dev"
-	ZoneDivision string // "main" or "go-lang"
-	ZoneUser     string // "jychri"
-	ZoneRemote   string // "github" or "gitlab"
-	Name         string // "git-in-sync"
-	DivPath      string // "/Users/jychri/dev/go-lang/"
-	RepoPath     string // "/Users/jychri/dev/go-lang/git-in-sync"
-	GitPath      string // "/Users/jychri/dev/go-lang/git-in-sync/.git"
-	GitDir       string // "--git-dir=/Users/jychri/dev/go-lang/git-in-sync/.git"
-	WorkTree     string // "--work-tree=/Users/jychri/dev/go-lang/git-in-sync"
-	URL          string // "https://github.com/jychri/git-in-sync"
+	BundlePath string // "~/dev"
+	Division   string // "main" or "go-lang"
+	User       string // "jychri"
+	Remote     string // "github" or "gitlab"
+	Name       string // "git-in-sync"
+	DivPath    string // "/Users/jychri/dev/go-lang/"
+	RepoPath   string // "/Users/jychri/dev/go-lang/git-in-sync"
+	GitPath    string // "/Users/jychri/dev/go-lang/git-in-sync/.git"
+	GitDir     string // "--git-dir=/Users/jychri/dev/go-lang/git-in-sync/.git"
+	WorkTree   string // "--work-tree=/Users/jychri/dev/go-lang/git-in-sync"
+	URL        string // "https://github.com/jychri/git-in-sync"
 
 	// rs.verifyRepos
 	PendingClone bool // true if RepoPath or GitPath are empty
@@ -541,13 +541,13 @@ func initRepo(zd string, zu string, zr string, bp string, rn string) *Repo {
 	r.BundlePath = bp
 
 	// "main" or "go-lang", (z)one(d)ivision
-	r.ZoneDivision = zd
+	r.Division = zd
 
 	// "jychri", (z)one(u)ser
-	r.ZoneUser = zu
+	r.User = zu
 
 	// "github" or "gitlab", (z)one(r)emote
-	r.ZoneRemote = zr
+	r.Remote = zr
 
 	// "git-in-sync", (r)epo(n)ame
 	r.Name = rn
@@ -556,9 +556,9 @@ func initRepo(zd string, zu string, zr string, bp string, rn string) *Repo {
 
 	// "/Users/jychri/dev/go-lang/"
 	b.WriteString(validatePath(r.BundlePath))
-	if r.ZoneDivision != "main" {
+	if r.Division != "main" {
 		b.WriteString("/")
-		b.WriteString(r.ZoneDivision)
+		b.WriteString(r.Division)
 	}
 	r.DivPath = b.String()
 
@@ -589,13 +589,13 @@ func initRepo(zd string, zu string, zr string, bp string, rn string) *Repo {
 
 	// "https://github.com/jychri/git-in-sync"
 	b.Reset()
-	switch r.ZoneRemote {
+	switch r.Remote {
 	case "github":
 		b.WriteString("https://github.com/")
 	case "gitlab":
 		b.WriteString("https://gitlab.com/")
 	}
-	b.WriteString(r.ZoneUser)
+	b.WriteString(r.User)
 	b.WriteString("/")
 	b.WriteString(r.Name)
 	r.URL = b.String()
@@ -662,7 +662,7 @@ func (r *Repo) gitClone(e Emoji, f Flags) {
 
 	if r.PendingClone == true {
 		// print
-		targetPrint(f, "%v cloning %v {%v}", e.Box, r.Name, r.ZoneDivision)
+		targetPrint(f, "%v cloning %v {%v}", e.Box, r.Name, r.Division)
 
 		// command
 		args := []string{"clone", r.URL, r.RepoPath}
@@ -1141,6 +1141,48 @@ func (r *Repo) checkCommitMessage() {
 	}
 }
 
+func (r *Repo) gitPull(e Emoji, f Flags) {
+	targetPrint(f, "%v %v pulling from %v", e.Ship, r.Name, r.Remote)
+
+	args := []string{"-C", r.RepoPath, "pull"}
+	cmd := exec.Command("git", args...)
+	cmd.Run()
+}
+
+func (r *Repo) gitPush(e Emoji, f Flags) {
+	targetPrint(f, "%v %v pushing to %v", e.Rocket, r.Name, r.Remote)
+
+	args := []string{"-C", r.RepoPath, "push"}
+	cmd := exec.Command("git", args...)
+	cmd.Run()
+}
+
+func (r *Repo) gitAdd(e Emoji, f Flags) {
+	targetPrint(f, "%v  %v adding changes [%v]{%v}(%v)", e.Satellite, r.Name, len(r.DiffsNameOnly), r.DiffsSummary, r.ShortStatSummary)
+	args := []string{"-C", r.RepoPath, "add", "-A"}
+	cmd := exec.Command("git", args...)
+	cmd.Run()
+}
+
+// FLAG: check for stash?
+
+func (r *Repo) gitCommit(e Emoji, f Flags) {
+	targetPrint(f, "%v %v committing changes [%v]{%v}(%v)", e.Fire, r.Name, len(r.DiffsNameOnly), r.DiffsSummary, r.ShortStatSummary)
+
+	args := []string{"-C", r.RepoPath, "commit", "-m", r.GitMessage}
+	cmd := exec.Command("git", args...)
+	cmd.Run()
+}
+
+func (r *Repo) gitStash(e Emoji, f Flags) {
+	targetPrint(f, "%v  %v stashing changes", e.Squirrel, r.Name)
+
+}
+
+func (r *Repo) gitPop(e Emoji, f Flags) {
+	targetPrint(f, "%v %v popping changes", e.Popcorn, r.Name)
+}
+
 // --> Repos: Collection of Repos
 
 type Repos []*Repo
@@ -1418,7 +1460,7 @@ func (rs Repos) verifyDivs(e Emoji, f Flags, t *Timer) {
 
 	for _, r := range rs {
 		dvs = append(dvs, r.DivPath)
-		zdvs = append(zdvs, r.ZoneDivision)
+		zdvs = append(zdvs, r.Division)
 	}
 
 	dvs = removeDuplicates(dvs)
@@ -1771,23 +1813,23 @@ func (rs Repos) verifyChanges(e Emoji, f Flags, t *Timer) {
 
 			switch r.Status {
 			case "Ahead":
-				fmt.Printf("%v push changes to %v? ", e.Rocket, r.ZoneRemote)
+				fmt.Printf("%v push changes to %v? ", e.Rocket, r.Remote)
 			case "Behind":
-				fmt.Printf("%v pull changes from %v? ", e.Ship, r.ZoneRemote)
+				fmt.Printf("%v pull changes from %v? ", e.Ship, r.Remote)
 			case "Dirty":
-				fmt.Printf("%v add all files, commit and push to %v? ", e.Clipboard, r.ZoneRemote)
+				fmt.Printf("%v add all files, commit and push to %v? ", e.Clipboard, r.Remote)
 			case "DirtyUntracked":
-				fmt.Printf("%v add all files, commit and push to %v? ", e.Clipboard, r.ZoneRemote)
+				fmt.Printf("%v add all files, commit and push to %v? ", e.Clipboard, r.Remote)
 			case "DirtyAhead":
-				fmt.Printf("%v add all files, commit and push to %v? ", e.Clipboard, r.ZoneRemote)
+				fmt.Printf("%v add all files, commit and push to %v? ", e.Clipboard, r.Remote)
 			case "DirtyBehind":
-				fmt.Printf("%v stash all files, pull changes, commit and push to %v? ", e.Clipboard, r.ZoneRemote)
+				fmt.Printf("%v stash all files, pull changes, commit and push to %v? ", e.Clipboard, r.Remote)
 			case "Untracked":
-				fmt.Printf("%v add all files, commit and push to %v? ", e.Clipboard, r.ZoneRemote)
+				fmt.Printf("%v add all files, commit and push to %v? ", e.Clipboard, r.Remote)
 			case "UntrackedAhead":
-				fmt.Printf("%v add all files, commit and push to %v? ", e.Clipboard, r.ZoneRemote)
+				fmt.Printf("%v add all files, commit and push to %v? ", e.Clipboard, r.Remote)
 			case "UntrackedBehind":
-				fmt.Printf("%v stash all files, pull changes, commit and push to %v? ", e.Clipboard, r.ZoneRemote)
+				fmt.Printf("%v stash all files, pull changes, commit and push to %v? ", e.Clipboard, r.Remote)
 			}
 
 			// prompt for approval
@@ -1803,7 +1845,14 @@ func (rs Repos) verifyChanges(e Emoji, f Flags, t *Timer) {
 }
 
 func (rs Repos) submitChanges(e Emoji, f Flags, t *Timer) {
-	// srs := initScheludedRepos(rs)
+	srs := initScheludedRepos(rs)
+	// fmt.Printf("len %v\n", len(srs))
+
+	if len(srs) >= 1 {
+		for _, r := range srs {
+			fmt.Println(r.Name)
+		}
+	}
 
 }
 

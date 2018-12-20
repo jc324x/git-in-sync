@@ -1142,7 +1142,7 @@ func (r *Repo) checkCommitMessage() {
 }
 
 func (r *Repo) gitPull(e Emoji, f Flags) {
-	targetPrint(f, "%v %v pulling from %v", e.Ship, r.Name, r.Remote)
+	targetPrint(f, "%v %v pulling from %v @ %v", e.Ship, r.Name, r.UpstreamBranch, r.Remote)
 
 	args := []string{"-C", r.RepoPath, "pull"}
 	cmd := exec.Command("git", args...)
@@ -1150,7 +1150,7 @@ func (r *Repo) gitPull(e Emoji, f Flags) {
 }
 
 func (r *Repo) gitPush(e Emoji, f Flags) {
-	targetPrint(f, "%v %v pushing to %v", e.Rocket, r.Name, r.Remote)
+	targetPrint(f, "%v %v pushing to %v @ %v", e.Rocket, r.Name, r.UpstreamBranch, r.Remote)
 
 	args := []string{"-C", r.RepoPath, "push"}
 	cmd := exec.Command("git", args...)
@@ -1158,16 +1158,25 @@ func (r *Repo) gitPush(e Emoji, f Flags) {
 }
 
 func (r *Repo) gitAdd(e Emoji, f Flags) {
-	targetPrint(f, "%v  %v adding changes [%v]{%v}(%v)", e.Satellite, r.Name, len(r.DiffsNameOnly), r.DiffsSummary, r.ShortStatSummary)
+	switch r.Status {
+	case "Dirty", "DirtyUntracked", "DirtyAhead", "DirtyBehind":
+		targetPrint(f, "%v  %v adding changes [%v]{%v}(%v)", e.Satellite, r.Name, len(r.DiffsNameOnly), r.DiffsSummary, r.ShortStatSummary)
+	case "Untracked", "UntrackedAhead", "UntrackedBehind":
+		targetPrint(f, "%v %v adding new files [%v]{%v}", e.Fire, r.Name, len(r.UntrackedFiles), r.UntrackedSummary)
+	}
+
 	args := []string{"-C", r.RepoPath, "add", "-A"}
 	cmd := exec.Command("git", args...)
 	cmd.Run()
 }
 
-// FLAG: check for stash?
-
 func (r *Repo) gitCommit(e Emoji, f Flags) {
-	targetPrint(f, "%v %v committing changes [%v]{%v}(%v)", e.Fire, r.Name, len(r.DiffsNameOnly), r.DiffsSummary, r.ShortStatSummary)
+	switch r.Status {
+	case "Dirty", "DirtyUntracked", "DirtyAhead", "DirtyBehind":
+		targetPrint(f, "%v %v committing changes [%v]{%v}(%v)", e.Fire, r.Name, len(r.DiffsNameOnly), r.DiffsSummary, r.ShortStatSummary)
+	case "Untracked", "UntrackedAhead", "UntrackedBehind":
+		targetPrint(f, "%v %v committing new files [%v]{%v}", e.Fire, r.Name, len(r.UntrackedFiles), r.UntrackedSummary)
+	}
 
 	args := []string{"-C", r.RepoPath, "commit", "-m", r.GitMessage}
 	cmd := exec.Command("git", args...)
@@ -1846,13 +1855,31 @@ func (rs Repos) verifyChanges(e Emoji, f Flags, t *Timer) {
 
 func (rs Repos) submitChanges(e Emoji, f Flags, t *Timer) {
 	srs := initScheludedRepos(rs)
-	// fmt.Printf("len %v\n", len(srs))
 
-	if len(srs) >= 1 {
-		for _, r := range srs {
-			fmt.Println(r.Name)
-		}
+	var wg sync.WaitGroup
+	for i := range srs {
+		wg.Add(1)
+		go func(r *Repo) {
+			defer wg.Done()
+			switch r.GitAction {
+			case "pull":
+				r.gitPull(e, f)
+			case "push":
+				r.gitPush(e, f)
+			case "add-commit-push":
+				r.gitAdd(e, f)
+				r.gitCommit(e, f)
+				r.gitPush(e, f)
+			case "stash-pull-pop-commit-push":
+				r.gitStash(e, f)
+				r.gitPull(e, f)
+				r.gitPop(e, f)
+				r.gitCommit(e, f)
+				r.gitPush(e, f)
+			}
+		}(srs[i])
 	}
+	wg.Wait()
 
 }
 

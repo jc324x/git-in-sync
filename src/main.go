@@ -1050,7 +1050,7 @@ func (r *Repo) setStatus(e Emoji, f Flags) {
 		r.Category = "Pending"
 		r.Status = "Untracked"
 		r.GitAction = "add-commit-push"
-	case (r.Clean == false && r.Untracked == true && r.Status == "Ahead"):
+	case (r.Clean == true && r.Untracked == true && r.Status == "Ahead"):
 		r.Category = "Pending"
 		r.Status = "UntrackedAhead"
 		r.GitAction = "add-commit-push"
@@ -1063,7 +1063,7 @@ func (r *Repo) setStatus(e Emoji, f Flags) {
 		r.GitAction = "stash-pull-pop-commit-push"
 	default:
 		r.Category = "Skipped"
-		r.Status = "Unknown"
+		// r.Status = "Unknown"
 		r.markError(e, f, "fatal: no matches found in setStatus switch", "setStatus")
 	}
 
@@ -1153,7 +1153,6 @@ func (r *Repo) gitAdd(e Emoji, f Flags) {
 	// command
 	args := []string{"-C", r.RepoPath, "add", "-A"}
 	cmd := exec.Command("git", args...)
-	cmd.Run()
 	var out bytes.Buffer
 	var err bytes.Buffer
 	cmd.Stderr = &err
@@ -1178,7 +1177,6 @@ func (r *Repo) gitCommit(e Emoji, f Flags) {
 	// command
 	args := []string{"-C", r.RepoPath, "commit", "-m", r.GitMessage}
 	cmd := exec.Command("git", args...)
-	cmd.Run()
 	var out bytes.Buffer
 	var err bytes.Buffer
 	cmd.Stderr = &err
@@ -1207,7 +1205,6 @@ func (r *Repo) gitPull(e Emoji, f Flags) {
 	// command
 	args := []string{"-C", r.RepoPath, "pull"}
 	cmd := exec.Command("git", args...)
-	cmd.Run()
 	var out bytes.Buffer
 	var err bytes.Buffer
 	cmd.Stderr = &err
@@ -1226,7 +1223,6 @@ func (r *Repo) gitPush(e Emoji, f Flags) {
 	// command
 	args := []string{"-C", r.RepoPath, "push"}
 	cmd := exec.Command("git", args...)
-	cmd.Run()
 	var out bytes.Buffer
 	var err bytes.Buffer
 	cmd.Stderr = &err
@@ -1327,6 +1323,15 @@ func initScheludedRepos(rs Repos) (srs Repos) {
 		}
 	}
 	return srs
+}
+
+func initSkippedRepos(rs Repos) (skrs Repos) {
+	for _, r := range rs {
+		if r.Category == "Skipped" {
+			skrs = append(skrs, r)
+		}
+	}
+	return skrs
 }
 
 // sort A-Z by r.Name
@@ -1620,9 +1625,9 @@ func (rs Repos) verifyDivs(e Emoji, f Flags, t *Timer) {
 	b.WriteString("] divs verified")
 
 	if len(cd) >= 1 {
-		b.WriteString(", created (")
+		b.WriteString(", created [")
 		b.WriteString(strconv.Itoa(len(cd)))
-		b.WriteString(")")
+		b.WriteString("]")
 	}
 
 	b.WriteString(" {")
@@ -1934,9 +1939,10 @@ func (rs Repos) verifyChanges(e Emoji, f Flags, t *Timer) {
 
 func (rs Repos) submitChanges(e Emoji, f Flags, t *Timer) {
 	srs := initScheludedRepos(rs)
+	skrs := initSkippedRepos(rs)
 
-	// nothing to see here...
-	if len(srs) == 0 {
+	// nothing to see here, return early
+	if len(srs) == 0 && len(skrs) == 0 {
 		return
 	}
 
@@ -1976,11 +1982,20 @@ func (rs Repos) submitChanges(e Emoji, f Flags, t *Timer) {
 		}
 	}
 
-	if len(srs) == len(vc) {
-		fmt.Println("ALL GOOD!")
-	} else {
-		fmt.Println("Hmm...schedule didn't complete")
+	switch {
+	case len(srs) == len(vc) && len(skrs) == 0:
+		fmt.Println("all good. nothing skipped, everything completed")
+	case len(srs) == len(vc) && len(skrs) >= 1:
+		fmt.Println("all pending actions complete - did skip this though (as planned)")
+	case len(srs) != len(vc) && len(skrs) >= 1:
+		fmt.Println("all changes not submitted correctly, also skipped")
 	}
+
+	// if len(srs) == len(vc) {
+	// 	fmt.Println("All changes submitted for pending repos")
+	// } else {
+	// 	fmt.Println("Hmm...schedule didn't complete")
+	// }
 }
 
 // debug spits out error info
@@ -1989,6 +2004,7 @@ func (rs Repos) debug() {
 		if r.ErrorShort != "" {
 			fmt.Printf("%v|%v (%v)\n", r.Name, r.ErrorName, r.ErrorFirst)
 			fmt.Printf("%v\n", r.ErrorShort)
+			fmt.Printf("clean: %v, untracked: %v, status: %v\n", r.Clean, r.Untracked, r.Status)
 		}
 	}
 }
@@ -2000,5 +2016,5 @@ func main() {
 	rs.verifyRepos(e, f, t)
 	rs.verifyChanges(e, f, t)
 	rs.submitChanges(e, f, t)
-	// rs.debug()
+	rs.debug()
 }

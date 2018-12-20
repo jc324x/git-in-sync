@@ -84,6 +84,7 @@ func (t *Timer) getMoment(s string) (Moment, error) {
 
 type Emoji struct {
 	AlarmClock           string
+	Boat                 string
 	Book                 string
 	Books                string
 	Box                  string
@@ -139,6 +140,7 @@ type Emoji struct {
 // initEmoji returns an Emoji struct with all values initialized.
 func initEmoji(f Flags, t *Timer) (e Emoji) {
 	e.AlarmClock = printEmoji(9200)
+	e.Boat = printEmoji(128676)
 	e.Book = printEmoji(128214)
 	e.Books = printEmoji(128218)
 	e.Box = printEmoji(128230)
@@ -1094,12 +1096,12 @@ func (r *Repo) setStatus(e Emoji, f Flags) {
 	}
 
 	// auto move to scheduled for matching login/logout
-	switch {
-	case loginMode(f) && r.Category == "Pending" && r.Status == "Behind":
-		r.Category = "Scheduled"
-	case logoutMode(f) && r.Category == "Pending" && r.Status == "Ahead":
-		r.Category = "Scheduled"
-	}
+	// switch {
+	// case loginMode(f) && r.Category == "Pending" && r.Status == "Behind":
+	// 	r.Category = "Scheduled"
+	// case logoutMode(f) && r.Category == "Pending" && r.Status == "Ahead":
+	// 	r.Category = "Scheduled"
+	// }
 }
 
 func (r *Repo) checkConfirmed() {
@@ -1217,15 +1219,19 @@ func (r *Repo) gitPull(e Emoji, f Flags) {
 	// command
 	args := []string{"-C", r.RepoPath, "pull"}
 	cmd := exec.Command("git", args...)
-	var out bytes.Buffer
+	// var out bytes.Buffer
 	var err bytes.Buffer
 	cmd.Stderr = &err
-	cmd.Stdout = &out
+	// cmd.Stdout = &out
 	cmd.Run()
 
 	// check error, set value(s)
 	if err := err.String(); err != "" {
 		r.markError(e, f, err, "gitPull")
+	}
+
+	if r.Verified == false {
+		targetPrint(f, "%v %v pull failed", e.Slash, r.Name)
 	}
 }
 
@@ -1245,6 +1251,11 @@ func (r *Repo) gitPush(e Emoji, f Flags) {
 	if err := err.String(); err != "" {
 		r.markError(e, f, err, "gitPush")
 	}
+
+	if r.Verified == false {
+		targetPrint(f, "%v %v push failed", e.Slash, r.Name)
+	}
+
 }
 
 func (r *Repo) gitStatusPorcelain(e Emoji, f Flags) {
@@ -1796,6 +1807,7 @@ func (rs Repos) verifyRepos(e Emoji, f Flags, t *Timer) {
 	targetPrint(f, b.String())
 
 	// scheduled repo info
+
 	if len(sch) >= 1 {
 		b.Reset()
 		schs := sliceSummary(sch, 15) // scheduled repo summary
@@ -1920,7 +1932,7 @@ func (rs Repos) verifyChanges(e Emoji, f Flags, t *Timer) {
 			case "Ahead":
 				fmt.Printf("%v push changes to %v? ", e.Rocket, r.Remote)
 			case "Behind":
-				fmt.Printf("%v pull changes from %v? ", e.Ship, r.Remote)
+				fmt.Printf("%v pull changes from %v? ", e.Boat, r.Remote)
 			case "Dirty":
 				fmt.Printf("%v add all files, commit and push to %v? ", e.Clipboard, r.Remote)
 			case "DirtyUntracked":
@@ -1951,37 +1963,57 @@ func (rs Repos) verifyChanges(e Emoji, f Flags, t *Timer) {
 
 		// check again see how many pending remain, should be zero...
 
-		var fcp []string // count pending
-		for _, r := range rs {
-			if r.Category == "Pending" {
-				fcp = append(fcp, r.Name)
-			}
-		}
+		// going to push pause for now
+		// I need to know count of pending/scheduled prior to the start
+		// to see what the difference is since then.
+		// things can be autoscheduled, need to account for those
 
-		var b bytes.Buffer
+		// var sr []string // scheduled repos
+		// for _, r := range rs {
+		// 	if r.Category == "Scheduled " {
+		// 		sr = append(sr, r.Name)
+		// 	}
+		// }
 
-		if len(fcp) == 0 {
-			b.WriteString(e.Checkmark)
-			b.WriteString(" [")
-			b.WriteString(strconv.Itoa(len(prs)))
-		} else {
-			b.WriteString(e.Warning)
-			b.WriteString(" [")
-			b.WriteString(strconv.Itoa(len(fcp)))
-		}
+		// var b bytes.Buffer
+		// tr := time.Millisecond // truncate
 
-		b.WriteString("/")
-		b.WriteString(strconv.Itoa(len(prs)))
-		b.WriteString("] scheduled {")
+		// debug
+		// for _, r := range prs {
+		// 	fmt.Println(r.Name)
+		// }
 
-		tr := time.Millisecond // truncate
-		b.WriteString("{")
-		b.WriteString(t.getSplit().Truncate(tr).String())
-		b.WriteString(" / ")
-		b.WriteString(t.getTime().Truncate(tr).String())
-		b.WriteString("}")
+		// switch {
+		// case len(prs) >= 1 && len(sr) >= 1:
+		// 	b.WriteString(e.Hourglass)
+		// 	b.WriteString(" [")
+		// 	b.WriteString(strconv.Itoa(len(prs)))
+		// case len(prs) >= 1 && len(sr) == 0:
+		// 	b.WriteString(e.Warning)
+		// 	b.WriteString(" [")
+		// 	b.WriteString(strconv.Itoa(len(fcp)))
+		// }
 
-		targetPrint(f, b.String())
+		// if len(prs) >= 1 && len(sr) >= 1 {
+		// 	b.WriteString(e.Hourglass)
+		// 	b.WriteString(" [")
+		// 	b.WriteString(strconv.Itoa(len(prs)))
+		// } else {
+		// fmt.Println()
+		// b.WriteString(e.Warning)
+		// b.WriteString(" [")
+		// b.WriteString(strconv.Itoa(len(fcp)))
+		// }
+
+		// b.WriteString("/")
+		// b.WriteString(strconv.Itoa(len(prs)))
+		// b.WriteString("] scheduled {")
+		// b.WriteString(t.getSplit().Truncate(tr).String())
+		// b.WriteString(" / ")
+		// b.WriteString(t.getTime().Truncate(tr).String())
+		// b.WriteString("}")
+
+		// targetPrint(f, b.String())
 	}
 
 }
@@ -2031,11 +2063,12 @@ func (rs Repos) submitChanges(e Emoji, f Flags, t *Timer) {
 		}
 	}
 
+	//
 	switch {
 	case len(srs) == len(vc) && len(skrs) == 0:
 		fmt.Println("all good. nothing skipped, everything completed")
-	case len(srs) == len(vc) && len(skrs) >= 1:
-		fmt.Println("all pending actions complete - did skip this though (as planned)")
+	// case len(srs) == len(vc) && len(skrs) >= 1:
+	// 	fmt.Println("all pending actions complete - did skip this though (as planned)")
 	case len(srs) != len(vc) && len(skrs) >= 1:
 		fmt.Println("all changes not submitted correctly, also skipped")
 	}
@@ -2055,6 +2088,13 @@ func (rs Repos) debug() {
 			fmt.Printf("%v\n", r.ErrorShort)
 			fmt.Printf("clean: %v, untracked: %v, status: %v\n", r.Clean, r.Untracked, r.Status)
 		}
+
+		// if r.Name == "tmp2" {
+		// 	fmt.Println(r.Status)
+		// 	fmt.Println(r.LocalSHA)
+		// 	fmt.Println(r.MergeSHA)
+		// 	fmt.Println(r.UpstreamSHA)
+		// }
 	}
 }
 

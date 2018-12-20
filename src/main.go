@@ -359,6 +359,24 @@ func oneLine(f Flags) bool {
 	}
 }
 
+// logoutMode returns true if mode is set to "logout"
+func logoutMode(f Flags) bool {
+	if f.Mode == "logout" {
+		return true
+	} else {
+		return false
+	}
+}
+
+// loginMode returns true if mode is set to "login"
+func loginMode(f Flags) bool {
+	if f.Mode == "login" {
+		return true
+	} else {
+		return false
+	}
+}
+
 // initPrint prints info for Emoji and Flag values.
 func initPrint(e Emoji, f Flags, t *Timer) {
 
@@ -472,10 +490,6 @@ type Repo struct {
 	// rs.verifyRepos -> gitConfigOriginURL
 	OriginURL string // "https://github.com/jychri/git-in-sync"
 
-	// rs.verifyRepos -> gitStatusPorcelain
-	GitStatus string // output of `git status porcelain`
-	Porcelain bool   // true if `git status --porcelain` returns ""
-
 	// rs.verifyRepos -> gitAbbrevRef
 	LocalBranch string // `git rev-parse --abbrev-ref HEAD`, "master"
 
@@ -492,26 +506,24 @@ type Repo struct {
 	UpstreamBranch string // `git rev-parse --abbrev-ref --symbolic-full-name @{u}`, "..."
 
 	// rs.verifyRepos -> gitDiffsNameOnly
-	DiffsNameOnly []string // `git diff --name-only @{u}`, []string
-	DiffsSummary  string   // "..."
+	DiffsNameOnly []string // `git diff --name-only @{u}`, [a, b, c, d, e]
+	DiffsSummary  string   // "a, b, c..."
 
 	// rs.verifyRepos -> gitShortstat
-	ShortStat  string // `git diff --shortstat`, "x files changed, y insertions(+), z deletions(-)"
-	Changed    int    // x
-	Insertions int    // y
-	Deletions  int    // z
-	Clean      bool   // true if Changed, Insertions and Deletions are all 0
-
-	// rs.verifyRepos -> gitUpstream
-	// Upstream string // ...
+	ShortStat        string // `git diff --shortstat`, "x files changed, y insertions(+), z deletions(-)"
+	Changed          int    // x
+	Insertions       int    // y
+	Deletions        int    // z
+	ShortStatSummary string // "+y|-z" or "D" for Deleted if (x >= 1 && y == 0 && z == 0)
+	Clean            bool   // true if Changed, Insertions and Deletions are all 0
 
 	// rs.verifyRepos -> gitUntracked
-	UntrackedFiles   []string
-	UntrackedSummary string
-	Untracked        bool
+	UntrackedFiles   []string // `git ls-files --others --exclude-standard`, [a, b, c, d, e]
+	UntrackedSummary string   // "a, b, c..."
+	Untracked        bool     // true if if len(r.UntrackedFiles) >= 1
 
 	// rs.verifyRepos -> setStatus
-	Category string // Complete, Pending, Skipped
+	Category string // Complete, Pending, Skipped, Scheduled
 	Status   string // better term?
 
 	// setActions
@@ -729,35 +741,6 @@ func (r *Repo) gitRemoteUpdate(e Emoji, f Flags) {
 	}
 }
 
-func (r *Repo) gitStatusPorcelain(e Emoji, f Flags) {
-
-	// return if not verified
-	if notVerified(r) {
-		return
-	}
-
-	// command
-	args := []string{r.GitDir, r.WorkTree, "status", "--porcelain"}
-	cmd := exec.Command("git", args...)
-	var out bytes.Buffer
-	var err bytes.Buffer
-	cmd.Stdout = &out
-	cmd.Stderr = &err
-	cmd.Run()
-
-	// check error, set value(s)
-	if err := err.String(); err != "" {
-		r.markError(e, f, err, "gitStatusPorcelain")
-	}
-
-	if str := out.String(); str != "" {
-		r.Porcelain = false
-		r.GitStatus = captureOut(out)
-	} else {
-		r.Porcelain = true
-	}
-}
-
 func (r *Repo) gitAbbrevRef(e Emoji, f Flags) {
 
 	// return if not verified
@@ -931,6 +914,7 @@ func (r *Repo) gitShortstat(e Emoji, f Flags) {
 		r.ShortStat = captureOut(out)
 	}
 
+	// scrape with regular expressions
 	rxc := regexp.MustCompile(`(.*)? file`)
 	rxs := rxc.FindStringSubmatch(r.ShortStat)
 	if len(rxs) == 2 {
@@ -957,6 +941,32 @@ func (r *Repo) gitShortstat(e Emoji, f Flags) {
 			r.Deletions = i
 		}
 	}
+
+	// set Rlean and ShortStatSummary
+	switch {
+	case r.Changed == 0 && r.Insertions == 0 && r.Deletions == 0:
+		r.Clean = true
+		r.ShortStatSummary = ""
+	case r.Changed >= 1 && r.Insertions == 0 && r.Deletions == 0:
+		r.Clean = false
+		r.ShortStatSummary = ("D")
+	default:
+		r.Clean = false
+
+		var b bytes.Buffer
+		b.WriteString("+")
+		b.WriteString(strconv.Itoa(r.Insertions))
+		b.WriteString("|-")
+		b.WriteString(strconv.Itoa(r.Deletions))
+		r.ShortStatSummary = b.String()
+	}
+
+	if r.Changed == 0 && r.Insertions == 0 && r.Deletions == 0 {
+		r.Clean = true
+	} else {
+		r.Clean = false
+	}
+
 }
 
 func (r *Repo) gitUntracked(e Emoji, f Flags) {
@@ -985,7 +995,7 @@ func (r *Repo) gitUntracked(e Emoji, f Flags) {
 		for _, f := range ufr {
 			f = lastPathSelection(f)
 			r.UntrackedFiles = append(r.UntrackedFiles, f)
-			r.UntrackedSummary = sliceSummary(r.UntrackedFiles, 15)
+			r.UntrackedSummary = sliceSummary(r.UntrackedFiles, 12)
 		}
 	} else {
 		r.UntrackedFiles = make([]string, 0)
@@ -1008,12 +1018,6 @@ func (r *Repo) setStatus(e Emoji, f Flags) {
 		r.Status = "Ahead"
 	}
 
-	if r.Changed == 0 && r.Insertions == 0 && r.Deletions == 0 {
-		r.Clean = true
-	} else {
-		r.Clean = false
-	}
-
 	switch {
 	case r.Verified == false:
 		r.Category = "Skipped"
@@ -1021,38 +1025,46 @@ func (r *Repo) setStatus(e Emoji, f Flags) {
 	case (r.Clean == true && r.Untracked == false && r.Status == "Ahead"):
 		r.Category = "Pending"
 		r.Status = "Ahead"
+		r.GitAction = "push"
 	case (r.Clean == true && r.Untracked == false && r.Status == "Behind"):
 		r.Category = "Pending"
 		r.Status = "Behind"
+		r.GitAction = "pull"
 	case (r.Clean == false && r.Untracked == false && r.Status == "Up-To-Date"):
 		r.Category = "Pending"
 		r.Status = "Dirty"
+		r.GitAction = "add-commit-push"
 	case (r.Clean == false && r.Untracked == true && r.Status == "Up-To-Date"):
 		r.Category = "Pending"
 		r.Status = "DirtyUntracked"
-		// fmt.Printf("debug: %v|%v p:%v c:%v i:%v d:%v\n", r.Name, r.Clean, r.Porcelain, r.Changed, r.Insertions, r.Deletions)
+		r.GitAction = "add-commit-push"
 	case (r.Clean == false && r.Untracked == false && r.Status == "Ahead"):
 		r.Category = "Pending"
 		r.Status = "DirtyAhead"
+		r.GitAction = "add-commit-push"
 	case (r.Clean == false && r.Untracked == false && r.Status == "Behind"):
 		r.Category = "Pending"
 		r.Status = "DirtyBehind"
+		r.GitAction = "stash-pull-pop-commit-push"
 	case (r.Clean == true && r.Untracked == true && r.Status == "Up-To-Date"):
 		r.Category = "Pending"
 		r.Status = "Untracked"
+		r.GitAction = "add-commit-push"
 	case (r.Clean == false && r.Untracked == true && r.Status == "Ahead"):
 		r.Category = "Pending"
 		r.Status = "UntrackedAhead"
+		r.GitAction = "add-commit-push"
 	case (r.Clean == false && r.Untracked == true && r.Status == "Behind"):
 		r.Category = "Pending"
 		r.Status = "UntrackedBehind"
 	case (r.Clean == true && r.Untracked == false && r.Status == "Up-To-Date"):
 		r.Category = "Complete"
 		r.Status = "Up-To-Date"
+		r.GitAction = "stash-pull-pop-commit-push"
 	default:
-		fmt.Printf("debug: %v|%v p:%v c:%v i:%v d:%v\n", r.Name, r.Clean, r.Porcelain, r.Changed, r.Insertions, r.Deletions)
 		r.Category = "Skipped"
 		r.Status = "Unknown"
+		r.markError(e, f, "fatal: no matches found in setStatus switch", "setStatus")
 	}
 
 	if r.ErrorMessage != "" {
@@ -1064,16 +1076,21 @@ func (r *Repo) setStatus(e Emoji, f Flags) {
 			r.ErrorShort = "fatal: 'origin' not set"
 		case strings.Contains(err, "fatal: URL != OriginURL"):
 			r.ErrorShort = "fatal: URL mismatch"
+		case strings.Contains(err, "fatal: no matches found"):
+			r.ErrorShort = "fatal: no matches found"
 		}
+	}
+
+	// auto move to scheduled for matching login/logout
+	switch {
+	case loginMode(f) && r.Category == "Pending" && r.Status == "Behind":
+		r.Category = "Scheduled"
+	case logoutMode(f) && r.Category == "Pending" && r.Status == "Ahead":
+		r.Category = "Scheduled"
 	}
 }
 
-// in, err := rdr.ReadString('\n')
-
 func (r *Repo) checkConfirmed() {
-
-	// r.Category = "Pending"
-	// If not Confirmed...put in Category:Skipped?
 
 	// setup reader
 	rdr := bufio.NewReader(os.Stdin)
@@ -1109,6 +1126,9 @@ func (r *Repo) checkCommitMessage() {
 		r.GitConfirmed = false
 		return
 	}
+
+	// trim trailing new line
+	in = strings.TrimSuffix(in, "\n")
 
 	switch in {
 	case "n", "no", "nah", "0", "stop", "skip", "abort", "halt", "quit", "exit", "":
@@ -1330,8 +1350,6 @@ func firstLine(s string) string {
 }
 
 func sliceSummary(sl []string, l int) string {
-	// l := 20 // limit
-
 	if len(sl) == 0 {
 		return ""
 	}
@@ -1558,7 +1576,6 @@ func (rs Repos) verifyRepos(e Emoji, f Flags, t *Timer) {
 			defer wg.Done()
 			r.gitConfigOriginURL(e, f)
 			r.gitRemoteUpdate(e, f)
-			r.gitStatusPorcelain(e, f)
 			r.gitAbbrevRef(e, f)
 			r.gitLocalSHA(e, f)
 			r.gitUpstreamSHA(e, f)
@@ -1572,7 +1589,7 @@ func (rs Repos) verifyRepos(e Emoji, f Flags, t *Timer) {
 	}
 	wg.Wait()
 
-	// track complete, pending and skipped
+	// track Complete, Pending, Skipped and Scheduled
 	var cr []string // complete repos
 	var pr []string // pending repos
 	var sr []string // skipped repos
@@ -1677,10 +1694,8 @@ func (rs Repos) verifyChanges(e Emoji, f Flags, t *Timer) {
 				b.WriteString(strconv.Itoa((len(r.DiffsNameOnly))))
 				b.WriteString("]{")
 				b.WriteString(r.DiffsSummary)
-				b.WriteString("}(+")
-				b.WriteString(strconv.Itoa(r.Insertions))
-				b.WriteString("|-")
-				b.WriteString(strconv.Itoa(r.Deletions))
+				b.WriteString("}(")
+				b.WriteString(r.ShortStatSummary)
 				b.WriteString(")")
 			case "Untracked", "UntrackedAhead", "UntrackedBehind":
 				b.WriteString(e.Pig)
@@ -1701,7 +1716,7 @@ func (rs Repos) verifyChanges(e Emoji, f Flags, t *Timer) {
 
 			switch r.Status {
 			case "DirtyUntracked":
-				b.WriteString(" with untracked files [")
+				b.WriteString(" and untracked [")
 				b.WriteString(strconv.Itoa(len(r.UntrackedFiles)))
 				b.WriteString("]{")
 				b.WriteString(r.UntrackedSummary)
@@ -1724,31 +1739,22 @@ func (rs Repos) verifyChanges(e Emoji, f Flags, t *Timer) {
 
 			switch r.Status {
 			case "Ahead":
-				r.GitAction = "push"
 				fmt.Printf("%v push changes to %v? ", e.Rocket, r.ZoneRemote)
 			case "Behind":
-				r.GitAction = "pull"
 				fmt.Printf("%v pull changes from %v? ", e.Ship, r.ZoneRemote)
 			case "Dirty":
-				r.GitAction = "add-commit-push"
 				fmt.Printf("%v add all files, commit and push to %v? ", e.Clipboard, r.ZoneRemote)
 			case "DirtyUntracked":
-				r.GitAction = "add-commit-push"
 				fmt.Printf("%v add all files, commit and push to %v? ", e.Clipboard, r.ZoneRemote)
 			case "DirtyAhead":
-				r.GitAction = "add-commit-push"
 				fmt.Printf("%v add all files, commit and push to %v? ", e.Clipboard, r.ZoneRemote)
 			case "DirtyBehind":
-				r.GitAction = "stash-pull-pop-commit-push"
 				fmt.Printf("%v stash all files, pull changes, commit and push to %v? ", e.Clipboard, r.ZoneRemote)
 			case "Untracked":
-				r.GitAction = "add-commit-push"
 				fmt.Printf("%v add all files, commit and push to %v? ", e.Clipboard, r.ZoneRemote)
 			case "UntrackedAhead":
-				r.GitAction = "add-commit-push"
 				fmt.Printf("%v add all files, commit and push to %v? ", e.Clipboard, r.ZoneRemote)
 			case "UntrackedBehind":
-				r.GitAction = "stash-pull-pop-commit-push"
 				fmt.Printf("%v stash all files, pull changes, commit and push to %v? ", e.Clipboard, r.ZoneRemote)
 			}
 
@@ -1777,9 +1783,10 @@ func main() {
 	rs.submitChanges(e, f, t)
 
 	// debugging
-	for _, r := range rs {
-		if r.ErrorShort != "" {
-			fmt.Printf("%v|%v: %v\n", r.Name, r.ErrorName, r.ErrorFirst)
-		}
-	}
+	// for _, r := range rs {
+	// 	if r.ErrorShort != "" {
+	// 		fmt.Printf("%v|%v (%v)\n", r.Name, r.ErrorName, r.ErrorFirst)
+	// 		fmt.Printf("%v\n", r.ErrorShort)
+	// 	}
+	// }
 }

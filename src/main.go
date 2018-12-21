@@ -210,7 +210,6 @@ type Flags struct {
 	Mode    string
 	Clear   bool
 	Verbose bool
-	Dry     bool
 	Emoji   bool
 	OneLine bool
 	Count   int
@@ -223,7 +222,6 @@ func initFlags(e Emoji, t *Timer) (f Flags) {
 	var m string // mode
 	var c bool   // clear
 	var v bool   // verbose
-	var d bool   // dry
 	var em bool  // emoji
 	var o bool   // one-line
 
@@ -235,8 +233,7 @@ func initFlags(e Emoji, t *Timer) (f Flags) {
 	flag.StringVar(&m, "m", "verify", "mode")
 	flag.BoolVar(&c, "c", false, "clear")
 	flag.BoolVar(&v, "v", true, "verbose")
-	flag.BoolVar(&d, "d", false, "dry")
-	flag.BoolVar(&em, "e", true, "emoji")
+	flag.BoolVar(&em, "e", false, "emoji")
 	flag.BoolVar(&o, "o", false, "one-line")
 	flag.Parse()
 
@@ -260,12 +257,6 @@ func initFlags(e Emoji, t *Timer) (f Flags) {
 	if c == true {
 		fc += 1
 		ef = append(ef, "clear")
-	}
-
-	// dry
-	if d == true {
-		fc += 1
-		ef = append(ef, "dry")
 	}
 
 	// verbose
@@ -293,7 +284,7 @@ func initFlags(e Emoji, t *Timer) (f Flags) {
 	t.markMoment("init-flags")
 
 	// set Flags
-	f = Flags{m, c, v, d, em, o, fc, s}
+	f = Flags{m, c, v, em, o, fc, s}
 
 	return f
 }
@@ -316,39 +307,12 @@ func isVerbose(f Flags) bool {
 	}
 }
 
-// isDry returns true if f.Dry is true.
-func isDry(f Flags) bool {
-	if f.Dry {
-		return true
-	} else {
-		return false
-	}
-}
-
-// isActive returns true if f.Dry is true.
-func isActive(f Flags) bool {
-	if f.Dry {
-		return false
-	} else {
-		return true
-	}
-}
-
 // hasEmoji returns true if f.Emoji is true.
 func hasEmoji(f Flags) bool {
 	if f.Emoji {
 		return true
 	} else {
 		return false
-	}
-}
-
-// noEmoji returns true if f.Emoji is false.
-func noEmoji(f Flags) bool {
-	if f.Emoji {
-		return false
-	} else {
-		return true
 	}
 }
 
@@ -386,23 +350,18 @@ func initPrint(e Emoji, f Flags, t *Timer) {
 	clearScreen(f)
 
 	// targetPrint prints a message with or without an emoji if f.Emoji is true or false.
-	targetPrint(f, "%v start", e.Clapper)
-
-	// dry run only messaging
-	if isDry(f) {
-		targetPrint(f, "%v  dry run; no changes will be made", e.Desert)
-	}
+	targetPrintln(f, "%v start", e.Clapper)
 
 	// print flag init
 	if ft, err := t.getMoment("init-flags"); err == nil {
-		targetPrint(f, "%v parsing flags", e.FlagInHole)
-		targetPrint(f, "%v [%v] flags (%v) {%v / %v}", e.Flag, f.Count, f.Summary, ft.Split, ft.Start)
+		targetPrintln(f, "%v parsing flags", e.FlagInHole)
+		targetPrintln(f, "%v [%v] flags (%v) {%v / %v}", e.Flag, f.Count, f.Summary, ft.Split, ft.Start)
 	}
 
 	// print emoji init
 	if et, err := t.getMoment("init-emoji"); err == nil {
-		targetPrint(f, "%v initializing emoji", e.CrystalBall)
-		targetPrint(f, "%v [%v] emoji {%v / %v}", e.DirectHit, e.Count, et.Split, et.Start)
+		targetPrintln(f, "%v initializing emoji", e.CrystalBall)
+		targetPrintln(f, "%v [%v] emoji {%v / %v}", e.DirectHit, e.Count, et.Split, et.Start)
 	}
 }
 
@@ -434,7 +393,7 @@ func initConfig(e Emoji, f Flags, t *Timer) (c Config) {
 	g := fmt.Sprintf("%v/.gisrc.json", u.HomeDir)
 
 	// print
-	targetPrint(f, "%v reading %v", e.Glasses, g)
+	targetPrintln(f, "%v reading %v", e.Glasses, g)
 
 	// read file
 	r, err := ioutil.ReadFile(g)
@@ -454,7 +413,7 @@ func initConfig(e Emoji, f Flags, t *Timer) (c Config) {
 	t.markMoment("init-config")
 
 	// print
-	targetPrint(f, "%v read %v {%v / %v}", e.Book, g, t.getSplit(), t.getTime())
+	targetPrintln(f, "%v read %v {%v / %v}", e.Book, g, t.getSplit(), t.getTime())
 
 	return c
 }
@@ -648,14 +607,10 @@ func (r *Repo) gitCheckPending(e Emoji, f Flags) {
 		r.markError(e, f, "fatal: file occupying path", "git-verify")
 	case isDirectory(rinfo) && notEmpty(r.RepoPath) && os.IsNotExist(gerr):
 		r.markError(e, f, "fatal: directory occupying path", "git-verify")
-	case isDirectory(rinfo) && isEmpty(r.RepoPath) && isActive(f):
+	case isDirectory(rinfo) && isEmpty(r.RepoPath):
 		r.PendingClone = true
-	case os.IsNotExist(rerr) && os.IsNotExist(gerr) && isActive(f):
+	case os.IsNotExist(rerr) && os.IsNotExist(gerr):
 		r.PendingClone = true
-	case isDirectory(rinfo) && isEmpty(r.RepoPath) && isDry(f):
-		r.markError(e, f, "fatal: git clone (dry run)", "git-verify")
-	case os.IsNotExist(rerr) && os.IsNotExist(gerr) && isActive(f):
-		r.markError(e, f, "fatal: git clone (dry run)", "git-verify")
 	case isDirectory(rinfo) && isDirectory(ginfo):
 		r.Verified = true
 	}
@@ -665,7 +620,7 @@ func (r *Repo) gitClone(e Emoji, f Flags) {
 
 	if r.PendingClone == true {
 		// print
-		targetPrint(f, "%v cloning %v {%v}", e.Box, r.Name, r.Division)
+		targetPrintln(f, "%v cloning %v {%v}", e.Box, r.Name, r.Division)
 
 		// command
 		args := []string{"clone", r.URL, r.RepoPath}
@@ -1159,9 +1114,9 @@ func (r *Repo) checkCommitMessage() {
 func (r *Repo) gitAdd(e Emoji, f Flags) {
 	switch r.Status {
 	case "Dirty", "DirtyUntracked", "DirtyAhead", "DirtyBehind":
-		targetPrint(f, "%v %v adding changes [%v]{%v}(%v)", e.Outbox, r.Name, len(r.DiffsNameOnly), r.DiffsSummary, r.ShortStatSummary)
+		targetPrintln(f, "%v %v adding changes [%v]{%v}(%v)", e.Outbox, r.Name, len(r.DiffsNameOnly), r.DiffsSummary, r.ShortStatSummary)
 	case "Untracked", "UntrackedAhead", "UntrackedBehind":
-		targetPrint(f, "%v %v adding new files [%v]{%v}", e.Outbox, r.Name, len(r.UntrackedFiles), r.UntrackedSummary)
+		targetPrintln(f, "%v %v adding new files [%v]{%v}", e.Outbox, r.Name, len(r.UntrackedFiles), r.UntrackedSummary)
 	}
 
 	// command
@@ -1183,9 +1138,9 @@ func (r *Repo) gitAdd(e Emoji, f Flags) {
 func (r *Repo) gitCommit(e Emoji, f Flags) {
 	switch r.Status {
 	case "Dirty", "DirtyUntracked", "DirtyAhead", "DirtyBehind":
-		targetPrint(f, "%v %v committing changes [%v]{%v}(%v)", e.Fire, r.Name, len(r.DiffsNameOnly), r.DiffsSummary, r.ShortStatSummary)
+		targetPrintln(f, "%v %v committing changes [%v]{%v}(%v)", e.Fire, r.Name, len(r.DiffsNameOnly), r.DiffsSummary, r.ShortStatSummary)
 	case "Untracked", "UntrackedAhead", "UntrackedBehind":
-		targetPrint(f, "%v %v committing new files [%v]{%v}", e.Fire, r.Name, len(r.UntrackedFiles), r.UntrackedSummary)
+		targetPrintln(f, "%v %v committing new files [%v]{%v}", e.Fire, r.Name, len(r.UntrackedFiles), r.UntrackedSummary)
 	}
 
 	// command
@@ -1205,16 +1160,16 @@ func (r *Repo) gitCommit(e Emoji, f Flags) {
 }
 
 func (r *Repo) gitStash(e Emoji, f Flags) {
-	targetPrint(f, "%v  %v stashing changes", e.Squirrel, r.Name)
+	targetPrintln(f, "%v  %v stashing changes", e.Squirrel, r.Name)
 
 }
 
 func (r *Repo) gitPop(e Emoji, f Flags) {
-	targetPrint(f, "%v %v popping changes", e.Popcorn, r.Name)
+	targetPrintln(f, "%v %v popping changes", e.Popcorn, r.Name)
 }
 
 func (r *Repo) gitPull(e Emoji, f Flags) {
-	targetPrint(f, "%v %v pulling from %v @ %v", e.Ship, r.Name, r.UpstreamBranch, r.Remote)
+	targetPrintln(f, "%v %v pulling from %v @ %v", e.Ship, r.Name, r.UpstreamBranch, r.Remote)
 
 	// command
 	args := []string{"-C", r.RepoPath, "pull"}
@@ -1231,12 +1186,12 @@ func (r *Repo) gitPull(e Emoji, f Flags) {
 	}
 
 	if r.Verified == false {
-		targetPrint(f, "%v %v pull failed", e.Slash, r.Name)
+		targetPrintln(f, "%v %v pull failed", e.Slash, r.Name)
 	}
 }
 
 func (r *Repo) gitPush(e Emoji, f Flags) {
-	targetPrint(f, "%v %v pushing to %v @ %v", e.Rocket, r.Name, r.UpstreamBranch, r.Remote)
+	targetPrintln(f, "%v %v pushing to %v @ %v", e.Rocket, r.Name, r.UpstreamBranch, r.Remote)
 
 	// command
 	args := []string{"-C", r.RepoPath, "push"}
@@ -1253,7 +1208,7 @@ func (r *Repo) gitPush(e Emoji, f Flags) {
 	}
 
 	if r.Verified == false {
-		targetPrint(f, "%v %v push failed", e.Slash, r.Name)
+		targetPrintln(f, "%v %v push failed", e.Slash, r.Name)
 	}
 
 }
@@ -1281,11 +1236,11 @@ func (r *Repo) gitStatusPorcelain(e Emoji, f Flags) {
 
 	if str := out.String(); str != "" {
 		r.Porcelain = false
-		targetPrint(f, "%v commit error (%v)", e.Slash, r.ErrorFirst)
+		targetPrintln(f, "%v commit error (%v)", e.Slash, r.ErrorFirst)
 	} else {
 		r.Category = "Complete"
 		r.Porcelain = true
-		targetPrint(f, "%v %v up to date!", e.Checkmark, r.Name)
+		targetPrintln(f, "%v %v up to date!", e.Checkmark, r.Name)
 	}
 
 }
@@ -1297,7 +1252,7 @@ type Repos []*Repo
 func initRepos(c Config, e Emoji, f Flags, t *Timer) (rs Repos) {
 
 	// print
-	targetPrint(f, "%v parsing divs|repos", e.Pager)
+	targetPrintln(f, "%v parsing divs|repos", e.Pager)
 
 	// initialize Repos from Config
 	for _, bl := range c.Bundles {
@@ -1325,7 +1280,7 @@ func initRepos(c Config, e Emoji, f Flags, t *Timer) (rs Repos) {
 	dvs = removeDuplicates(dvs)
 
 	// print
-	targetPrint(f, "%v [%v|%v] divs|repos {%v / %v}", e.FaxMachine, len(dvs), len(rs), t.getSplit(), t.getTime())
+	targetPrintln(f, "%v [%v|%v] divs|repos {%v / %v}", e.FaxMachine, len(dvs), len(rs), t.getSplit(), t.getTime())
 
 	return rs
 }
@@ -1368,7 +1323,7 @@ func (rs Repos) sortByPath() {
 	sort.SliceStable(rs, func(i, j int) bool { return rs[i].DivPath < rs[j].DivPath })
 }
 
-// Utility functions. Repackage and clarify someday.
+// Utility functions. Repackage and clarify someday?
 
 func clearScreen(f Flags) {
 	if isClear(f) || hasEmoji(f) {
@@ -1477,19 +1432,24 @@ func lastPathSelection(p string) string {
 	}
 }
 
-func targetPrint(f Flags, s string, z ...interface{}) {
-	var p string // print
-	switch {
-	case oneLine(f):
-	case isVerbose(f) && hasEmoji(f):
-		p = fmt.Sprintf(s, z...)
-		fmt.Println(p)
-	case isVerbose(f) && noEmoji(f):
-		p = fmt.Sprintf(s, z...)
-		p = strings.TrimPrefix(p, " ")
-		p = strings.TrimPrefix(p, " ")
-		fmt.Println(p)
+func targetPrintln(f Flags, s string, z ...interface{}) {
+
+	// return if oneLine
+	if oneLine(f) {
+		return
 	}
+
+	fmt.Println(fmt.Sprintf(s, z...))
+}
+
+func targetPrintf(f Flags, s string, z ...interface{}) {
+
+	// return if oneLine
+	if oneLine(f) {
+		return
+	}
+
+	fmt.Printf(fmt.Sprintf(s, z...))
 }
 
 func removeDuplicates(ssl []string) (sl []string) {
@@ -1585,7 +1545,7 @@ func (rs Repos) verifyDivs(e Emoji, f Flags, t *Timer) {
 	zds := sliceSummary(zdvs, 25) // zone division summary
 
 	// print
-	targetPrint(f, "%v  verifying divs [%v](%v)", e.FileCabinet, len(dvs), zds)
+	targetPrintln(f, "%v  verifying divs [%v](%v)", e.FileCabinet, len(dvs), zds)
 
 	// track created, verified and missing divs
 	var cd []string // created divs
@@ -1597,8 +1557,8 @@ func (rs Repos) verifyDivs(e Emoji, f Flags, t *Timer) {
 		_, err := os.Stat(r.DivPath)
 
 		// create div if missing and active run
-		if os.IsNotExist(err) && isActive(f) {
-			targetPrint(f, "%v creating %v", e.Folder, r.DivPath)
+		if os.IsNotExist(err) {
+			targetPrintln(f, "%v creating %v", e.Folder, r.DivPath)
 			os.MkdirAll(r.DivPath, 0777)
 			cd = append(cd, r.DivPath)
 		}
@@ -1659,7 +1619,7 @@ func (rs Repos) verifyDivs(e Emoji, f Flags, t *Timer) {
 	b.WriteString(t.getTime().String())
 	b.WriteString("}")
 
-	targetPrint(f, b.String())
+	targetPrintln(f, b.String())
 }
 
 func (rs Repos) verifyCloned(e Emoji, f Flags, t *Timer) {
@@ -1680,7 +1640,7 @@ func (rs Repos) verifyCloned(e Emoji, f Flags, t *Timer) {
 	}
 
 	// if there are pending repos
-	targetPrint(f, "%v cloning [%v]", e.Sheep, len(pc))
+	targetPrintln(f, "%v cloning [%v]", e.Sheep, len(pc))
 
 	// verify each repo (async)
 	var wg sync.WaitGroup
@@ -1721,7 +1681,7 @@ func (rs Repos) verifyCloned(e Emoji, f Flags, t *Timer) {
 	b.WriteString(t.getTime().Truncate(tr).String())
 	b.WriteString("}")
 
-	targetPrint(f, b.String())
+	targetPrintln(f, b.String())
 }
 
 func (rs Repos) verifyRepos(e Emoji, f Flags, t *Timer) {
@@ -1734,7 +1694,7 @@ func (rs Repos) verifyRepos(e Emoji, f Flags, t *Timer) {
 	rns := sliceSummary(rn, 25)
 
 	// print
-	targetPrint(f, "%v  verifying repos [%v](%v)", e.Satellite, len(rs), rns)
+	targetPrintln(f, "%v  verifying repos [%v](%v)", e.Satellite, len(rs), rns)
 
 	// verify each repo (async)
 	var wg sync.WaitGroup
@@ -1804,7 +1764,7 @@ func (rs Repos) verifyRepos(e Emoji, f Flags, t *Timer) {
 	b.WriteString(t.getTime().Truncate(tr).String())
 	b.WriteString("}")
 
-	targetPrint(f, b.String())
+	targetPrintln(f, b.String())
 
 	// scheduled repo info
 
@@ -1824,7 +1784,7 @@ func (rs Repos) verifyRepos(e Emoji, f Flags, t *Timer) {
 
 		b.WriteString(schs)
 		b.WriteString(")")
-		targetPrint(f, b.String())
+		targetPrintln(f, b.String())
 	}
 
 	// skipped repo info
@@ -1837,7 +1797,7 @@ func (rs Repos) verifyRepos(e Emoji, f Flags, t *Timer) {
 		b.WriteString("] skipped (")
 		b.WriteString(sks)
 		b.WriteString(")")
-		targetPrint(f, b.String())
+		targetPrintln(f, b.String())
 	}
 
 	// pending repo info
@@ -1850,7 +1810,7 @@ func (rs Repos) verifyRepos(e Emoji, f Flags, t *Timer) {
 		b.WriteString("] pending (")
 		b.WriteString(prs)
 		b.WriteString(")")
-		targetPrint(f, b.String())
+		targetPrintln(f, b.String())
 	}
 
 }
@@ -1926,7 +1886,7 @@ func (rs Repos) verifyChanges(e Emoji, f Flags, t *Timer) {
 				b.WriteString(r.UpstreamBranch)
 			}
 
-			targetPrint(f, b.String())
+			targetPrintln(f, b.String())
 
 			switch r.Status {
 			case "Ahead":
@@ -2013,7 +1973,7 @@ func (rs Repos) verifyChanges(e Emoji, f Flags, t *Timer) {
 		// b.WriteString(t.getTime().Truncate(tr).String())
 		// b.WriteString("}")
 
-		// targetPrint(f, b.String())
+		// targetPrintln(f, b.String())
 	}
 
 }

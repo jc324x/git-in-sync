@@ -1921,8 +1921,8 @@ func (rs Repos) verifyChanges(e Emoji, f Flags, t *Timer) {
 
 		t.markMoment("verify-changes")
 
+		// FLAG:
 		// check again see how many pending remain, should be zero...
-
 		// going to push pause for now
 		// I need to know count of pending/scheduled prior to the start
 		// to see what the difference is since then.
@@ -1978,6 +1978,7 @@ func (rs Repos) verifyChanges(e Emoji, f Flags, t *Timer) {
 
 }
 
+// FLAG: need to fix up messaging here
 func (rs Repos) submitChanges(e Emoji, f Flags, t *Timer) {
 	srs := initScheludedRepos(rs)
 	skrs := initSkippedRepos(rs)
@@ -2048,13 +2049,6 @@ func (rs Repos) debug() {
 			fmt.Printf("%v\n", r.ErrorShort)
 			fmt.Printf("clean: %v, untracked: %v, status: %v\n", r.Clean, r.Untracked, r.Status)
 		}
-
-		// if r.Name == "tmp2" {
-		// 	fmt.Println(r.Status)
-		// 	fmt.Println(r.LocalSHA)
-		// 	fmt.Println(r.MergeSHA)
-		// 	fmt.Println(r.UpstreamSHA)
-		// }
 	}
 }
 
@@ -2065,5 +2059,5 @@ func main() {
 	rs.verifyRepos(e, f, t)
 	rs.verifyChanges(e, f, t)
 	rs.submitChanges(e, f, t)
-	rs.debug()
+	// rs.debug()
 }

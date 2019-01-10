@@ -1,5 +1,8 @@
 package main
 
+// cleaner paths with Clean
+// https://golang.org/pkg/path/filepath/#Clean
+
 import (
 	"bufio"
 	"bytes"

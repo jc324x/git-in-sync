@@ -1,7 +1,7 @@
 package main
 
 // cleaner paths with Clean
-// https://golang.org/pkg/path/filepath/#Clean
+// div or workspace?
 
 import (
 	"bufio"
@@ -17,6 +17,7 @@ import (
 	"os"
 	"os/exec"
 	"os/user"
+	// "path" -> Clean
 	"reflect"
 	"regexp"
 	"sort"
@@ -374,10 +375,10 @@ type Config struct {
 	Bundles []struct {
 		Path  string `json:"path"`
 		Zones []struct {
-			User     string   `json:"user"`
-			Remote   string   `json:"remote"`
-			Division string   `json:"division"`
-			Repos    []string `json:"repositories"`
+			User      string   `json:"user"`
+			Remote    string   `json:"remote"`
+			Workspace string   `json:"workspace"`
+			Repos     []string `json:"repositories"`
 		} `json:"zones"`
 	} `json:"bundles"`
 }
@@ -1261,7 +1262,7 @@ func initRepos(c Config, e Emoji, f Flags, t *Timer) (rs Repos) {
 	for _, bl := range c.Bundles {
 		for _, z := range bl.Zones {
 			for _, rn := range z.Repos {
-				r := initRepo(z.Division, z.User, z.Remote, bl.Path, rn)
+				r := initRepo(z.Workspace, z.User, z.Remote, bl.Path, rn)
 				rs = append(rs, r)
 			}
 		}

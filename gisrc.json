@@ -1,10 +1,10 @@
 {
 	"bundles": [{
-		"path": "~/go-git-in-sync-example",
+		"path": "~/git-in-sync-example",
 		"zones": [{
 				"user": "jychri",
 				"remote": "github",
-				"division": "google-apps-script",
+				"workspace": "google-apps-script",
 				"repositories": [
 					"crunchy-calendar",
 					"daily-sign-up",
@@ -18,7 +18,7 @@
 			}, {
 				"user": "jychri",
 				"remote": "github",
-				"division": "main",
+				"workspace": "main",
 				"repositories": [
           "empty-ex",
 					"tmp1",

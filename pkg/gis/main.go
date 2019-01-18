@@ -1,50 +1,425 @@
 package main
 
+// cleaner paths with Clean
+// div or workspace?
+
 import (
 	"bufio"
 	"bytes"
-	// "errors"
+	"encoding/json"
+	"errors"
+	"flag"
 	"fmt"
+	"html"
 	"io"
+	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
 	"os/user"
 	// "path" -> Clean
+	"reflect"
 	"regexp"
 	"sort"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
-
-	"github.com/jychri/git-in-sync/pkg/conf"
-	"github.com/jychri/git-in-sync/pkg/emoji"
-	"github.com/jychri/git-in-sync/pkg/flags"
-	"github.com/jychri/git-in-sync/pkg/timer"
-	"github.com/jychri/git-in-sync/pkg/util"
 )
 
+// --> Moment: a moment in time
+
+type Moment struct {
+	Name  string
+	Time  time.Time
+	Start time.Duration // duration since start
+	Split time.Duration // duration since last moment
+}
+
+// --> Timer: tracking moments in time
+
+type Timer struct {
+	Moments []Moment
+}
+
+// initTimer initializes a *Timer with a Start moment.
+func initTimer() *Timer {
+	t := new(Timer)
+	st := Moment{Name: "Start", Time: time.Now()} // (st)art
+	t.Moments = append(t.Moments, st)
+	return t
+}
+
+// markMoment marks a moment in time as a Moment and appends t.Moments.
+func (t *Timer) markMoment(s string) {
+	sm := t.Moments[0]                           // (s)tarting (m)oment
+	lm := t.Moments[len(t.Moments)-1]            // (l)ast (m)oment
+	m := Moment{Name: s, Time: time.Now()}       // name and time
+	m.Start = time.Since(sm.Time).Truncate(1000) // duration since start
+	m.Split = m.Start - lm.Start                 // duration since last moment
+	t.Moments = append(t.Moments, m)             // append Moment
+}
+
+// getTime returns the elapsed time at the last recorded moment in t.Moments.
+func (t *Timer) getTime() time.Duration {
+	lm := t.Moments[len(t.Moments)-1] // (l)ast (m)oment
+	return lm.Start
+}
+
+// getSplit returns the split time for the last recorded moment in t.Moments.
+func (t *Timer) getSplit() time.Duration {
+	lm := t.Moments[len(t.Moments)-1] // (l)ast (m)oment
+	return lm.Split
+}
+
+// getMoment returns a Moment and an error value from t.Moments.
+func (t *Timer) getMoment(s string) (Moment, error) {
+	for _, m := range t.Moments {
+		if m.Name == s {
+			return m, nil
+		}
+	}
+
+	var em Moment // (e)mpty (m)oment
+	return em, errors.New("no moment found")
+}
+
+// --> Emoji: struct collecting emojis
+
+type Emoji struct {
+	AlarmClock           string
+	Boat                 string
+	Book                 string
+	Books                string
+	Box                  string
+	Briefcase            string
+	BuildingConstruction string
+	Bunny                string
+	Checkmark            string
+	Clapper              string
+	Clipboard            string
+	CrystalBall          string
+	Desert               string
+	DirectHit            string
+	FaxMachine           string
+	Finger               string
+	Flag                 string
+	FlagInHole           string
+	FileCabinet          string
+	Fire                 string
+	Folder               string
+	Glasses              string
+	Hourglass            string
+	Hole                 string
+	Inbox                string
+	Memo                 string
+	Microscope           string
+	Outbox               string
+	Pager                string
+	Parents              string
+	Pen                  string
+	Pig                  string
+	Popcorn              string
+	Rocket               string
+	Run                  string
+	Satellite            string
+	SatelliteDish        string
+	Ship                 string
+	Sheep                string
+	Slash                string
+	Squirrel             string
+	Telescope            string
+	Text                 string
+	ThinkingFace         string
+	TimerClock           string
+	Traffic              string
+	Truck                string
+	Turtle               string
+	ThumbsUp             string
+	Unicorn              string
+	Warning              string
+	Count                int
+}
+
+// initEmoji returns an Emoji struct with all values initialized.
+func initEmoji(f Flags, t *Timer) (e Emoji) {
+	e.AlarmClock = printEmoji(9200)
+	e.Boat = printEmoji(128676)
+	e.Book = printEmoji(128214)
+	e.Books = printEmoji(128218)
+	e.Box = printEmoji(128230)
+	e.Briefcase = printEmoji(128188)
+	e.BuildingConstruction = printEmoji(127959)
+	e.Bunny = printEmoji(128048)
+	e.Checkmark = printEmoji(9989)
+	e.Clapper = printEmoji(127916)
+	e.Clipboard = printEmoji(128203)
+	e.CrystalBall = printEmoji(128302)
+	e.DirectHit = printEmoji(127919)
+	e.Desert = printEmoji(127964)
+	e.FaxMachine = printEmoji(128224)
+	e.Finger = printEmoji(128073)
+	e.FileCabinet = printEmoji(128452)
+	e.Flag = printEmoji(127937)
+	e.FlagInHole = printEmoji(9971)
+	e.Fire = printEmoji(128293)
+	e.Folder = printEmoji(128193)
+	e.Glasses = printEmoji(128083)
+	e.Hole = printEmoji(128371)
+	e.Hourglass = printEmoji(9203)
+	e.Inbox = printEmoji(128229)
+	e.Microscope = printEmoji(128300)
+	e.Memo = printEmoji(128221)
+	e.Outbox = printEmoji(128228)
+	e.Pager = printEmoji(128223)
+	e.Parents = printEmoji(128106)
+	e.Pen = printEmoji(128394)
+	e.Pig = printEmoji(128055)
+	e.Popcorn = printEmoji(127871)
+	e.Rocket = printEmoji(128640)
+	e.Run = printEmoji(127939)
+	e.Satellite = printEmoji(128752)
+	e.SatelliteDish = printEmoji(128225)
+	e.Slash = printEmoji(128683)
+	e.Ship = printEmoji(128674)
+	e.Sheep = printEmoji(128017)
+	e.Squirrel = printEmoji(128063)
+	e.Telescope = printEmoji(128301)
+	e.Text = printEmoji(128172)
+	e.ThumbsUp = printEmoji(128077)
+	e.TimerClock = printEmoji(9202)
+	e.Traffic = printEmoji(128678)
+	e.Truck = printEmoji(128666)
+	e.Turtle = printEmoji(128034)
+	e.Unicorn = printEmoji(129412)
+	e.Warning = printEmoji(128679)
+	e.Count = reflect.ValueOf(e).NumField() - 1
+
+	// timer
+	t.markMoment("init-emoji")
+
+	return e
+}
+
+// printEmoji returns an emoji character as a string value.
+func printEmoji(n int) string {
+	str := html.UnescapeString("&#" + strconv.Itoa(n) + ";")
+	return str
+}
+
+// --> Flags: struct collecting flag values
+
+// FLAG: silent error / warning flag?
+type Flags struct {
+	Mode    string
+	Clear   bool
+	Verbose bool
+	Emoji   bool
+	OneLine bool
+	Count   int
+	Summary string
+}
+
+func initFlags(e Emoji, t *Timer) (f Flags) {
+
+	// shortcut variables
+	var m string // mode
+	var c bool   // clear
+	var v bool   // verbose
+	var em bool  // emoji
+	var o bool   // one-line
+
+	// summary and count
+	var fc int   // flag count
+	var s string // summary
+
+	// point to shortcut variables
+	flag.StringVar(&m, "m", "verify", "mode")
+	flag.BoolVar(&c, "c", false, "clear")
+	flag.BoolVar(&v, "v", true, "verbose")
+	flag.BoolVar(&em, "e", false, "emoji")
+	flag.BoolVar(&o, "o", false, "one-line")
+	flag.Parse()
+
+	// collect and join (e)nabled (f)lags
+	var ef []string
+
+	// mode
+	if m != "" {
+		fc += 1
+	}
+
+	// ...otherwise set to 'verify'
+	switch m {
+	case "login", "logout", "verify":
+	default:
+		m = "verify"
+	}
+	ef = append(ef, m)
+
+	// clear
+	if c == true {
+		fc += 1
+		ef = append(ef, "clear")
+	}
+
+	// verbose
+	if v == true {
+		fc += 1
+		ef = append(ef, "verbose")
+	}
+
+	// emoji
+	if em == true {
+		fc += 1
+		ef = append(ef, "emoji")
+	}
+
+	// one-line
+	if o == true {
+		fc += 1
+		ef = append(ef, "one-line")
+	}
+
+	// summary
+	s = strings.Join(ef, ", ")
+
+	// timer
+	t.markMoment("init-flags")
+
+	// set Flags
+	f = Flags{m, c, v, em, o, fc, s}
+
+	return f
+}
+
+// isClear returns true if f.Clear is true.
+func isClear(f Flags) bool {
+	if f.Clear {
+		return true
+	} else {
+		return false
+	}
+}
+
+// isVerbose returns true if f.Verbose is true.
+func isVerbose(f Flags) bool {
+	if f.Verbose {
+		return true
+	} else {
+		return false
+	}
+}
+
+// hasEmoji returns true if f.Emoji is true.
+func hasEmoji(f Flags) bool {
+	if f.Emoji {
+		return true
+	} else {
+		return false
+	}
+}
+
+// oneLine returns true if f.OneLine is true.
+func oneLine(f Flags) bool {
+	if f.OneLine {
+		return true
+	} else {
+		return false
+	}
+}
+
+// logoutMode returns true if mode is set to "logout"
+func logoutMode(f Flags) bool {
+	if f.Mode == "logout" {
+		return true
+	} else {
+		return false
+	}
+}
+
+// loginMode returns true if mode is set to "login"
+func loginMode(f Flags) bool {
+	if f.Mode == "login" {
+		return true
+	} else {
+		return false
+	}
+}
+
 // initPrint prints info for Emoji and Flag values.
-func initPrint(e map[string]string, f flags.Flags, t *timer.Timer) {
+func initPrint(e Emoji, f Flags, t *Timer) {
 
 	// clears the screen if f.Clear or f.Emoji are true
-	util.ClearScreen()
+	clearScreen(f)
 
 	// targetPrint prints a message with or without an emoji if f.Emoji is true or false.
-	util.TPrintln(f, "%v start", e.Clapper)
+	targetPrintln(f, "%v start", e.Clapper)
 
 	// print flag init
-	if ft, err := t.GetMoment("init-flags"); err == nil {
-		util.TPrintln(f, "%v parsing flags", e.FlagInHole)
-		util.TPrintln(f, "%v [%v] flags (%v) {%v / %v}", e.Flag, f.Count, f.Summary, ft.Split, ft.Start)
+	if ft, err := t.getMoment("init-flags"); err == nil {
+		targetPrintln(f, "%v parsing flags", e.FlagInHole)
+		targetPrintln(f, "%v [%v] flags (%v) {%v / %v}", e.Flag, f.Count, f.Summary, ft.Split, ft.Start)
 	}
 
 	// print emoji init
-	if et, err := t.GetMoment("init-emoji"); err == nil {
-		util.TPrintln(f, "%v initializing emoji", e.CrystalBall)
-		util.TPrintln(f, "%v [%v] emoji {%v / %v}", e.DirectHit, e.Count, et.Split, et.Start)
+	if et, err := t.getMoment("init-emoji"); err == nil {
+		targetPrintln(f, "%v initializing emoji", e.CrystalBall)
+		targetPrintln(f, "%v [%v] emoji {%v / %v}", e.DirectHit, e.Count, et.Split, et.Start)
 	}
+}
+
+// --> Config: ~/.gisrc.json unmarshalled
+
+type Config struct {
+	Bundles []struct {
+		Path  string `json:"path"`
+		Zones []struct {
+			User      string   `json:"user"`
+			Remote    string   `json:"remote"`
+			Workspace string   `json:"workspace"`
+			Repos     []string `json:"repositories"`
+		} `json:"zones"`
+	} `json:"bundles"`
+}
+
+// initConfig returns data from ~/.gisrc.json as a Config struct.
+func initConfig(e Emoji, f Flags, t *Timer) (c Config) {
+
+	// get the current user, otherwise fatal
+	u, err := user.Current()
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// expand "~/" to "/Users/user"
+	g := fmt.Sprintf("%v/.gisrc.json", u.HomeDir)
+
+	// print
+	targetPrintln(f, "%v reading %v", e.Glasses, g)
+
+	// read file
+	r, err := ioutil.ReadFile(g)
+
+	if err != nil {
+		log.Fatalf("No file found at %v\n", g)
+	}
+
+	// unmarshall json
+	err = json.Unmarshal(r, &c)
+
+	if err != nil {
+		log.Fatalf("Can't unmarshal JSON from %v\n", g)
+	}
+
+	// timer
+	t.markMoment("init-config")
+
+	// print
+	targetPrintln(f, "%v read %v {%v / %v}", e.Book, g, t.getSplit(), t.getTime())
+
+	return c
 }
 
 // --> Repo: Repository configuration and information
@@ -53,11 +428,11 @@ type Repo struct {
 
 	// initRun -> initRepos -> initRepo
 	BundlePath string // "~/dev"
-	Workspace  string // "main" or "go-lang"
+	Division   string // "main" or "go-lang"
 	User       string // "jychri"
 	Remote     string // "github" or "gitlab"
 	Name       string // "git-in-sync"
-	WorkPath   string // "/Users/jychri/dev/go-lang/"
+	DivPath    string // "/Users/jychri/dev/go-lang/"
 	RepoPath   string // "/Users/jychri/dev/go-lang/git-in-sync"
 	GitPath    string // "/Users/jychri/dev/go-lang/git-in-sync/.git"
 	GitDir     string // "--git-dir=/Users/jychri/dev/go-lang/git-in-sync/.git"
@@ -67,7 +442,7 @@ type Repo struct {
 	// rs.verifyRepos
 	PendingClone bool // true if RepoPath or GitPath are empty
 
-	// rs.verifyDivs, rs.verifyRepos || FLAG: now workspaces
+	// rs.verifyDivs, rs.verifyRepos
 	Verified     bool   // true if Repo continues to pass verification
 	ErrorMessage string // the last error message
 	ErrorName    string // name of the last error
@@ -124,7 +499,6 @@ type Repo struct {
 
 // initRepo returns a *Repo with initial values set.
 
-// FLAG: div -> workspace
 func initRepo(zd string, zu string, zr string, bp string, rn string) *Repo {
 
 	r := new(Repo)
@@ -133,7 +507,7 @@ func initRepo(zd string, zu string, zr string, bp string, rn string) *Repo {
 	r.BundlePath = bp
 
 	// "main" or "go-lang", (z)one(d)ivision
-	r.Workspace = zd
+	r.Division = zd
 
 	// "jychri", (z)one(u)ser
 	r.User = zu
@@ -148,15 +522,15 @@ func initRepo(zd string, zu string, zr string, bp string, rn string) *Repo {
 
 	// "/Users/jychri/dev/go-lang/"
 	b.WriteString(validatePath(r.BundlePath))
-	if r.Workspace != "main" {
+	if r.Division != "main" {
 		b.WriteString("/")
-		b.WriteString(r.Workspace)
+		b.WriteString(r.Division)
 	}
-	r.WorkPath = b.String()
+	r.DivPath = b.String()
 
 	// "/Users/jychri/dev/go-lang/git-in-sync/"
 	b.Reset()
-	b.WriteString(r.WorkPath)
+	b.WriteString(r.DivPath)
 	b.WriteString("/")
 	b.WriteString(r.Name)
 	r.RepoPath = b.String()
@@ -250,7 +624,7 @@ func (r *Repo) gitClone(e Emoji, f Flags) {
 
 	if r.PendingClone == true {
 		// print
-		util.TPrintln(f, "%v cloning %v {%v}", e.Box, r.Name, r.WorkPath)
+		targetPrintln(f, "%v cloning %v {%v}", e.Box, r.Name, r.Division)
 
 		// command
 		args := []string{"clone", r.URL, r.RepoPath}
@@ -744,9 +1118,9 @@ func (r *Repo) checkCommitMessage() {
 func (r *Repo) gitAdd(e Emoji, f Flags) {
 	switch r.Status {
 	case "Dirty", "DirtyUntracked", "DirtyAhead", "DirtyBehind":
-		util.TPrintln(f, "%v %v adding changes [%v]{%v}(%v)", e.Outbox, r.Name, len(r.DiffsNameOnly), r.DiffsSummary, r.ShortStatSummary)
+		targetPrintln(f, "%v %v adding changes [%v]{%v}(%v)", e.Outbox, r.Name, len(r.DiffsNameOnly), r.DiffsSummary, r.ShortStatSummary)
 	case "Untracked", "UntrackedAhead", "UntrackedBehind":
-		util.TPrintln(f, "%v %v adding new files [%v]{%v}", e.Outbox, r.Name, len(r.UntrackedFiles), r.UntrackedSummary)
+		targetPrintln(f, "%v %v adding new files [%v]{%v}", e.Outbox, r.Name, len(r.UntrackedFiles), r.UntrackedSummary)
 	}
 
 	// command
@@ -768,9 +1142,9 @@ func (r *Repo) gitAdd(e Emoji, f Flags) {
 func (r *Repo) gitCommit(e Emoji, f Flags) {
 	switch r.Status {
 	case "Dirty", "DirtyUntracked", "DirtyAhead", "DirtyBehind":
-		util.TPrintln(f, "%v %v committing changes [%v]{%v}(%v)", e.Fire, r.Name, len(r.DiffsNameOnly), r.DiffsSummary, r.ShortStatSummary)
+		targetPrintln(f, "%v %v committing changes [%v]{%v}(%v)", e.Fire, r.Name, len(r.DiffsNameOnly), r.DiffsSummary, r.ShortStatSummary)
 	case "Untracked", "UntrackedAhead", "UntrackedBehind":
-		util.TPrintln(f, "%v %v committing new files [%v]{%v}", e.Fire, r.Name, len(r.UntrackedFiles), r.UntrackedSummary)
+		targetPrintln(f, "%v %v committing new files [%v]{%v}", e.Fire, r.Name, len(r.UntrackedFiles), r.UntrackedSummary)
 	}
 
 	// command
@@ -790,16 +1164,16 @@ func (r *Repo) gitCommit(e Emoji, f Flags) {
 }
 
 func (r *Repo) gitStash(e Emoji, f Flags) {
-	util.TPrintln(f, "%v  %v stashing changes", e.Squirrel, r.Name)
+	targetPrintln(f, "%v  %v stashing changes", e.Squirrel, r.Name)
 
 }
 
 func (r *Repo) gitPop(e Emoji, f Flags) {
-	util.TPrintln(f, "%v %v popping changes", e.Popcorn, r.Name)
+	targetPrintln(f, "%v %v popping changes", e.Popcorn, r.Name)
 }
 
 func (r *Repo) gitPull(e Emoji, f Flags) {
-	util.TPrintln(f, "%v %v pulling from %v @ %v", e.Ship, r.Name, r.UpstreamBranch, r.Remote)
+	targetPrintln(f, "%v %v pulling from %v @ %v", e.Ship, r.Name, r.UpstreamBranch, r.Remote)
 
 	// command
 	args := []string{"-C", r.RepoPath, "pull"}
@@ -816,12 +1190,12 @@ func (r *Repo) gitPull(e Emoji, f Flags) {
 	}
 
 	if r.Verified == false {
-		util.TPrintln(f, "%v %v pull failed", e.Slash, r.Name)
+		targetPrintln(f, "%v %v pull failed", e.Slash, r.Name)
 	}
 }
 
 func (r *Repo) gitPush(e Emoji, f Flags) {
-	util.TPrintln(f, "%v %v pushing to %v @ %v", e.Rocket, r.Name, r.UpstreamBranch, r.Remote)
+	targetPrintln(f, "%v %v pushing to %v @ %v", e.Rocket, r.Name, r.UpstreamBranch, r.Remote)
 
 	// command
 	args := []string{"-C", r.RepoPath, "push"}
@@ -838,7 +1212,7 @@ func (r *Repo) gitPush(e Emoji, f Flags) {
 	}
 
 	if r.Verified == false {
-		util.TPrintln(f, "%v %v push failed", e.Slash, r.Name)
+		targetPrintln(f, "%v %v push failed", e.Slash, r.Name)
 	}
 
 }
@@ -866,11 +1240,11 @@ func (r *Repo) gitStatusPorcelain(e Emoji, f Flags) {
 
 	if str := out.String(); str != "" {
 		r.Porcelain = false
-		util.TPrintln(f, "%v commit error (%v)", e.Slash, r.ErrorFirst)
+		targetPrintln(f, "%v commit error (%v)", e.Slash, r.ErrorFirst)
 	} else {
 		r.Category = "Complete"
 		r.Porcelain = true
-		util.TPrintln(f, "%v %v up to date!", e.Checkmark, r.Name)
+		targetPrintln(f, "%v %v up to date!", e.Checkmark, r.Name)
 	}
 
 }
@@ -882,7 +1256,7 @@ type Repos []*Repo
 func initRepos(c Config, e Emoji, f Flags, t *Timer) (rs Repos) {
 
 	// print
-	util.TPrintln(f, "%v parsing workspaces|repos", e.Pager)
+	targetPrintln(f, "%v parsing divs|repos", e.Pager)
 
 	// initialize Repos from Config
 	for _, bl := range c.Bundles {
@@ -895,22 +1269,22 @@ func initRepos(c Config, e Emoji, f Flags, t *Timer) (rs Repos) {
 	}
 
 	// timer
-	t.MarkMoment("init-repos")
+	t.markMoment("init-repos")
 
 	// sort
 	rs.sortByPath()
 
-	// get all workspaces, remove duplicates
-	var dvs []string // divs -> wss
+	// get all divs, remove duplicates
+	var dvs []string // divs
 
 	for _, r := range rs {
-		dvs = append(dvs, r.WorkPath)
+		dvs = append(dvs, r.DivPath)
 	}
 
 	dvs = removeDuplicates(dvs)
 
 	// print
-	util.TPrintln(f, "%v [%v|%v] workspaces|repos {%v / %v}", e.FaxMachine, len(dvs), len(rs), t.GetSplit(), t.GetTime())
+	targetPrintln(f, "%v [%v|%v] divs|repos {%v / %v}", e.FaxMachine, len(dvs), len(rs), t.getSplit(), t.getTime())
 
 	return rs
 }
@@ -947,13 +1321,21 @@ func (rs Repos) sortByName() {
 	sort.SliceStable(rs, func(i, j int) bool { return rs[i].Name < rs[j].Name })
 }
 
-// sort A-Z by r.WorkPath, then r.Name
+// sort A-Z by r.DivPath, then r.Name
 func (rs Repos) sortByPath() {
 	sort.SliceStable(rs, func(i, j int) bool { return rs[i].Name < rs[j].Name })
-	sort.SliceStable(rs, func(i, j int) bool { return rs[i].WorkPath < rs[j].WorkPath })
+	sort.SliceStable(rs, func(i, j int) bool { return rs[i].DivPath < rs[j].DivPath })
 }
 
 // Utility functions. Repackage and clarify someday?
+
+func clearScreen(f Flags) {
+	if isClear(f) || hasEmoji(f) {
+		cmd := exec.Command("clear")
+		cmd.Stdout = os.Stdout
+		cmd.Run()
+	}
+}
 
 func noPermission(info os.FileInfo) bool {
 
@@ -1054,6 +1436,26 @@ func lastPathSelection(p string) string {
 	}
 }
 
+func targetPrintln(f Flags, s string, z ...interface{}) {
+
+	// return if oneLine
+	if oneLine(f) {
+		return
+	}
+
+	fmt.Println(fmt.Sprintf(s, z...))
+}
+
+func targetPrintf(f Flags, s string, z ...interface{}) {
+
+	// return if oneLine
+	if oneLine(f) {
+		return
+	}
+
+	fmt.Printf(fmt.Sprintf(s, z...))
+}
+
 func removeDuplicates(ssl []string) (sl []string) {
 
 	smap := make(map[string]bool)
@@ -1108,12 +1510,12 @@ func sliceSummary(sl []string, l int) string {
 
 // --> main fns
 
-func initRun() (e map[string]string, f Flags, rs Repos, t *timer.Timer) {
+func initRun() (e Emoji, f Flags, rs Repos, t *Timer) {
 
 	// initialize Timer, Flags and Emoji
-	t = timer.InitTimer()
+	t = initTimer()
 	f = initFlags(e, t)
-	e = emoji.InitEmoji()
+	e = initEmoji(f, t)
 
 	// clear screen, early messaging
 	initPrint(e, f, t)
@@ -1127,102 +1529,102 @@ func initRun() (e map[string]string, f Flags, rs Repos, t *timer.Timer) {
 	return e, f, rs, t
 }
 
-// func (rs Repos) verifyDivs(e Emoji, f Flags, t *Timer) {
+func (rs Repos) verifyDivs(e Emoji, f Flags, t *Timer) {
 
-// 	// sort
-// 	rs.sortByPath()
+	// sort
+	rs.sortByPath()
 
-// 	// get all divs, remove duplicates
-// 	var dvs []string  // divs
-// 	var zdvs []string // zone divisions (go, main, google-apps-script etc)
+	// get all divs, remove duplicates
+	var dvs []string  // divs
+	var zdvs []string // zone divisions (go, main, google-apps-script etc)
 
-// 	for _, r := range rs {
-// 		dvs = append(dvs, r.WorkPath)
-// 		zdvs = append(zdvs, r.WorkPath)
-// 	}
+	for _, r := range rs {
+		dvs = append(dvs, r.DivPath)
+		zdvs = append(zdvs, r.Division)
+	}
 
-// 	dvs = removeDuplicates(dvs)
-// 	zdvs = removeDuplicates(zdvs)
+	dvs = removeDuplicates(dvs)
+	zdvs = removeDuplicates(zdvs)
 
-// 	zds := sliceSummary(zdvs, 25) // zone division summary
+	zds := sliceSummary(zdvs, 25) // zone division summary
 
-// 	// print
-// 	util.TPrintln(f, "%v  verifying divs [%v](%v)", e.FileCabinet, len(dvs), zds)
+	// print
+	targetPrintln(f, "%v  verifying divs [%v](%v)", e.FileCabinet, len(dvs), zds)
 
-// 	// track created, verified and missing divs
-// 	var cd []string // created divs
-// 	var vd []string // verified divs
-// 	var id []string // inaccessible divs // --> FLAG: change to unverified?
+	// track created, verified and missing divs
+	var cd []string // created divs
+	var vd []string // verified divs
+	var id []string // inaccessible divs // --> FLAG: change to unverified?
 
-// 	for _, r := range rs {
+	for _, r := range rs {
 
-// 		_, err := os.Stat(r.WorkPath)
+		_, err := os.Stat(r.DivPath)
 
-// 		// create div if missing and active run
-// 		if os.IsNotExist(err) {
-// 			util.TPrintln(f, "%v creating %v", e.Folder, r.WorkPath)
-// 			os.MkdirAll(r.WorkPath, 0777)
-// 			cd = append(cd, r.WorkPath)
-// 		}
+		// create div if missing and active run
+		if os.IsNotExist(err) {
+			targetPrintln(f, "%v creating %v", e.Folder, r.DivPath)
+			os.MkdirAll(r.DivPath, 0777)
+			cd = append(cd, r.DivPath)
+		}
 
-// 		// check div status
-// 		info, err := os.Stat(r.WorkPath)
+		// check div status
+		info, err := os.Stat(r.DivPath)
 
-// 		switch {
-// 		case noPermission(info):
-// 			r.markError(e, f, "fatal: No permsission", "verify-divs")
-// 			id = append(id, r.WorkPath)
-// 		case !info.IsDir():
-// 			r.markError(e, f, "fatal: File occupying path", "verify-divs")
-// 			id = append(id, r.WorkPath)
-// 		case os.IsNotExist(err):
-// 			r.markError(e, f, "fatal: No directory", "verify-divs")
-// 			id = append(id, r.WorkPath)
-// 		case err != nil:
-// 			r.markError(e, f, "fatal: No directory", "verify-divs")
-// 			id = append(id, r.WorkPath)
-// 		default:
-// 			r.Verified = true
-// 			vd = append(vd, r.WorkPath)
-// 		}
-// 	}
+		switch {
+		case noPermission(info):
+			r.markError(e, f, "fatal: No permsission", "verify-divs")
+			id = append(id, r.DivPath)
+		case !info.IsDir():
+			r.markError(e, f, "fatal: File occupying path", "verify-divs")
+			id = append(id, r.DivPath)
+		case os.IsNotExist(err):
+			r.markError(e, f, "fatal: No directory", "verify-divs")
+			id = append(id, r.DivPath)
+		case err != nil:
+			r.markError(e, f, "fatal: No directory", "verify-divs")
+			id = append(id, r.DivPath)
+		default:
+			r.Verified = true
+			vd = append(vd, r.DivPath)
+		}
+	}
 
-// 	// timer
-// 	t.MarkMoment("verify-divs")
+	// timer
+	t.markMoment("verify-divs")
 
-// 	// remove duplicates from slices
-// 	vd = removeDuplicates(vd)
-// 	id = removeDuplicates(id)
+	// remove duplicates from slices
+	vd = removeDuplicates(vd)
+	id = removeDuplicates(id)
 
-// 	// summary
-// 	var b bytes.Buffer
+	// summary
+	var b bytes.Buffer
 
-// 	if len(dvs) == len(vd) {
-// 		b.WriteString(e.Briefcase)
-// 	} else {
-// 		b.WriteString(e.Slash)
-// 	}
+	if len(dvs) == len(vd) {
+		b.WriteString(e.Briefcase)
+	} else {
+		b.WriteString(e.Slash)
+	}
 
-// 	b.WriteString(" [")
-// 	b.WriteString(strconv.Itoa(len(vd)))
-// 	b.WriteString("/")
-// 	b.WriteString(strconv.Itoa(len(dvs)))
-// 	b.WriteString("] divs verified")
+	b.WriteString(" [")
+	b.WriteString(strconv.Itoa(len(vd)))
+	b.WriteString("/")
+	b.WriteString(strconv.Itoa(len(dvs)))
+	b.WriteString("] divs verified")
 
-// 	if len(cd) >= 1 {
-// 		b.WriteString(", created [")
-// 		b.WriteString(strconv.Itoa(len(cd)))
-// 		b.WriteString("]")
-// 	}
+	if len(cd) >= 1 {
+		b.WriteString(", created [")
+		b.WriteString(strconv.Itoa(len(cd)))
+		b.WriteString("]")
+	}
 
-// 	b.WriteString(" {")
-// 	b.WriteString(t.GetSplit().String())
-// 	b.WriteString(" / ")
-// 	b.WriteString(t.GetTime().String())
-// 	b.WriteString("}")
+	b.WriteString(" {")
+	b.WriteString(t.getSplit().String())
+	b.WriteString(" / ")
+	b.WriteString(t.getTime().String())
+	b.WriteString("}")
 
-// 	util.TPrintln(f, b.String())
-// }
+	targetPrintln(f, b.String())
+}
 
 func (rs Repos) verifyCloned(e Emoji, f Flags, t *Timer) {
 	var pc []string // pending clone
@@ -1242,7 +1644,7 @@ func (rs Repos) verifyCloned(e Emoji, f Flags, t *Timer) {
 	}
 
 	// if there are pending repos
-	util.TPrintln(f, "%v cloning [%v]", e.Sheep, len(pc))
+	targetPrintln(f, "%v cloning [%v]", e.Sheep, len(pc))
 
 	// verify each repo (async)
 	var wg sync.WaitGroup
@@ -1264,7 +1666,7 @@ func (rs Repos) verifyCloned(e Emoji, f Flags, t *Timer) {
 	}
 
 	// timer
-	t.MarkMoment("verify-repos")
+	t.markMoment("verify-repos")
 
 	// summary
 	var b bytes.Buffer
@@ -1278,12 +1680,12 @@ func (rs Repos) verifyCloned(e Emoji, f Flags, t *Timer) {
 
 	tr := time.Millisecond // truncate
 	b.WriteString(" {")
-	b.WriteString(t.GetSplit().Truncate(tr).String())
+	b.WriteString(t.getSplit().Truncate(tr).String())
 	b.WriteString(" / ")
-	b.WriteString(t.GetTime().Truncate(tr).String())
+	b.WriteString(t.getTime().Truncate(tr).String())
 	b.WriteString("}")
 
-	util.TPrintln(f, b.String())
+	targetPrintln(f, b.String())
 }
 
 func (rs Repos) verifyRepos(e Emoji, f Flags, t *Timer) {
@@ -1296,7 +1698,7 @@ func (rs Repos) verifyRepos(e Emoji, f Flags, t *Timer) {
 	rns := sliceSummary(rn, 25)
 
 	// print
-	util.TPrintln(f, "%v  verifying repos [%v](%v)", e.Satellite, len(rs), rns)
+	targetPrintln(f, "%v  verifying repos [%v](%v)", e.Satellite, len(rs), rns)
 
 	// verify each repo (async)
 	var wg sync.WaitGroup
@@ -1344,7 +1746,7 @@ func (rs Repos) verifyRepos(e Emoji, f Flags, t *Timer) {
 	}
 
 	// timer
-	t.MarkMoment("verify-repos")
+	t.markMoment("verify-repos")
 
 	var b bytes.Buffer
 
@@ -1361,12 +1763,12 @@ func (rs Repos) verifyRepos(e Emoji, f Flags, t *Timer) {
 	b.WriteString("] complete {")
 
 	tr := time.Millisecond // truncate
-	b.WriteString(t.GetSplit().Truncate(tr).String())
+	b.WriteString(t.getSplit().Truncate(tr).String())
 	b.WriteString(" / ")
-	b.WriteString(t.GetTime().Truncate(tr).String())
+	b.WriteString(t.getTime().Truncate(tr).String())
 	b.WriteString("}")
 
-	util.TPrintln(f, b.String())
+	targetPrintln(f, b.String())
 
 	// scheduled repo info
 
@@ -1386,7 +1788,7 @@ func (rs Repos) verifyRepos(e Emoji, f Flags, t *Timer) {
 
 		b.WriteString(schs)
 		b.WriteString(")")
-		util.TPrintln(f, b.String())
+		targetPrintln(f, b.String())
 	}
 
 	// skipped repo info
@@ -1399,7 +1801,7 @@ func (rs Repos) verifyRepos(e Emoji, f Flags, t *Timer) {
 		b.WriteString("] skipped (")
 		b.WriteString(sks)
 		b.WriteString(")")
-		util.TPrintln(f, b.String())
+		targetPrintln(f, b.String())
 	}
 
 	// pending repo info
@@ -1412,7 +1814,7 @@ func (rs Repos) verifyRepos(e Emoji, f Flags, t *Timer) {
 		b.WriteString("] pending (")
 		b.WriteString(prs)
 		b.WriteString(")")
-		util.TPrintln(f, b.String())
+		targetPrintln(f, b.String())
 	}
 
 }
@@ -1488,7 +1890,7 @@ func (rs Repos) verifyChanges(e Emoji, f Flags, t *Timer) {
 				b.WriteString(r.UpstreamBranch)
 			}
 
-			util.TPrintln(f, b.String())
+			targetPrintln(f, b.String())
 
 			switch r.Status {
 			case "Ahead":
@@ -1521,7 +1923,7 @@ func (rs Repos) verifyChanges(e Emoji, f Flags, t *Timer) {
 			}
 		}
 
-		t.MarkMoment("verify-changes")
+		t.markMoment("verify-changes")
 
 		// FLAG:
 		// check again see how many pending remain, should be zero...
@@ -1570,12 +1972,12 @@ func (rs Repos) verifyChanges(e Emoji, f Flags, t *Timer) {
 		// b.WriteString("/")
 		// b.WriteString(strconv.Itoa(len(prs)))
 		// b.WriteString("] scheduled {")
-		// b.WriteString(t.GetSplit().Truncate(tr).String())
+		// b.WriteString(t.getSplit().Truncate(tr).String())
 		// b.WriteString(" / ")
-		// b.WriteString(t.GetTime().Truncate(tr).String())
+		// b.WriteString(t.getTime().Truncate(tr).String())
 		// b.WriteString("}")
 
-		// util.TPrintln(f, b.String())
+		// targetPrintln(f, b.String())
 	}
 
 }

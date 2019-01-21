@@ -340,7 +340,7 @@ func loginMode(f Flags) bool {
 func initPrint(e Emoji, f Flags, t *Timer) {
 
 	// clears the screen if f.Clear or f.Emoji are true
-	clearScreen(f)
+	clearScreen()
 
 	// targetPrint prints a message with or without an emoji if f.Emoji is true or false.
 	targetPrintln(f, "%v start", e.Clapper)
@@ -358,8 +358,7 @@ func initPrint(e Emoji, f Flags, t *Timer) {
 	}
 }
 
-// --> Config: ~/.gisrc.json unmarshalled
-
+// Config holds the data from ~/.gisrc.json after Unmasrhalling.
 type Config struct {
 	Bundles []struct {
 		Path  string `json:"path"`
@@ -1316,14 +1315,12 @@ func (rs Repos) sortByPath() {
 	sort.SliceStable(rs, func(i, j int) bool { return rs[i].DivPath < rs[j].DivPath })
 }
 
-// Utility functions. Repackage and clarify someday?
+// Utility functions.
 
-func clearScreen(f Flags) {
-	if isClear(f) || hasEmoji(f) {
-		cmd := exec.Command("clear")
-		cmd.Stdout = os.Stdout
-		cmd.Run()
-	}
+func clearScreen() {
+	cmd := exec.Command("clear")
+	cmd.Stdout = os.Stdout
+	cmd.Run()
 }
 
 func noPermission(info os.FileInfo) bool {
@@ -1336,13 +1333,11 @@ func noPermission(info os.FileInfo) bool {
 		return true
 	}
 
-	s := info.Mode().String()[1:4]
-
-	if s != "rwx" {
+	if s := info.Mode().String()[1:4]; s != "rwx" {
 		return true
-	} else {
-		return false
 	}
+
+	return false
 }
 
 func isDirectory(info os.FileInfo) bool {

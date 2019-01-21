@@ -201,9 +201,7 @@ func printEmoji(n int) string {
 	return str
 }
 
-// --> Flags: struct collecting flag values
-
-// FLAG: silent error / warning flag?
+// Flags hold flag input
 type Flags struct {
 	Mode    string
 	Clear   bool
@@ -216,18 +214,15 @@ type Flags struct {
 
 func initFlags(e Emoji, t *Timer) (f Flags) {
 
-	// shortcut variables
-	var m string // mode
-	var c bool   // clear
-	var v bool   // verbose
-	var em bool  // emoji
-	var o bool   // one-line
+	// short variables
+	var c, v, em, o bool // clear, verbose, emoji, one-line
+	var m string         // mode
 
 	// summary and count
 	var fc int   // flag count
 	var s string // summary
 
-	// point to shortcut variables
+	// point to short variables
 	flag.StringVar(&m, "m", "verify", "mode")
 	flag.BoolVar(&c, "c", false, "clear")
 	flag.BoolVar(&v, "v", true, "verbose")
@@ -243,7 +238,7 @@ func initFlags(e Emoji, t *Timer) (f Flags) {
 		fc += 1
 	}
 
-	// ...otherwise set to 'verify'
+	// default value for mode is verify
 	switch m {
 	case "login", "logout", "verify":
 	default:

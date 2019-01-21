@@ -1,8 +1,5 @@
 package main
 
-// cleaner paths with Clean
-// div or workspace?
-
 import (
 	"bufio"
 	"bytes"
@@ -27,8 +24,7 @@ import (
 	"time"
 )
 
-// --> Moment: a moment in time
-
+// Moment marks moments in time.
 type Moment struct {
 	Name  string
 	Time  time.Time
@@ -36,13 +32,12 @@ type Moment struct {
 	Split time.Duration // duration since last moment
 }
 
-// --> Timer: tracking moments in time
-
+// Timer collects Moments.
 type Timer struct {
 	Moments []Moment
 }
 
-// initTimer initializes a *Timer with a Start moment.
+// initTimer initializes a *Timer with a Start Moment.
 func initTimer() *Timer {
 	t := new(Timer)
 	st := Moment{Name: "Start", Time: time.Now()} // (st)art
@@ -60,19 +55,19 @@ func (t *Timer) markMoment(s string) {
 	t.Moments = append(t.Moments, m)             // append Moment
 }
 
-// getTime returns the elapsed time at the last recorded moment in t.Moments.
+// getTime returns the elapsed time at the last recorded moment in *Timer.
 func (t *Timer) getTime() time.Duration {
 	lm := t.Moments[len(t.Moments)-1] // (l)ast (m)oment
 	return lm.Start
 }
 
-// getSplit returns the split time for the last recorded moment in t.Moments.
+// getSplit returns the split time for the last recorded moment in *Timer.
 func (t *Timer) getSplit() time.Duration {
 	lm := t.Moments[len(t.Moments)-1] // (l)ast (m)oment
 	return lm.Split
 }
 
-// getMoment returns a Moment and an error value from t.Moments.
+// getMoment returns a Moment and an error value from a *Timer.
 func (t *Timer) getMoment(s string) (Moment, error) {
 	for _, m := range t.Moments {
 		if m.Name == s {
@@ -84,8 +79,7 @@ func (t *Timer) getMoment(s string) (Moment, error) {
 	return em, errors.New("no moment found")
 }
 
-// --> Emoji: struct collecting emojis
-
+// Emoji holds emoji characters as string values.
 type Emoji struct {
 	AlarmClock           string
 	Boat                 string

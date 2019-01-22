@@ -37,16 +37,16 @@ type Timer struct {
 	Moments []Moment
 }
 
-// initTimer initializes a *Timer with a Start Moment.
-func initTimer() *Timer {
+// InitTimer initializes a *Timer with a Start Moment.
+func InitTimer() *Timer {
 	t := new(Timer)
 	st := Moment{Name: "Start", Time: time.Now()} // (st)art
 	t.Moments = append(t.Moments, st)
 	return t
 }
 
-// markMoment marks a moment in time as a Moment and appends t.Moments.
-func (t *Timer) markMoment(s string) {
+// MarkMoment marks a moment in time as a Moment and appends t.Moments.
+func (t *Timer) MarkMoment(s string) {
 	sm := t.Moments[0]                           // (s)tarting (m)oment
 	lm := t.Moments[len(t.Moments)-1]            // (l)ast (m)oment
 	m := Moment{Name: s, Time: time.Now()}       // name and time
@@ -55,20 +55,20 @@ func (t *Timer) markMoment(s string) {
 	t.Moments = append(t.Moments, m)             // append Moment
 }
 
-// getTime returns the elapsed time at the last recorded moment in *Timer.
-func (t *Timer) getTime() time.Duration {
+// GetTime returns the elapsed time at the last recorded moment in *Timer.
+func (t *Timer) GetTime() time.Duration {
 	lm := t.Moments[len(t.Moments)-1] // (l)ast (m)oment
 	return lm.Start
 }
 
-// getSplit returns the split time for the last recorded moment in *Timer.
-func (t *Timer) getSplit() time.Duration {
+// GetSplit returns the split time for the last recorded moment in *Timer.
+func (t *Timer) GetSplit() time.Duration {
 	lm := t.Moments[len(t.Moments)-1] // (l)ast (m)oment
 	return lm.Split
 }
 
-// getMoment returns a Moment and an error value from a *Timer.
-func (t *Timer) getMoment(s string) (Moment, error) {
+// GetMoment returns a Moment and an error value from a *Timer.
+func (t *Timer) GetMoment(s string) (Moment, error) {
 	for _, m := range t.Moments {
 		if m.Name == s {
 			return m, nil
@@ -136,7 +136,7 @@ type Emoji struct {
 }
 
 // initEmoji returns an Emoji struct with all values initialized.
-func initEmoji(f Flags, t *Timer) (e Emoji) {
+func InitEmoji(f Flags, t *Timer) (e Emoji) {
 	e.AlarmClock = printEmoji(9200)
 	e.Boat = printEmoji(128676)
 	e.Book = printEmoji(128214)
@@ -190,7 +190,7 @@ func initEmoji(f Flags, t *Timer) (e Emoji) {
 	e.Count = reflect.ValueOf(e).NumField() - 1
 
 	// timer
-	t.markMoment("init-emoji")
+	t.MarkMoment("init-emoji")
 
 	return e
 }
@@ -274,7 +274,7 @@ func initFlags(e Emoji, t *Timer) (f Flags) {
 	s = strings.Join(ef, ", ")
 
 	// timer
-	t.markMoment("init-flags")
+	t.MarkMoment("init-flags")
 
 	// set Flags
 	f = Flags{m, c, v, em, o, fc, s}
@@ -346,13 +346,13 @@ func initPrint(e Emoji, f Flags, t *Timer) {
 	targetPrintln(f, "%v start", e.Clapper)
 
 	// print flag init
-	if ft, err := t.getMoment("init-flags"); err == nil {
+	if ft, err := t.GetMoment("init-flags"); err == nil {
 		targetPrintln(f, "%v parsing flags", e.FlagInHole)
 		targetPrintln(f, "%v [%v] flags (%v) {%v / %v}", e.Flag, f.Count, f.Summary, ft.Split, ft.Start)
 	}
 
 	// print emoji init
-	if et, err := t.getMoment("init-emoji"); err == nil {
+	if et, err := t.GetMoment("init-emoji"); err == nil {
 		targetPrintln(f, "%v initializing emoji", e.CrystalBall)
 		targetPrintln(f, "%v [%v] emoji {%v / %v}", e.DirectHit, e.Count, et.Split, et.Start)
 	}
@@ -402,10 +402,10 @@ func initConfig(e Emoji, f Flags, t *Timer) (c Config) {
 	}
 
 	// timer
-	t.markMoment("init-config")
+	t.MarkMoment("init-config")
 
 	// print
-	targetPrintln(f, "%v read %v {%v / %v}", e.Book, g, t.getSplit(), t.getTime())
+	targetPrintln(f, "%v read %v {%v / %v}", e.Book, g, t.GetSplit(), t.GetTime())
 
 	return c
 }
@@ -1257,7 +1257,7 @@ func initRepos(c Config, e Emoji, f Flags, t *Timer) (rs Repos) {
 	}
 
 	// timer
-	t.markMoment("init-repos")
+	t.MarkMoment("init-repos")
 
 	// sort
 	rs.sortByPath()
@@ -1272,7 +1272,7 @@ func initRepos(c Config, e Emoji, f Flags, t *Timer) (rs Repos) {
 	dvs = removeDuplicates(dvs)
 
 	// print
-	targetPrintln(f, "%v [%v|%v] divs|repos {%v / %v}", e.FaxMachine, len(dvs), len(rs), t.getSplit(), t.getTime())
+	targetPrintln(f, "%v [%v|%v] divs|repos {%v / %v}", e.FaxMachine, len(dvs), len(rs), t.GetSplit(), t.GetTime())
 
 	return rs
 }
@@ -1497,9 +1497,9 @@ func sliceSummary(sl []string, l int) string {
 func initRun() (e Emoji, f Flags, rs Repos, t *Timer) {
 
 	// initialize Timer, Flags and Emoji
-	t = initTimer()
+	t = InitTimer()
 	f = initFlags(e, t)
-	e = initEmoji(f, t)
+	e = InitEmoji(f, t)
 
 	// clear screen, early messaging
 	initPrint(e, f, t)
@@ -1574,7 +1574,7 @@ func (rs Repos) verifyDivs(e Emoji, f Flags, t *Timer) {
 	}
 
 	// timer
-	t.markMoment("verify-divs")
+	t.MarkMoment("verify-divs")
 
 	// remove duplicates from slices
 	vd = removeDuplicates(vd)
@@ -1602,9 +1602,9 @@ func (rs Repos) verifyDivs(e Emoji, f Flags, t *Timer) {
 	}
 
 	b.WriteString(" {")
-	b.WriteString(t.getSplit().String())
+	b.WriteString(t.GetSplit().String())
 	b.WriteString(" / ")
-	b.WriteString(t.getTime().String())
+	b.WriteString(t.GetTime().String())
 	b.WriteString("}")
 
 	targetPrintln(f, b.String())
@@ -1650,7 +1650,7 @@ func (rs Repos) verifyCloned(e Emoji, f Flags, t *Timer) {
 	}
 
 	// timer
-	t.markMoment("verify-repos")
+	t.MarkMoment("verify-repos")
 
 	// summary
 	var b bytes.Buffer
@@ -1664,9 +1664,9 @@ func (rs Repos) verifyCloned(e Emoji, f Flags, t *Timer) {
 
 	tr := time.Millisecond // truncate
 	b.WriteString(" {")
-	b.WriteString(t.getSplit().Truncate(tr).String())
+	b.WriteString(t.GetSplit().Truncate(tr).String())
 	b.WriteString(" / ")
-	b.WriteString(t.getTime().Truncate(tr).String())
+	b.WriteString(t.GetTime().Truncate(tr).String())
 	b.WriteString("}")
 
 	targetPrintln(f, b.String())
@@ -1730,7 +1730,7 @@ func (rs Repos) verifyRepos(e Emoji, f Flags, t *Timer) {
 	}
 
 	// timer
-	t.markMoment("verify-repos")
+	t.MarkMoment("verify-repos")
 
 	var b bytes.Buffer
 
@@ -1747,9 +1747,9 @@ func (rs Repos) verifyRepos(e Emoji, f Flags, t *Timer) {
 	b.WriteString("] complete {")
 
 	tr := time.Millisecond // truncate
-	b.WriteString(t.getSplit().Truncate(tr).String())
+	b.WriteString(t.GetSplit().Truncate(tr).String())
 	b.WriteString(" / ")
-	b.WriteString(t.getTime().Truncate(tr).String())
+	b.WriteString(t.GetTime().Truncate(tr).String())
 	b.WriteString("}")
 
 	targetPrintln(f, b.String())
@@ -1907,7 +1907,7 @@ func (rs Repos) verifyChanges(e Emoji, f Flags, t *Timer) {
 			}
 		}
 
-		t.markMoment("verify-changes")
+		t.MarkMoment("verify-changes")
 
 		// FLAG:
 		// check again see how many pending remain, should be zero...
@@ -1956,9 +1956,9 @@ func (rs Repos) verifyChanges(e Emoji, f Flags, t *Timer) {
 		// b.WriteString("/")
 		// b.WriteString(strconv.Itoa(len(prs)))
 		// b.WriteString("] scheduled {")
-		// b.WriteString(t.getSplit().Truncate(tr).String())
+		// b.WriteString(t.GetSplit().Truncate(tr).String())
 		// b.WriteString(" / ")
-		// b.WriteString(t.getTime().Truncate(tr).String())
+		// b.WriteString(t.GetTime().Truncate(tr).String())
 		// b.WriteString("}")
 
 		// targetPrintln(f, b.String())

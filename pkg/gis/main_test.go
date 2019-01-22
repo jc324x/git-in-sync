@@ -3,11 +3,13 @@ package main
 import (
 	"testing"
 	"time"
+
+	"github.com/jychri/git-in-sync/pkg/timer"
 )
 
 func TestTimer(t *testing.T) {
-	tt := InitTimer()   // test Timer
-	sm := tt.Moments[0] // Timer initializes with a (S)tart (M)oment
+	tt := timer.InitTimer() // test Timer
+	sm := tt.Moments[0]     // Timer initializes with a (S)tart (M)oment
 
 	if sm.Name != "Start" {
 		t.Errorf("TestTimer: Start Moment Name error")

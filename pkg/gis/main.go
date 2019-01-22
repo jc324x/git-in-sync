@@ -19,6 +19,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/jychri/git-in-sync/pkg/emoji"
 	"github.com/jychri/git-in-sync/pkg/timer"
 )
 
@@ -158,13 +159,13 @@ func loginMode(f Flags) bool {
 }
 
 // initPrint prints info for Emoji and Flag values.
-func initPrint(e Emoji, f Flags) {
+func initPrint(f Flags) {
 
 	// clears the screen if f.Clear or f.Emoji are true
 	clearScreen()
 
 	// targetPrint prints a message with or without an emoji if f.Emoji is true or false.
-	targetPrintln(f, "%v start", e.Clapper)
+	// targetPrintln(f, "%v start", e.Clapper)
 
 	// print flag init
 	// if ft, err := t.GetMoment("init-flags"); err == nil {
@@ -193,7 +194,7 @@ type Config struct {
 }
 
 // initConfig returns data from ~/.gisrc.json as a Config struct.
-func initConfig(e Emoji, f Flags) (c Config) {
+func initConfig(f Flags) (c Config) {
 
 	// get the current user, otherwise fatal
 	u, err := user.Current()
@@ -206,7 +207,7 @@ func initConfig(e Emoji, f Flags) (c Config) {
 	g := fmt.Sprintf("%v/.gisrc.json", u.HomeDir)
 
 	// print
-	targetPrintln(f, "%v reading %v", e.Glasses, g)
+	// targetPrintln(f, "%v reading %v", e.Glasses, g)
 
 	// read file
 	r, err := ioutil.ReadFile(g)
@@ -386,7 +387,7 @@ func notVerified(r *Repo) bool {
 	}
 }
 
-func (r *Repo) markError(e Emoji, f Flags, err string, name string) {
+func (r *Repo) markError(f Flags, err string, name string) {
 	r.ErrorMessage = err
 	r.ErrorName = name
 	r.ErrorFirst = firstLine(err)
@@ -404,7 +405,7 @@ func captureOut(b bytes.Buffer) string {
 	return strings.TrimSuffix(b.String(), "\n")
 }
 
-func (r *Repo) gitCheckPending(e Emoji, f Flags) {
+func (r *Repo) gitCheckPending(f Flags) {
 
 	// return if not verified
 	if notVerified(r) {
@@ -417,9 +418,9 @@ func (r *Repo) gitCheckPending(e Emoji, f Flags) {
 
 	switch {
 	case isFile(rinfo):
-		r.markError(e, f, "fatal: file occupying path", "git-verify")
+		// r.markError(e, f, "fatal: file occupying path", "git-verify")
 	case isDirectory(rinfo) && notEmpty(r.RepoPath) && os.IsNotExist(gerr):
-		r.markError(e, f, "fatal: directory occupying path", "git-verify")
+		// r.markError(e, f, "fatal: directory occupying path", "git-verify")
 	case isDirectory(rinfo) && isEmpty(r.RepoPath):
 		r.PendingClone = true
 	case os.IsNotExist(rerr) && os.IsNotExist(gerr):
@@ -429,11 +430,11 @@ func (r *Repo) gitCheckPending(e Emoji, f Flags) {
 	}
 }
 
-func (r *Repo) gitClone(e Emoji, f Flags) {
+func (r *Repo) gitClone(f Flags) {
 
 	if r.PendingClone == true {
 		// print
-		targetPrintln(f, "%v cloning %v {%v}", e.Box, r.Name, r.Division)
+		// targetPrintln(f, "%v cloning %v {%v}", e.Box, r.Name, r.Division)
 
 		// command
 		args := []string{"clone", r.URL, r.RepoPath}
@@ -446,7 +447,7 @@ func (r *Repo) gitClone(e Emoji, f Flags) {
 
 		// check error, set value(s)
 		if err := err.String(); err != "" {
-			r.markError(e, f, err, "gitClone")
+			// r.markError(e, f, err, "gitClone")
 		}
 
 		r.Cloned = true
@@ -455,7 +456,7 @@ func (r *Repo) gitClone(e Emoji, f Flags) {
 
 }
 
-func (r *Repo) gitConfigOriginURL(e Emoji, f Flags) {
+func (r *Repo) gitConfigOriginURL(f Flags) {
 
 	// return if not verified
 	if notVerified(r) {
@@ -479,13 +480,13 @@ func (r *Repo) gitConfigOriginURL(e Emoji, f Flags) {
 	// check error, set value(s)
 	switch {
 	case r.OriginURL == "":
-		r.markError(e, f, "fatal: 'origin' does not appear to be a git repository", "gitConfigOriginURL")
+		// r.markError(e, f, "fatal: 'origin' does not appear to be a git repository", "gitConfigOriginURL")
 	case r.OriginURL != r.URL:
-		r.markError(e, f, "fatal: URL != OriginURL", "gitConfigOriginURL")
+		// r.markError(e, f, "fatal: URL != OriginURL", "gitConfigOriginURL")
 	}
 }
 
-func (r *Repo) gitRemoteUpdate(e Emoji, f Flags) {
+func (r *Repo) gitRemoteUpdate(f Flags) {
 
 	// return if not verified
 	if notVerified(r) {
@@ -507,11 +508,11 @@ func (r *Repo) gitRemoteUpdate(e Emoji, f Flags) {
 	case strings.Contains(eval, "warning: redirecting") && strings.Contains(eval, wgit):
 		// fmt.Printf("%v - redirect to .git\n", r.Name)
 	case eval != "":
-		r.markError(e, f, eval, "gitRemoteUpdate")
+		// r.markError(e, f, eval, "gitRemoteUpdate")
 	}
 }
 
-func (r *Repo) gitAbbrevRef(e Emoji, f Flags) {
+func (r *Repo) gitAbbrevRef(f Flags) {
 
 	// return if not verified
 	if notVerified(r) {
@@ -529,13 +530,13 @@ func (r *Repo) gitAbbrevRef(e Emoji, f Flags) {
 
 	// check error, set value(s)
 	if err := err.String(); err != "" {
-		r.markError(e, f, err, "gitAbbrevRef")
+		// r.markError(e, f, err, "gitAbbrevRef")
 	} else {
 		r.LocalBranch = captureOut(out)
 	}
 }
 
-func (r *Repo) gitLocalSHA(e Emoji, f Flags) {
+func (r *Repo) gitLocalSHA(f Flags) {
 
 	// return if not verified
 	if notVerified(r) {
@@ -553,13 +554,13 @@ func (r *Repo) gitLocalSHA(e Emoji, f Flags) {
 
 	// check error, set value(s)
 	if err := err.String(); err != "" {
-		r.markError(e, f, err, "gitLocalSHA")
+		// r.markError(e, f, err, "gitLocalSHA")
 	} else {
 		r.LocalSHA = captureOut(out)
 	}
 }
 
-func (r *Repo) gitUpstreamSHA(e Emoji, f Flags) {
+func (r *Repo) gitUpstreamSHA(f Flags) {
 
 	// return if not verified
 	if notVerified(r) {
@@ -577,13 +578,13 @@ func (r *Repo) gitUpstreamSHA(e Emoji, f Flags) {
 
 	// check error, set value(s)
 	if err := err.String(); err != "" {
-		r.markError(e, f, err, "gitUpstreamSHA")
+		// r.markError(e, f, err, "gitUpstreamSHA")
 	} else {
 		r.UpstreamSHA = captureOut(out)
 	}
 }
 
-func (r *Repo) gitMergeBaseSHA(e Emoji, f Flags) {
+func (r *Repo) gitMergeBaseSHA(f Flags) {
 
 	// return if not verified
 	if notVerified(r) {
@@ -601,13 +602,13 @@ func (r *Repo) gitMergeBaseSHA(e Emoji, f Flags) {
 
 	// check error, set value(s)
 	if err := err.String(); err != "" {
-		r.markError(e, f, err, "gitUpstreamSHA")
+		// r.markError(e, f, err, "gitUpstreamSHA")
 	} else {
 		r.MergeSHA = captureOut(out)
 	}
 }
 
-func (r *Repo) gitRevParseUpstream(e Emoji, f Flags) {
+func (r *Repo) gitRevParseUpstream(f Flags) {
 
 	// return if not verified
 	if notVerified(r) {
@@ -625,13 +626,13 @@ func (r *Repo) gitRevParseUpstream(e Emoji, f Flags) {
 
 	// check error, set value(s)
 	if err := err.String(); err != "" {
-		r.markError(e, f, err, "gitRevParseUpstream")
+		// r.markError(e, f, err, "gitRevParseUpstream")
 	} else {
 		r.UpstreamBranch = captureOut(out)
 	}
 }
 
-func (r *Repo) gitDiffsNameOnly(e Emoji, f Flags) {
+func (r *Repo) gitDiffsNameOnly(f Flags) {
 
 	// return if not verified
 	if notVerified(r) {
@@ -649,7 +650,7 @@ func (r *Repo) gitDiffsNameOnly(e Emoji, f Flags) {
 
 	// check error, set value(s)
 	if err := err.String(); err != "" {
-		r.markError(e, f, err, "gitDiffsNameOnly")
+		// r.markError(e, f, err, "gitDiffsNameOnly")
 	}
 
 	if str := out.String(); str != "" {
@@ -661,7 +662,7 @@ func (r *Repo) gitDiffsNameOnly(e Emoji, f Flags) {
 	}
 }
 
-func (r *Repo) gitShortstat(e Emoji, f Flags) {
+func (r *Repo) gitShortstat(f Flags) {
 
 	// return if not verified
 	if notVerified(r) {
@@ -679,7 +680,7 @@ func (r *Repo) gitShortstat(e Emoji, f Flags) {
 
 	// check error, set value(s)
 	if err := err.String(); err != "" {
-		r.markError(e, f, err, "gitShortstat")
+		// r.markError(e, f, err, "gitShortstat")
 	} else {
 		r.ShortStat = captureOut(out)
 	}
@@ -751,7 +752,7 @@ func (r *Repo) gitShortstat(e Emoji, f Flags) {
 
 }
 
-func (r *Repo) gitUntracked(e Emoji, f Flags) {
+func (r *Repo) gitUntracked(f Flags) {
 
 	// return if not verified
 	if notVerified(r) {
@@ -769,7 +770,7 @@ func (r *Repo) gitUntracked(e Emoji, f Flags) {
 
 	// check error, set value(s)
 	if err := err.String(); err != "" {
-		r.markError(e, f, err, "gitUntracked")
+		// r.markError(e, f, err, "gitUntracked")
 	}
 
 	if str := out.String(); str != "" {
@@ -789,7 +790,7 @@ func (r *Repo) gitUntracked(e Emoji, f Flags) {
 
 }
 
-func (r *Repo) setStatus(e Emoji, f Flags) {
+func (r *Repo) setStatus(f Flags) {
 
 	switch {
 	case r.LocalSHA == r.UpstreamSHA:
@@ -846,7 +847,7 @@ func (r *Repo) setStatus(e Emoji, f Flags) {
 	default:
 		r.Category = "Skipped"
 		// r.Status = "Unknown"
-		r.markError(e, f, "fatal: no matches found in setStatus switch", "setStatus")
+		// r.markError(e, f, "fatal: no matches found in setStatus switch", "setStatus")
 	}
 
 	if r.ErrorMessage != "" {
@@ -924,12 +925,12 @@ func (r *Repo) checkCommitMessage() {
 	}
 }
 
-func (r *Repo) gitAdd(e Emoji, f Flags) {
+func (r *Repo) gitAdd(f Flags) {
 	switch r.Status {
 	case "Dirty", "DirtyUntracked", "DirtyAhead", "DirtyBehind":
-		targetPrintln(f, "%v %v adding changes [%v]{%v}(%v)", e.Outbox, r.Name, len(r.DiffsNameOnly), r.DiffsSummary, r.ShortStatSummary)
+		// targetPrintln(f, "%v %v adding changes [%v]{%v}(%v)", e.Outbox, r.Name, len(r.DiffsNameOnly), r.DiffsSummary, r.ShortStatSummary)
 	case "Untracked", "UntrackedAhead", "UntrackedBehind":
-		targetPrintln(f, "%v %v adding new files [%v]{%v}", e.Outbox, r.Name, len(r.UntrackedFiles), r.UntrackedSummary)
+		// targetPrintln(f, "%v %v adding new files [%v]{%v}", e.Outbox, r.Name, len(r.UntrackedFiles), r.UntrackedSummary)
 	}
 
 	// command
@@ -943,17 +944,17 @@ func (r *Repo) gitAdd(e Emoji, f Flags) {
 
 	// check error, set value(s)
 	if err := err.String(); err != "" {
-		r.markError(e, f, err, "gitAdd")
+		// r.markError(e, f, err, "gitAdd")
 	}
 
 }
 
-func (r *Repo) gitCommit(e Emoji, f Flags) {
+func (r *Repo) gitCommit(f Flags) {
 	switch r.Status {
 	case "Dirty", "DirtyUntracked", "DirtyAhead", "DirtyBehind":
-		targetPrintln(f, "%v %v committing changes [%v]{%v}(%v)", e.Fire, r.Name, len(r.DiffsNameOnly), r.DiffsSummary, r.ShortStatSummary)
+		// targetPrintln(f, "%v %v committing changes [%v]{%v}(%v)", e.Fire, r.Name, len(r.DiffsNameOnly), r.DiffsSummary, r.ShortStatSummary)
 	case "Untracked", "UntrackedAhead", "UntrackedBehind":
-		targetPrintln(f, "%v %v committing new files [%v]{%v}", e.Fire, r.Name, len(r.UntrackedFiles), r.UntrackedSummary)
+		// targetPrintln(f, "%v %v committing new files [%v]{%v}", e.Fire, r.Name, len(r.UntrackedFiles), r.UntrackedSummary)
 	}
 
 	// command
@@ -967,22 +968,22 @@ func (r *Repo) gitCommit(e Emoji, f Flags) {
 
 	// check error, set value(s)
 	if err := err.String(); err != "" {
-		r.markError(e, f, err, "gitCommit")
+		// r.markError(e, f, err, "gitCommit")
 	}
 
 }
 
-func (r *Repo) gitStash(e Emoji, f Flags) {
-	targetPrintln(f, "%v  %v stashing changes", e.Squirrel, r.Name)
+func (r *Repo) gitStash(f Flags) {
+	// targetPrintln(f, "%v  %v stashing changes", e.Squirrel, r.Name)
 
 }
 
-func (r *Repo) gitPop(e Emoji, f Flags) {
-	targetPrintln(f, "%v %v popping changes", e.Popcorn, r.Name)
+func (r *Repo) gitPop(f Flags) {
+	// targetPrintln(f, "%v %v popping changes", e.Popcorn, r.Name)
 }
 
-func (r *Repo) gitPull(e Emoji, f Flags) {
-	targetPrintln(f, "%v %v pulling from %v @ %v", e.Ship, r.Name, r.UpstreamBranch, r.Remote)
+func (r *Repo) gitPull(f Flags) {
+	// targetPrintln(f, "%v %v pulling from %v @ %v", e.Ship, r.Name, r.UpstreamBranch, r.Remote)
 
 	// command
 	args := []string{"-C", r.RepoPath, "pull"}
@@ -995,16 +996,16 @@ func (r *Repo) gitPull(e Emoji, f Flags) {
 
 	// check error, set value(s)
 	if err := err.String(); err != "" {
-		r.markError(e, f, err, "gitPull")
+		// r.markError(e, f, err, "gitPull")
 	}
 
 	if r.Verified == false {
-		targetPrintln(f, "%v %v pull failed", e.Slash, r.Name)
+		// targetPrintln(f, "%v %v pull failed", e.Slash, r.Name)
 	}
 }
 
-func (r *Repo) gitPush(e Emoji, f Flags) {
-	targetPrintln(f, "%v %v pushing to %v @ %v", e.Rocket, r.Name, r.UpstreamBranch, r.Remote)
+func (r *Repo) gitPush(f Flags) {
+	// targetPrintln(f, "%v %v pushing to %v @ %v", e.Rocket, r.Name, r.UpstreamBranch, r.Remote)
 
 	// command
 	args := []string{"-C", r.RepoPath, "push"}
@@ -1017,16 +1018,16 @@ func (r *Repo) gitPush(e Emoji, f Flags) {
 
 	// check error, set value(s)
 	if err := err.String(); err != "" {
-		r.markError(e, f, err, "gitPush")
+		// r.markError(e, f, err, "gitPush")
 	}
 
 	if r.Verified == false {
-		targetPrintln(f, "%v %v push failed", e.Slash, r.Name)
+		// targetPrintln(f, "%v %v push failed", e.Slash, r.Name)
 	}
 
 }
 
-func (r *Repo) gitStatusPorcelain(e Emoji, f Flags) {
+func (r *Repo) gitStatusPorcelain(f Flags) {
 
 	// return if not verified
 	if notVerified(r) {
@@ -1044,16 +1045,16 @@ func (r *Repo) gitStatusPorcelain(e Emoji, f Flags) {
 
 	// check error, set value(s)
 	if err := err.String(); err != "" {
-		r.markError(e, f, err, "gitStatusPorcelain")
+		// r.markError(e, f, err, "gitStatusPorcelain")
 	}
 
 	if str := out.String(); str != "" {
 		r.Porcelain = false
-		targetPrintln(f, "%v commit error (%v)", e.Slash, r.ErrorFirst)
+		// targetPrintln(f, "%v commit error (%v)", e.Slash, r.ErrorFirst)
 	} else {
 		r.Category = "Complete"
 		r.Porcelain = true
-		targetPrintln(f, "%v %v up to date!", e.Checkmark, r.Name)
+		// targetPrintln(f, "%v %v up to date!", e.Checkmark, r.Name)
 	}
 
 }
@@ -1062,10 +1063,10 @@ func (r *Repo) gitStatusPorcelain(e Emoji, f Flags) {
 
 type Repos []*Repo
 
-func initRepos(c Config, e Emoji, f Flags) (rs Repos) {
+func initRepos(c Config, f Flags) (rs Repos) {
 
 	// print
-	targetPrintln(f, "%v parsing divs|repos", e.Pager)
+	// targetPrintln(f, "%v parsing divs|repos", e.Pager)
 
 	// initialize Repos from Config
 	for _, bl := range c.Bundles {
@@ -1315,7 +1316,7 @@ func sliceSummary(sl []string, l int) string {
 
 // --> main fns
 
-func initRun() (e Emoji, f Flags, rs Repos, t *timer.Timer) {
+func initRun() (f Flags, rs Repos, t *timer.Timer) {
 
 	// initialize Timer, Flags and Emoji
 	t = timer.InitTimer()
@@ -1331,111 +1332,111 @@ func initRun() (e Emoji, f Flags, rs Repos, t *timer.Timer) {
 	// initialize Repos
 	// rs = initRepos(c, e, f, t)
 
-	return e, f, rs, t
+	return f, rs, t
 }
 
-func (rs Repos) verifyDivs(e Emoji, f Flags) {
+// func (rs Repos) verifyDivs(f Flags) {
 
-	// sort
-	rs.sortByPath()
+// 	// sort
+// 	rs.sortByPath()
 
-	// get all divs, remove duplicates
-	var dvs []string  // divs
-	var zdvs []string // zone divisions (go, main, google-apps-script etc)
+// 	// get all divs, remove duplicates
+// 	var dvs []string  // divs
+// 	var zdvs []string // zone divisions (go, main, google-apps-script etc)
 
-	for _, r := range rs {
-		dvs = append(dvs, r.DivPath)
-		zdvs = append(zdvs, r.Division)
-	}
+// 	for _, r := range rs {
+// 		dvs = append(dvs, r.DivPath)
+// 		zdvs = append(zdvs, r.Division)
+// 	}
 
-	dvs = removeDuplicates(dvs)
-	zdvs = removeDuplicates(zdvs)
+// 	dvs = removeDuplicates(dvs)
+// 	zdvs = removeDuplicates(zdvs)
 
-	zds := sliceSummary(zdvs, 25) // zone division summary
+// 	zds := sliceSummary(zdvs, 25) // zone division summary
 
-	// print
-	targetPrintln(f, "%v  verifying divs [%v](%v)", e.FileCabinet, len(dvs), zds)
+// 	// print
+// 	// targetPrintln(f, "%v  verifying divs [%v](%v)", e.FileCabinet, len(dvs), zds)
 
-	// track created, verified and missing divs
-	var cd []string // created divs
-	var vd []string // verified divs
-	var id []string // inaccessible divs // --> FLAG: change to unverified?
+// 	// track created, verified and missing divs
+// 	var cd []string // created divs
+// 	var vd []string // verified divs
+// 	var id []string // inaccessible divs // --> FLAG: change to unverified?
 
-	for _, r := range rs {
+// 	for _, r := range rs {
 
-		_, err := os.Stat(r.DivPath)
+// 		_, err := os.Stat(r.DivPath)
 
-		// create div if missing and active run
-		if os.IsNotExist(err) {
-			targetPrintln(f, "%v creating %v", e.Folder, r.DivPath)
-			os.MkdirAll(r.DivPath, 0777)
-			cd = append(cd, r.DivPath)
-		}
+// 		// create div if missing and active run
+// 		if os.IsNotExist(err) {
+// 			// targetPrintln(f, "%v creating %v", e.Folder, r.DivPath)
+// 			os.MkdirAll(r.DivPath, 0777)
+// 			cd = append(cd, r.DivPath)
+// 		}
 
-		// check div status
-		info, err := os.Stat(r.DivPath)
+// 		// check div status
+// 		info, err := os.Stat(r.DivPath)
 
-		switch {
-		case noPermission(info):
-			r.markError(e, f, "fatal: No permsission", "verify-divs")
-			id = append(id, r.DivPath)
-		case !info.IsDir():
-			r.markError(e, f, "fatal: File occupying path", "verify-divs")
-			id = append(id, r.DivPath)
-		case os.IsNotExist(err):
-			r.markError(e, f, "fatal: No directory", "verify-divs")
-			id = append(id, r.DivPath)
-		case err != nil:
-			r.markError(e, f, "fatal: No directory", "verify-divs")
-			id = append(id, r.DivPath)
-		default:
-			r.Verified = true
-			vd = append(vd, r.DivPath)
-		}
-	}
+// 		switch {
+// 		case noPermission(info):
+// 			// r.markError(e, f, "fatal: No permsission", "verify-divs")
+// 			id = append(id, r.DivPath)
+// 		case !info.IsDir():
+// 			// r.markError(e, f, "fatal: File occupying path", "verify-divs")
+// 			id = append(id, r.DivPath)
+// 		case os.IsNotExist(err):
+// 			// r.markError(e, f, "fatal: No directory", "verify-divs")
+// 			id = append(id, r.DivPath)
+// 		case err != nil:
+// 			// r.markError(e, f, "fatal: No directory", "verify-divs")
+// 			id = append(id, r.DivPath)
+// 		default:
+// 			r.Verified = true
+// 			vd = append(vd, r.DivPath)
+// 		}
+// 	}
 
-	// timer
-	// t.MarkMoment("verify-divs")
+// 	// timer
+// 	// t.MarkMoment("verify-divs")
 
-	// remove duplicates from slices
-	vd = removeDuplicates(vd)
-	id = removeDuplicates(id)
+// 	// remove duplicates from slices
+// 	vd = removeDuplicates(vd)
+// 	id = removeDuplicates(id)
 
-	// summary
-	var b bytes.Buffer
+// 	// summary
+// 	var b bytes.Buffer
 
-	if len(dvs) == len(vd) {
-		b.WriteString(e.Briefcase)
-	} else {
-		b.WriteString(e.Slash)
-	}
+// 	if len(dvs) == len(vd) {
+// 		// b.WriteString(e.Briefcase)
+// 	} else {
+// 		// b.WriteString(e.Slash)
+// 	}
 
-	b.WriteString(" [")
-	b.WriteString(strconv.Itoa(len(vd)))
-	b.WriteString("/")
-	b.WriteString(strconv.Itoa(len(dvs)))
-	b.WriteString("] divs verified")
+// 	b.WriteString(" [")
+// 	b.WriteString(strconv.Itoa(len(vd)))
+// 	b.WriteString("/")
+// 	b.WriteString(strconv.Itoa(len(dvs)))
+// 	b.WriteString("] divs verified")
 
-	if len(cd) >= 1 {
-		b.WriteString(", created [")
-		b.WriteString(strconv.Itoa(len(cd)))
-		b.WriteString("]")
-	}
+// 	if len(cd) >= 1 {
+// 		b.WriteString(", created [")
+// 		b.WriteString(strconv.Itoa(len(cd)))
+// 		b.WriteString("]")
+// 	}
 
-	// b.WriteString(" {")
-	// b.WriteString(t.GetSplit().String())
-	// b.WriteString(" / ")
-	// b.WriteString(t.GetTime().String())
-	// b.WriteString("}")
+// 	// b.WriteString(" {")
+// 	// b.WriteString(t.GetSplit().String())
+// 	// b.WriteString(" / ")
+// 	// b.WriteString(t.GetTime().String())
+// 	// b.WriteString("}")
 
-	// targetPrintln(f, b.String())
-}
+// 	// targetPrintln(f, b.String())
+// }
 
-func (rs Repos) verifyCloned(e Emoji, f Flags) {
+func (rs Repos) verifyCloned(f Flags) {
 	var pc []string // pending clone
 
 	for _, r := range rs {
-		r.gitCheckPending(e, f)
+		// r.gitCheckPending(e, f)
 
 		if r.PendingClone == true {
 			pc = append(pc, r.Name)
@@ -1449,7 +1450,7 @@ func (rs Repos) verifyCloned(e Emoji, f Flags) {
 	}
 
 	// if there are pending repos
-	targetPrintln(f, "%v cloning [%v]", e.Sheep, len(pc))
+	// targetPrintln(f, "%v cloning [%v]", e.Sheep, len(pc))
 
 	// verify each repo (async)
 	var wg sync.WaitGroup
@@ -1457,7 +1458,7 @@ func (rs Repos) verifyCloned(e Emoji, f Flags) {
 		wg.Add(1)
 		go func(r *Repo) {
 			defer wg.Done()
-			r.gitClone(e, f)
+			// r.gitClone(e, f)
 		}(rs[i])
 	}
 	wg.Wait()
@@ -1493,362 +1494,362 @@ func (rs Repos) verifyCloned(e Emoji, f Flags) {
 	// targetPrintln(f, b.String())
 }
 
-func (rs Repos) verifyRepos(e Emoji, f Flags) {
-	var rn []string // repo names
+// // func (rs Repos) verifyRepos(e Emoji, f Flags) {
+// 	var rn []string // repo names
 
-	for _, r := range rs {
-		rn = append(rn, r.Name)
-	}
+// 	for _, r := range rs {
+// 		rn = append(rn, r.Name)
+// 	}
 
-	rns := sliceSummary(rn, 25)
+// 	rns := sliceSummary(rn, 25)
 
-	// print
-	targetPrintln(f, "%v  verifying repos [%v](%v)", e.Satellite, len(rs), rns)
+// 	// print
+// 	targetPrintln(f, "%v  verifying repos [%v](%v)", e.Satellite, len(rs), rns)
 
-	// verify each repo (async)
-	var wg sync.WaitGroup
-	for i := range rs {
-		wg.Add(1)
-		go func(r *Repo) {
-			defer wg.Done()
-			r.gitConfigOriginURL(e, f)
-			r.gitRemoteUpdate(e, f)
-			r.gitAbbrevRef(e, f)
-			r.gitLocalSHA(e, f)
-			r.gitUpstreamSHA(e, f)
-			r.gitMergeBaseSHA(e, f)
-			r.gitRevParseUpstream(e, f)
-			r.gitDiffsNameOnly(e, f)
-			r.gitShortstat(e, f)
-			r.gitUntracked(e, f)
-			r.setStatus(e, f)
-		}(rs[i])
-	}
-	wg.Wait()
+// 	// verify each repo (async)
+// 	var wg sync.WaitGroup
+// 	for i := range rs {
+// 		wg.Add(1)
+// 		go func(r *Repo) {
+// 			defer wg.Done()
+// 			r.gitConfigOriginURL(e, f)
+// 			r.gitRemoteUpdate(e, f)
+// 			r.gitAbbrevRef(e, f)
+// 			r.gitLocalSHA(e, f)
+// 			r.gitUpstreamSHA(e, f)
+// 			r.gitMergeBaseSHA(e, f)
+// 			r.gitRevParseUpstream(e, f)
+// 			r.gitDiffsNameOnly(e, f)
+// 			r.gitShortstat(e, f)
+// 			r.gitUntracked(e, f)
+// 			r.setStatus(e, f)
+// 		}(rs[i])
+// 	}
+// 	wg.Wait()
 
-	// track Complete, Pending, Skipped and Scheduled
-	var cr []string  // complete repos
-	var pr []string  // pending repos
-	var sk []string  // skipped repos
-	var sch []string // scheduled repos
+// 	// track Complete, Pending, Skipped and Scheduled
+// 	var cr []string  // complete repos
+// 	var pr []string  // pending repos
+// 	var sk []string  // skipped repos
+// 	var sch []string // scheduled repos
 
-	for _, r := range rs {
-		if r.Category == "Complete" {
-			cr = append(cr, r.Name)
-		}
+// 	for _, r := range rs {
+// 		if r.Category == "Complete" {
+// 			cr = append(cr, r.Name)
+// 		}
 
-		if r.Category == "Pending" {
-			pr = append(pr, r.Name)
-		}
+// 		if r.Category == "Pending" {
+// 			pr = append(pr, r.Name)
+// 		}
 
-		if r.Category == "Skipped" {
-			sk = append(sk, r.Name)
-		}
+// 		if r.Category == "Skipped" {
+// 			sk = append(sk, r.Name)
+// 		}
 
-		if r.Category == "Scheduled" {
-			sch = append(sch, r.Name)
-		}
-	}
+// 		if r.Category == "Scheduled" {
+// 			sch = append(sch, r.Name)
+// 		}
+// 	}
 
-	// timer
-	// t.MarkMoment("verify-repos")
+// 	// timer
+// 	// t.MarkMoment("verify-repos")
 
-	// var b bytes.Buffer
+// 	// var b bytes.Buffer
 
-	// if len(cr) == len(rs) {
-	// 	b.WriteString(e.Checkmark)
-	// } else {
-	// 	b.WriteString(e.Traffic)
-	// }
+// 	// if len(cr) == len(rs) {
+// 	// 	b.WriteString(e.Checkmark)
+// 	// } else {
+// 	// 	b.WriteString(e.Traffic)
+// 	// }
 
-	// b.WriteString(" [")
-	// b.WriteString(strconv.Itoa(len(cr)))
-	// b.WriteString("/")
-	// b.WriteString(strconv.Itoa(len(rs)))
-	// b.WriteString("] complete {")
+// 	// b.WriteString(" [")
+// 	// b.WriteString(strconv.Itoa(len(cr)))
+// 	// b.WriteString("/")
+// 	// b.WriteString(strconv.Itoa(len(rs)))
+// 	// b.WriteString("] complete {")
 
-	// tr := time.Millisecond // truncate
-	// b.WriteString(t.GetSplit().Truncate(tr).String())
-	// b.WriteString(" / ")
-	// b.WriteString(t.GetTime().Truncate(tr).String())
-	// b.WriteString("}")
+// 	// tr := time.Millisecond // truncate
+// 	// b.WriteString(t.GetSplit().Truncate(tr).String())
+// 	// b.WriteString(" / ")
+// 	// b.WriteString(t.GetTime().Truncate(tr).String())
+// 	// b.WriteString("}")
 
-	// targetPrintln(f, b.String())
+// 	// targetPrintln(f, b.String())
 
-	// scheduled repo info
+// 	// scheduled repo info
 
-	// if len(sch) >= 1 {
-	// 	b.Reset()
-	// 	schs := sliceSummary(sch, 15) // scheduled repo summary
-	// 	b.WriteString(e.TimerClock)
-	// 	b.WriteString("  [")
-	// 	b.WriteString(strconv.Itoa(len(sch)))
+// 	// if len(sch) >= 1 {
+// 	// 	b.Reset()
+// 	// 	schs := sliceSummary(sch, 15) // scheduled repo summary
+// 	// 	b.WriteString(e.TimerClock)
+// 	// 	b.WriteString("  [")
+// 	// 	b.WriteString(strconv.Itoa(len(sch)))
 
-	// 	if loginMode(f) {
-	// 		b.WriteString("] pull scheduled (")
+// 	// 	if loginMode(f) {
+// 	// 		b.WriteString("] pull scheduled (")
 
-	// 	} else if logoutMode(f) {
-	// 		b.WriteString("] push scheduled (")
-	// 	}
+// 	// 	} else if logoutMode(f) {
+// 	// 		b.WriteString("] push scheduled (")
+// 	// 	}
 
-	// 	b.WriteString(schs)
-	// 	b.WriteString(")")
-	// 	targetPrintln(f, b.String())
-	// }
+// 	// 	b.WriteString(schs)
+// 	// 	b.WriteString(")")
+// 	// 	targetPrintln(f, b.String())
+// 	// }
 
-	// skipped repo info
-	// if len(sk) >= 1 {
-	// 	b.Reset()
-	// 	sks := sliceSummary(sk, 15) // skipped repo summary
-	// 	b.WriteString(e.Slash)
-	// 	b.WriteString(" [")
-	// 	b.WriteString(strconv.Itoa(len(sk)))
-	// 	b.WriteString("] skipped (")
-	// 	b.WriteString(sks)
-	// 	b.WriteString(")")
-	// 	targetPrintln(f, b.String())
-	// }
+// 	// skipped repo info
+// 	// if len(sk) >= 1 {
+// 	// 	b.Reset()
+// 	// 	sks := sliceSummary(sk, 15) // skipped repo summary
+// 	// 	b.WriteString(e.Slash)
+// 	// 	b.WriteString(" [")
+// 	// 	b.WriteString(strconv.Itoa(len(sk)))
+// 	// 	b.WriteString("] skipped (")
+// 	// 	b.WriteString(sks)
+// 	// 	b.WriteString(")")
+// 	// 	targetPrintln(f, b.String())
+// 	// }
 
-	// pending repo info
-	// if len(pr) >= 1 {
-	// 	b.Reset()
-	// 	prs := sliceSummary(pr, 15) // pending repo summary
-	// 	b.WriteString(e.Warning)
-	// 	b.WriteString(" [")
-	// 	b.WriteString(strconv.Itoa(len(pr)))
-	// 	b.WriteString("] pending (")
-	// 	b.WriteString(prs)
-	// 	b.WriteString(")")
-	// 	targetPrintln(f, b.String())
-	// }
+// 	// pending repo info
+// 	// if len(pr) >= 1 {
+// 	// 	b.Reset()
+// 	// 	prs := sliceSummary(pr, 15) // pending repo summary
+// 	// 	b.WriteString(e.Warning)
+// 	// 	b.WriteString(" [")
+// 	// 	b.WriteString(strconv.Itoa(len(pr)))
+// 	// 	b.WriteString("] pending (")
+// 	// 	b.WriteString(prs)
+// 	// 	b.WriteString(")")
+// 	// 	targetPrintln(f, b.String())
+// 	// }
 
-}
+// }
 
-func (rs Repos) verifyChanges(e Emoji, f Flags) {
+// func (rs Repos) verifyChanges(e Emoji, f Flags) {
 
-	prs := initPendingRepos(rs)
+// 	prs := initPendingRepos(rs)
 
-	if len(prs) >= 1 {
-		for _, r := range prs {
+// 	if len(prs) >= 1 {
+// 		for _, r := range prs {
 
-			var b bytes.Buffer
+// 			var b bytes.Buffer
 
-			switch r.Status {
-			case "Ahead":
-				b.WriteString(e.Bunny)
-				b.WriteString(" ")
-				b.WriteString(r.Name)
-				b.WriteString(" is ahead of ")
-				b.WriteString(r.UpstreamBranch)
-			case "Behind":
-				b.WriteString(e.Turtle)
-				b.WriteString(" ")
-				b.WriteString(r.Name)
-				b.WriteString(" is behind ")
-				b.WriteString(r.UpstreamBranch)
-			case "Dirty", "DirtyUntracked", "DirtyAhead", "DirtyBehind":
-				b.WriteString(e.Pig)
-				b.WriteString(" ")
-				b.WriteString(r.Name)
-				b.WriteString(" is dirty [")
-				b.WriteString(strconv.Itoa((len(r.DiffsNameOnly))))
-				b.WriteString("]{")
-				b.WriteString(r.DiffsSummary)
-				b.WriteString("}(")
-				b.WriteString(r.ShortStatSummary)
-				b.WriteString(")")
-			case "Untracked", "UntrackedAhead", "UntrackedBehind":
-				b.WriteString(e.Pig)
-				b.WriteString(" ")
-				b.WriteString(r.Name)
-				b.WriteString(" is untracked [")
-				b.WriteString(strconv.Itoa(len(r.UntrackedFiles)))
-				b.WriteString("]{")
-				b.WriteString(r.UntrackedSummary)
-				b.WriteString("}")
-			case "Up-To-Date":
-				b.WriteString(e.Checkmark)
-				b.WriteString(" ")
-				b.WriteString(r.Name)
-				b.WriteString(" is up to date with ")
-				b.WriteString(r.UpstreamBranch)
-			}
+// 			switch r.Status {
+// 			case "Ahead":
+// 				b.WriteString(e.Bunny)
+// 				b.WriteString(" ")
+// 				b.WriteString(r.Name)
+// 				b.WriteString(" is ahead of ")
+// 				b.WriteString(r.UpstreamBranch)
+// 			case "Behind":
+// 				b.WriteString(e.Turtle)
+// 				b.WriteString(" ")
+// 				b.WriteString(r.Name)
+// 				b.WriteString(" is behind ")
+// 				b.WriteString(r.UpstreamBranch)
+// 			case "Dirty", "DirtyUntracked", "DirtyAhead", "DirtyBehind":
+// 				b.WriteString(e.Pig)
+// 				b.WriteString(" ")
+// 				b.WriteString(r.Name)
+// 				b.WriteString(" is dirty [")
+// 				b.WriteString(strconv.Itoa((len(r.DiffsNameOnly))))
+// 				b.WriteString("]{")
+// 				b.WriteString(r.DiffsSummary)
+// 				b.WriteString("}(")
+// 				b.WriteString(r.ShortStatSummary)
+// 				b.WriteString(")")
+// 			case "Untracked", "UntrackedAhead", "UntrackedBehind":
+// 				b.WriteString(e.Pig)
+// 				b.WriteString(" ")
+// 				b.WriteString(r.Name)
+// 				b.WriteString(" is untracked [")
+// 				b.WriteString(strconv.Itoa(len(r.UntrackedFiles)))
+// 				b.WriteString("]{")
+// 				b.WriteString(r.UntrackedSummary)
+// 				b.WriteString("}")
+// 			case "Up-To-Date":
+// 				b.WriteString(e.Checkmark)
+// 				b.WriteString(" ")
+// 				b.WriteString(r.Name)
+// 				b.WriteString(" is up to date with ")
+// 				b.WriteString(r.UpstreamBranch)
+// 			}
 
-			switch r.Status {
-			case "DirtyUntracked":
-				b.WriteString(" and untracked [")
-				b.WriteString(strconv.Itoa(len(r.UntrackedFiles)))
-				b.WriteString("]{")
-				b.WriteString(r.UntrackedSummary)
-				b.WriteString("}")
-			case "DirtyAhead":
-				b.WriteString(" & ahead of ")
-				b.WriteString(r.UpstreamBranch)
-			case "DirtyBehind":
-				b.WriteString(" & behind")
-				b.WriteString(r.UpstreamBranch)
-			case "UntrackedAhead":
-				b.WriteString(" & is ahead of ")
-				b.WriteString(r.UpstreamBranch)
-			case "UntrackedBehind":
-				b.WriteString(" & is behind ")
-				b.WriteString(r.UpstreamBranch)
-			}
+// 			switch r.Status {
+// 			case "DirtyUntracked":
+// 				b.WriteString(" and untracked [")
+// 				b.WriteString(strconv.Itoa(len(r.UntrackedFiles)))
+// 				b.WriteString("]{")
+// 				b.WriteString(r.UntrackedSummary)
+// 				b.WriteString("}")
+// 			case "DirtyAhead":
+// 				b.WriteString(" & ahead of ")
+// 				b.WriteString(r.UpstreamBranch)
+// 			case "DirtyBehind":
+// 				b.WriteString(" & behind")
+// 				b.WriteString(r.UpstreamBranch)
+// 			case "UntrackedAhead":
+// 				b.WriteString(" & is ahead of ")
+// 				b.WriteString(r.UpstreamBranch)
+// 			case "UntrackedBehind":
+// 				b.WriteString(" & is behind ")
+// 				b.WriteString(r.UpstreamBranch)
+// 			}
 
-			targetPrintln(f, b.String())
+// 			targetPrintln(f, b.String())
 
-			switch r.Status {
-			case "Ahead":
-				fmt.Printf("%v push changes to %v? ", e.Rocket, r.Remote)
-			case "Behind":
-				fmt.Printf("%v pull changes from %v? ", e.Boat, r.Remote)
-			case "Dirty":
-				fmt.Printf("%v add all files, commit and push to %v? ", e.Clipboard, r.Remote)
-			case "DirtyUntracked":
-				fmt.Printf("%v add all files, commit and push to %v? ", e.Clipboard, r.Remote)
-			case "DirtyAhead":
-				fmt.Printf("%v add all files, commit and push to %v? ", e.Clipboard, r.Remote)
-			case "DirtyBehind":
-				fmt.Printf("%v stash all files, pull changes, commit and push to %v? ", e.Clipboard, r.Remote)
-			case "Untracked":
-				fmt.Printf("%v add all files, commit and push to %v? ", e.Clipboard, r.Remote)
-			case "UntrackedAhead":
-				fmt.Printf("%v add all files, commit and push to %v? ", e.Clipboard, r.Remote)
-			case "UntrackedBehind":
-				fmt.Printf("%v stash all files, pull changes, commit and push to %v? ", e.Clipboard, r.Remote)
-			}
+// 			switch r.Status {
+// 			case "Ahead":
+// 				fmt.Printf("%v push changes to %v? ", e.Rocket, r.Remote)
+// 			case "Behind":
+// 				fmt.Printf("%v pull changes from %v? ", e.Boat, r.Remote)
+// 			case "Dirty":
+// 				fmt.Printf("%v add all files, commit and push to %v? ", e.Clipboard, r.Remote)
+// 			case "DirtyUntracked":
+// 				fmt.Printf("%v add all files, commit and push to %v? ", e.Clipboard, r.Remote)
+// 			case "DirtyAhead":
+// 				fmt.Printf("%v add all files, commit and push to %v? ", e.Clipboard, r.Remote)
+// 			case "DirtyBehind":
+// 				fmt.Printf("%v stash all files, pull changes, commit and push to %v? ", e.Clipboard, r.Remote)
+// 			case "Untracked":
+// 				fmt.Printf("%v add all files, commit and push to %v? ", e.Clipboard, r.Remote)
+// 			case "UntrackedAhead":
+// 				fmt.Printf("%v add all files, commit and push to %v? ", e.Clipboard, r.Remote)
+// 			case "UntrackedBehind":
+// 				fmt.Printf("%v stash all files, pull changes, commit and push to %v? ", e.Clipboard, r.Remote)
+// 			}
 
-			// prompt for approval
-			r.checkConfirmed()
+// 			// prompt for approval
+// 			r.checkConfirmed()
 
-			// prompt for commit message
-			if r.Category != "Skipped" && strings.Contains(r.GitAction, "commit") {
-				fmt.Printf("%v commit message: ", e.Memo)
-				r.checkCommitMessage()
-			}
-		}
+// 			// prompt for commit message
+// 			if r.Category != "Skipped" && strings.Contains(r.GitAction, "commit") {
+// 				fmt.Printf("%v commit message: ", e.Memo)
+// 				r.checkCommitMessage()
+// 			}
+// 		}
 
-		// t.MarkMoment("verify-changes")
+// 		// t.MarkMoment("verify-changes")
 
-		// FLAG:
-		// check again see how many pending remain, should be zero...
-		// going to push pause for now
-		// I need to know count of pending/scheduled prior to the start
-		// to see what the difference is since then.
-		// things can be autoscheduled, need to account for those
+// 		// FLAG:
+// 		// check again see how many pending remain, should be zero...
+// 		// going to push pause for now
+// 		// I need to know count of pending/scheduled prior to the start
+// 		// to see what the difference is since then.
+// 		// things can be autoscheduled, need to account for those
 
-		// var sr []string // scheduled repos
-		// for _, r := range rs {
-		// 	if r.Category == "Scheduled " {
-		// 		sr = append(sr, r.Name)
-		// 	}
-		// }
+// 		// var sr []string // scheduled repos
+// 		// for _, r := range rs {
+// 		// 	if r.Category == "Scheduled " {
+// 		// 		sr = append(sr, r.Name)
+// 		// 	}
+// 		// }
 
-		// var b bytes.Buffer
-		// tr := time.Millisecond // truncate
+// 		// var b bytes.Buffer
+// 		// tr := time.Millisecond // truncate
 
-		// debug
-		// for _, r := range prs {
-		// 	fmt.Println(r.Name)
-		// }
+// 		// debug
+// 		// for _, r := range prs {
+// 		// 	fmt.Println(r.Name)
+// 		// }
 
-		// switch {
-		// case len(prs) >= 1 && len(sr) >= 1:
-		// 	b.WriteString(e.Hourglass)
-		// 	b.WriteString(" [")
-		// 	b.WriteString(strconv.Itoa(len(prs)))
-		// case len(prs) >= 1 && len(sr) == 0:
-		// 	b.WriteString(e.Warning)
-		// 	b.WriteString(" [")
-		// 	b.WriteString(strconv.Itoa(len(fcp)))
-		// }
+// 		// switch {
+// 		// case len(prs) >= 1 && len(sr) >= 1:
+// 		// 	b.WriteString(e.Hourglass)
+// 		// 	b.WriteString(" [")
+// 		// 	b.WriteString(strconv.Itoa(len(prs)))
+// 		// case len(prs) >= 1 && len(sr) == 0:
+// 		// 	b.WriteString(e.Warning)
+// 		// 	b.WriteString(" [")
+// 		// 	b.WriteString(strconv.Itoa(len(fcp)))
+// 		// }
 
-		// if len(prs) >= 1 && len(sr) >= 1 {
-		// 	b.WriteString(e.Hourglass)
-		// 	b.WriteString(" [")
-		// 	b.WriteString(strconv.Itoa(len(prs)))
-		// } else {
-		// fmt.Println()
-		// b.WriteString(e.Warning)
-		// b.WriteString(" [")
-		// b.WriteString(strconv.Itoa(len(fcp)))
-		// }
+// 		// if len(prs) >= 1 && len(sr) >= 1 {
+// 		// 	b.WriteString(e.Hourglass)
+// 		// 	b.WriteString(" [")
+// 		// 	b.WriteString(strconv.Itoa(len(prs)))
+// 		// } else {
+// 		// fmt.Println()
+// 		// b.WriteString(e.Warning)
+// 		// b.WriteString(" [")
+// 		// b.WriteString(strconv.Itoa(len(fcp)))
+// 		// }
 
-		// b.WriteString("/")
-		// b.WriteString(strconv.Itoa(len(prs)))
-		// b.WriteString("] scheduled {")
-		// b.WriteString(t.GetSplit().Truncate(tr).String())
-		// b.WriteString(" / ")
-		// b.WriteString(t.GetTime().Truncate(tr).String())
-		// b.WriteString("}")
+// 		// b.WriteString("/")
+// 		// b.WriteString(strconv.Itoa(len(prs)))
+// 		// b.WriteString("] scheduled {")
+// 		// b.WriteString(t.GetSplit().Truncate(tr).String())
+// 		// b.WriteString(" / ")
+// 		// b.WriteString(t.GetTime().Truncate(tr).String())
+// 		// b.WriteString("}")
 
-		// targetPrintln(f, b.String())
-	}
+// 		// targetPrintln(f, b.String())
+// 	}
 
-}
+// }
 
 // FLAG: need to fix up messaging here
-func (rs Repos) submitChanges(e Emoji, f Flags) {
-	srs := initScheludedRepos(rs)
-	skrs := initSkippedRepos(rs)
+//func (rs Repos) submitChanges(e Emoji, f Flags) {
+//	srs := initScheludedRepos(rs)
+//	skrs := initSkippedRepos(rs)
 
-	// nothing to see here, return early
-	if len(srs) == 0 && len(skrs) == 0 {
-		return
-	}
+//	// nothing to see here, return early
+//	if len(srs) == 0 && len(skrs) == 0 {
+//		return
+//	}
 
-	var wg sync.WaitGroup
-	for i := range srs {
-		wg.Add(1)
-		go func(r *Repo) {
-			defer wg.Done()
-			switch r.GitAction {
-			case "pull":
-				r.gitPull(e, f)
-			case "push":
-				r.gitPush(e, f)
-			case "add-commit-push":
-				r.gitAdd(e, f)
-				r.gitCommit(e, f)
-				r.gitPush(e, f)
-			case "stash-pull-pop-commit-push":
-				r.gitStash(e, f)
-				r.gitPull(e, f)
-				r.gitPop(e, f)
-				r.gitCommit(e, f)
-				r.gitPush(e, f)
-			}
-			r.gitRemoteUpdate(e, f)
-			r.gitStatusPorcelain(e, f)
+//	var wg sync.WaitGroup
+//	for i := range srs {
+//		wg.Add(1)
+//		go func(r *Repo) {
+//			defer wg.Done()
+//			switch r.GitAction {
+//			case "pull":
+//				r.gitPull(e, f)
+//			case "push":
+//				r.gitPush(e, f)
+//			case "add-commit-push":
+//				r.gitAdd(e, f)
+//				r.gitCommit(e, f)
+//				r.gitPush(e, f)
+//			case "stash-pull-pop-commit-push":
+//				r.gitStash(e, f)
+//				r.gitPull(e, f)
+//				r.gitPop(e, f)
+//				r.gitCommit(e, f)
+//				r.gitPush(e, f)
+//			}
+//			r.gitRemoteUpdate(e, f)
+//			r.gitStatusPorcelain(e, f)
 
-		}(srs[i])
-	}
-	wg.Wait()
+//		}(srs[i])
+//	}
+//	wg.Wait()
 
-	var vc []string // verified complete repos
+//	var vc []string // verified complete repos
 
-	for _, r := range srs {
-		if r.Category == "Complete" {
-			vc = append(vc, r.Name)
-		}
-	}
+//	for _, r := range srs {
+//		if r.Category == "Complete" {
+//			vc = append(vc, r.Name)
+//		}
+//	}
 
-	//
-	switch {
-	case len(srs) == len(vc) && len(skrs) == 0:
-		fmt.Println("all good. nothing skipped, everything completed")
-	// case len(srs) == len(vc) && len(skrs) >= 1:
-	// 	fmt.Println("all pending actions complete - did skip this though (as planned)")
-	case len(srs) != len(vc) && len(skrs) >= 1:
-		fmt.Println("all changes not submitted correctly, also skipped")
-	}
+//	//
+//	switch {
+//	case len(srs) == len(vc) && len(skrs) == 0:
+//		fmt.Println("all good. nothing skipped, everything completed")
+//	// case len(srs) == len(vc) && len(skrs) >= 1:
+//	// 	fmt.Println("all pending actions complete - did skip this though (as planned)")
+//	case len(srs) != len(vc) && len(skrs) >= 1:
+//		fmt.Println("all changes not submitted correctly, also skipped")
+//	}
 
-	// if len(srs) == len(vc) {
-	// 	fmt.Println("All changes submitted for pending repos")
-	// } else {
-	// 	fmt.Println("Hmm...schedule didn't complete")
-	// }
-}
+//	// if len(srs) == len(vc) {
+//	// 	fmt.Println("All changes submitted for pending repos")
+//	// } else {
+//	// 	fmt.Println("Hmm...schedule didn't complete")
+//	// }
+//}
 
 // debug spits out error info
 func (rs Repos) debug() {
@@ -1862,11 +1863,12 @@ func (rs Repos) debug() {
 }
 
 func main() {
-	e, f, rs, t := initRun()
-	rs.verifyDivs(e, f)
-	rs.verifyCloned(e, f)
-	rs.verifyRepos(e, f)
-	rs.verifyChanges(e, f)
-	rs.submitChanges(e, f)
+	fmt.Println(emoji.Printe("Boat"))
+	// e, f, rs, t := initRun()
+	// rs.verifyDivs(e, f)
+	// rs.verifyCloned(e, f)
+	// rs.verifyRepos(e, f)
+	// rs.verifyChanges(e, f)
+	// rs.submitChanges(e, f)
 	// rs.debug()
 }

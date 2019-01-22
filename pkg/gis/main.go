@@ -13,6 +13,7 @@ import (
 	"strings"
 	"sync"
 
+	// "github.com/jychri/git-in-sync/pkg/brf"
 	"github.com/jychri/git-in-sync/pkg/conf"
 	"github.com/jychri/git-in-sync/pkg/emoji"
 	"github.com/jychri/git-in-sync/pkg/flags"
@@ -263,17 +264,18 @@ func sliceSummary(sl []string, l int) string {
 
 // --> main fns
 
-func initRun() (f flags.Flags, rs Repos, t *timer.Timer) {
+func initRun() (e emoji.Emoji, f flags.Flags, rs Repos, t *timer.Timer) {
 
 	// clear the screen
 	emoji.ClearScreen()
 
 	// initialize Timer and Flags
+	e = emoji.Init()
 	t = timer.Init()
 	f = flags.Init()
 
 	// targetPrint prints a message with or without an emoji if f.Emoji is true or false.
-	tprintln(f, "%v start", emoji.Eprintln("Clapper"))
+	tprintln(f, "%v start", e.Clapper)
 
 	// print flag init
 	// if ft, err := t.GetMoment("init-flags"); err == nil {
@@ -299,7 +301,7 @@ func initRun() (f flags.Flags, rs Repos, t *timer.Timer) {
 	// initialize Repos
 	// rs = initRepos(c, e, f, t)
 
-	return f, rs, t
+	return e, f, rs, t
 }
 
 // func (rs Repos) verifyDivs(f Flags) {

@@ -6,6 +6,8 @@ import (
 	"io/ioutil"
 	"log"
 	"os/user"
+
+	"github.com/jychri/git-in-sync/pkg/flags"
 )
 
 // Config holds the data from ~/.gisrc.json after Unmasrhalling.
@@ -22,7 +24,7 @@ type Config struct {
 }
 
 // initConfig returns data from ~/.gisrc.json as a Config struct.
-func Init() (c Config) {
+func Init(f flags.Flags) (c Config) {
 
 	// get the current user, otherwise fatal
 	u, err := user.Current()
@@ -33,9 +35,6 @@ func Init() (c Config) {
 
 	// expand "~/" to "/Users/user"
 	g := fmt.Sprintf("%v/.gisrc.json", u.HomeDir)
-
-	// print
-	// targetPrintln(f, "%v reading %v", e.Glasses, g)
 
 	// read file
 	r, err := ioutil.ReadFile(g)

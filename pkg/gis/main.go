@@ -4,7 +4,6 @@ import (
 	"github.com/jychri/git-in-sync/pkg/brf" // brief
 	"github.com/jychri/git-in-sync/pkg/conf"
 	"github.com/jychri/git-in-sync/pkg/emoji"
-	// "github.com/jychri/git-in-sync/pkg/fchk" // file check
 	"github.com/jychri/git-in-sync/pkg/flags"
 	"github.com/jychri/git-in-sync/pkg/repos"
 	"github.com/jychri/git-in-sync/pkg/timer"
@@ -28,13 +27,7 @@ func initRun() (e emoji.Emoji, f flags.Flags, rs repos.Repos, t *timer.Timer) {
 	// print "flag(s) set..."
 	if ft, err := t.GetMoment("init-flags"); err == nil {
 		brf.Printv(f, "%v parsing flags", e.FlagInHole)
-
-		switch {
-		case f.Count == 0 || f.Count >= 2:
-			brf.Printv(f, "%v [%v] flags set (%v) {%v / %v}", e.Flag, f.Count, f.Summary, ft.Split, ft.Start)
-		case f.Count == 1:
-			brf.Printv(f, "%v [%v] flag set (%v) {%v / %v}", e.Flag, f.Count, f.Summary, ft.Split, ft.Start)
-		}
+		brf.Printv(f, "%v [%v] flags set (%v) {%v / %v}", e.Flag, f.Count, f.Summary, ft.Split, ft.Start)
 	}
 
 	// print "emoji..."
@@ -47,7 +40,8 @@ func initRun() (e emoji.Emoji, f flags.Flags, rs repos.Repos, t *timer.Timer) {
 	brf.Printv(f, "%v reading ~/.gisrc.json", e.Books)
 
 	// initialize Config from ~/.gisrc.json
-	c := conf.Init()
+	c := conf.Init(f)
+
 	t.MarkMoment("init-config")
 
 	// print "read /Users/user/.gisrc.json..."

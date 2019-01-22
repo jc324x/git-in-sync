@@ -4,7 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/json"
-	"errors"
+	// "errors"
 	"flag"
 	"fmt"
 	"html"
@@ -21,63 +21,9 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-	"time"
+
+	"github.com/jychri/git-in-sync/pkg/timer"
 )
-
-// Moment marks moments in time.
-type Moment struct {
-	Name  string
-	Time  time.Time
-	Start time.Duration // duration since start
-	Split time.Duration // duration since last moment
-}
-
-// Timer collects Moments.
-type Timer struct {
-	Moments []Moment
-}
-
-// InitTimer initializes a *Timer with a Start Moment.
-func InitTimer() *Timer {
-	t := new(Timer)
-	st := Moment{Name: "Start", Time: time.Now()} // (st)art
-	t.Moments = append(t.Moments, st)
-	return t
-}
-
-// MarkMoment marks a moment in time as a Moment and appends t.Moments.
-func (t *Timer) MarkMoment(s string) {
-	sm := t.Moments[0]                           // (s)tarting (m)oment
-	lm := t.Moments[len(t.Moments)-1]            // (l)ast (m)oment
-	m := Moment{Name: s, Time: time.Now()}       // name and time
-	m.Start = time.Since(sm.Time).Truncate(1000) // duration since start
-	m.Split = m.Start - lm.Start                 // duration since last moment
-	t.Moments = append(t.Moments, m)             // append Moment
-}
-
-// GetTime returns the elapsed time at the last recorded moment in *Timer.
-func (t *Timer) GetTime() time.Duration {
-	lm := t.Moments[len(t.Moments)-1] // (l)ast (m)oment
-	return lm.Start
-}
-
-// GetSplit returns the split time for the last recorded moment in *Timer.
-func (t *Timer) GetSplit() time.Duration {
-	lm := t.Moments[len(t.Moments)-1] // (l)ast (m)oment
-	return lm.Split
-}
-
-// GetMoment returns a Moment and an error value from a *Timer.
-func (t *Timer) GetMoment(s string) (Moment, error) {
-	for _, m := range t.Moments {
-		if m.Name == s {
-			return m, nil
-		}
-	}
-
-	var em Moment // (e)mpty (m)oment
-	return em, errors.New("no moment found")
-}
 
 // Emoji holds emoji characters as string values.
 type Emoji struct {
@@ -136,7 +82,7 @@ type Emoji struct {
 }
 
 // initEmoji returns an Emoji struct with all values initialized.
-func InitEmoji(f Flags, t *Timer) (e Emoji) {
+func InitEmoji() (e Emoji) {
 	e.AlarmClock = printEmoji(9200)
 	e.Boat = printEmoji(128676)
 	e.Book = printEmoji(128214)
@@ -190,7 +136,7 @@ func InitEmoji(f Flags, t *Timer) (e Emoji) {
 	e.Count = reflect.ValueOf(e).NumField() - 1
 
 	// timer
-	t.MarkMoment("init-emoji")
+	// t.MarkMoment("init-emoji")
 
 	return e
 }
@@ -212,7 +158,7 @@ type Flags struct {
 	Summary string
 }
 
-func initFlags(e Emoji, t *Timer) (f Flags) {
+func initFlags() (f Flags) {
 
 	// short variables
 	var c, v, em, o bool // clear, verbose, emoji, one-line
@@ -274,7 +220,7 @@ func initFlags(e Emoji, t *Timer) (f Flags) {
 	s = strings.Join(ef, ", ")
 
 	// timer
-	t.MarkMoment("init-flags")
+	// t.MarkMoment("init-flags")
 
 	// set Flags
 	f = Flags{m, c, v, em, o, fc, s}
@@ -337,7 +283,7 @@ func loginMode(f Flags) bool {
 }
 
 // initPrint prints info for Emoji and Flag values.
-func initPrint(e Emoji, f Flags, t *Timer) {
+func initPrint(e Emoji, f Flags) {
 
 	// clears the screen if f.Clear or f.Emoji are true
 	clearScreen()
@@ -346,16 +292,16 @@ func initPrint(e Emoji, f Flags, t *Timer) {
 	targetPrintln(f, "%v start", e.Clapper)
 
 	// print flag init
-	if ft, err := t.GetMoment("init-flags"); err == nil {
-		targetPrintln(f, "%v parsing flags", e.FlagInHole)
-		targetPrintln(f, "%v [%v] flags (%v) {%v / %v}", e.Flag, f.Count, f.Summary, ft.Split, ft.Start)
-	}
+	// if ft, err := t.GetMoment("init-flags"); err == nil {
+	// 	targetPrintln(f, "%v parsing flags", e.FlagInHole)
+	// 	targetPrintln(f, "%v [%v] flags (%v) {%v / %v}", e.Flag, f.Count, f.Summary, ft.Split, ft.Start)
+	// }
 
 	// print emoji init
-	if et, err := t.GetMoment("init-emoji"); err == nil {
-		targetPrintln(f, "%v initializing emoji", e.CrystalBall)
-		targetPrintln(f, "%v [%v] emoji {%v / %v}", e.DirectHit, e.Count, et.Split, et.Start)
-	}
+	// if et, err := t.GetMoment("init-emoji"); err == nil {
+	// 	targetPrintln(f, "%v initializing emoji", e.CrystalBall)
+	// 	targetPrintln(f, "%v [%v] emoji {%v / %v}", e.DirectHit, e.Count, et.Split, et.Start)
+	// }
 }
 
 // Config holds the data from ~/.gisrc.json after Unmasrhalling.
@@ -372,7 +318,7 @@ type Config struct {
 }
 
 // initConfig returns data from ~/.gisrc.json as a Config struct.
-func initConfig(e Emoji, f Flags, t *Timer) (c Config) {
+func initConfig(e Emoji, f Flags) (c Config) {
 
 	// get the current user, otherwise fatal
 	u, err := user.Current()
@@ -402,10 +348,10 @@ func initConfig(e Emoji, f Flags, t *Timer) (c Config) {
 	}
 
 	// timer
-	t.MarkMoment("init-config")
+	// t.MarkMoment("init-config")
 
 	// print
-	targetPrintln(f, "%v read %v {%v / %v}", e.Book, g, t.GetSplit(), t.GetTime())
+	// targetPrintln(f, "%v read %v {%v / %v}", e.Book, g, t.GetSplit(), t.GetTime())
 
 	return c
 }
@@ -1241,7 +1187,7 @@ func (r *Repo) gitStatusPorcelain(e Emoji, f Flags) {
 
 type Repos []*Repo
 
-func initRepos(c Config, e Emoji, f Flags, t *Timer) (rs Repos) {
+func initRepos(c Config, e Emoji, f Flags) (rs Repos) {
 
 	// print
 	targetPrintln(f, "%v parsing divs|repos", e.Pager)
@@ -1257,7 +1203,7 @@ func initRepos(c Config, e Emoji, f Flags, t *Timer) (rs Repos) {
 	}
 
 	// timer
-	t.MarkMoment("init-repos")
+	// t.MarkMoment("init-repos")
 
 	// sort
 	rs.sortByPath()
@@ -1272,7 +1218,7 @@ func initRepos(c Config, e Emoji, f Flags, t *Timer) (rs Repos) {
 	dvs = removeDuplicates(dvs)
 
 	// print
-	targetPrintln(f, "%v [%v|%v] divs|repos {%v / %v}", e.FaxMachine, len(dvs), len(rs), t.GetSplit(), t.GetTime())
+	// targetPrintln(f, "%v [%v|%v] divs|repos {%v / %v}", e.FaxMachine, len(dvs), len(rs), t.GetSplit(), t.GetTime())
 
 	return rs
 }
@@ -1494,26 +1440,26 @@ func sliceSummary(sl []string, l int) string {
 
 // --> main fns
 
-func initRun() (e Emoji, f Flags, rs Repos, t *Timer) {
+func initRun() (e Emoji, f Flags, rs Repos, t *timer.Timer) {
 
 	// initialize Timer, Flags and Emoji
-	t = InitTimer()
-	f = initFlags(e, t)
-	e = InitEmoji(f, t)
+	t = timer.InitTimer()
+	// f = initFlags(e, t)
+	// e = InitEmoji(f, t)
 
 	// clear screen, early messaging
-	initPrint(e, f, t)
+	// initPrint(e, f, t)
 
 	// read ~/.gisrc.json, initialize Config
-	c := initConfig(e, f, t)
+	// c := initConfig(e, f, t)
 
 	// initialize Repos
-	rs = initRepos(c, e, f, t)
+	// rs = initRepos(c, e, f, t)
 
 	return e, f, rs, t
 }
 
-func (rs Repos) verifyDivs(e Emoji, f Flags, t *Timer) {
+func (rs Repos) verifyDivs(e Emoji, f Flags) {
 
 	// sort
 	rs.sortByPath()
@@ -1574,7 +1520,7 @@ func (rs Repos) verifyDivs(e Emoji, f Flags, t *Timer) {
 	}
 
 	// timer
-	t.MarkMoment("verify-divs")
+	// t.MarkMoment("verify-divs")
 
 	// remove duplicates from slices
 	vd = removeDuplicates(vd)
@@ -1601,16 +1547,16 @@ func (rs Repos) verifyDivs(e Emoji, f Flags, t *Timer) {
 		b.WriteString("]")
 	}
 
-	b.WriteString(" {")
-	b.WriteString(t.GetSplit().String())
-	b.WriteString(" / ")
-	b.WriteString(t.GetTime().String())
-	b.WriteString("}")
+	// b.WriteString(" {")
+	// b.WriteString(t.GetSplit().String())
+	// b.WriteString(" / ")
+	// b.WriteString(t.GetTime().String())
+	// b.WriteString("}")
 
-	targetPrintln(f, b.String())
+	// targetPrintln(f, b.String())
 }
 
-func (rs Repos) verifyCloned(e Emoji, f Flags, t *Timer) {
+func (rs Repos) verifyCloned(e Emoji, f Flags) {
 	var pc []string // pending clone
 
 	for _, r := range rs {
@@ -1650,29 +1596,29 @@ func (rs Repos) verifyCloned(e Emoji, f Flags, t *Timer) {
 	}
 
 	// timer
-	t.MarkMoment("verify-repos")
+	// t.MarkMoment("verify-repos")
 
 	// summary
-	var b bytes.Buffer
+	// var b bytes.Buffer
 
-	b.WriteString(e.Truck)
-	b.WriteString(" [")
-	b.WriteString(strconv.Itoa(len(cr)))
-	b.WriteString("/")
-	b.WriteString(strconv.Itoa(len(pc)))
-	b.WriteString("] cloned")
+	// b.WriteString(e.Truck)
+	// b.WriteString(" [")
+	// b.WriteString(strconv.Itoa(len(cr)))
+	// b.WriteString("/")
+	// b.WriteString(strconv.Itoa(len(pc)))
+	// b.WriteString("] cloned")
 
-	tr := time.Millisecond // truncate
-	b.WriteString(" {")
-	b.WriteString(t.GetSplit().Truncate(tr).String())
-	b.WriteString(" / ")
-	b.WriteString(t.GetTime().Truncate(tr).String())
-	b.WriteString("}")
+	// tr := time.Millisecond // truncate
+	// b.WriteString(" {")
+	// b.WriteString(t.GetSplit().Truncate(tr).String())
+	// b.WriteString(" / ")
+	// b.WriteString(t.GetTime().Truncate(tr).String())
+	// b.WriteString("}")
 
-	targetPrintln(f, b.String())
+	// targetPrintln(f, b.String())
 }
 
-func (rs Repos) verifyRepos(e Emoji, f Flags, t *Timer) {
+func (rs Repos) verifyRepos(e Emoji, f Flags) {
 	var rn []string // repo names
 
 	for _, r := range rs {
@@ -1730,80 +1676,80 @@ func (rs Repos) verifyRepos(e Emoji, f Flags, t *Timer) {
 	}
 
 	// timer
-	t.MarkMoment("verify-repos")
+	// t.MarkMoment("verify-repos")
 
-	var b bytes.Buffer
+	// var b bytes.Buffer
 
-	if len(cr) == len(rs) {
-		b.WriteString(e.Checkmark)
-	} else {
-		b.WriteString(e.Traffic)
-	}
+	// if len(cr) == len(rs) {
+	// 	b.WriteString(e.Checkmark)
+	// } else {
+	// 	b.WriteString(e.Traffic)
+	// }
 
-	b.WriteString(" [")
-	b.WriteString(strconv.Itoa(len(cr)))
-	b.WriteString("/")
-	b.WriteString(strconv.Itoa(len(rs)))
-	b.WriteString("] complete {")
+	// b.WriteString(" [")
+	// b.WriteString(strconv.Itoa(len(cr)))
+	// b.WriteString("/")
+	// b.WriteString(strconv.Itoa(len(rs)))
+	// b.WriteString("] complete {")
 
-	tr := time.Millisecond // truncate
-	b.WriteString(t.GetSplit().Truncate(tr).String())
-	b.WriteString(" / ")
-	b.WriteString(t.GetTime().Truncate(tr).String())
-	b.WriteString("}")
+	// tr := time.Millisecond // truncate
+	// b.WriteString(t.GetSplit().Truncate(tr).String())
+	// b.WriteString(" / ")
+	// b.WriteString(t.GetTime().Truncate(tr).String())
+	// b.WriteString("}")
 
-	targetPrintln(f, b.String())
+	// targetPrintln(f, b.String())
 
 	// scheduled repo info
 
-	if len(sch) >= 1 {
-		b.Reset()
-		schs := sliceSummary(sch, 15) // scheduled repo summary
-		b.WriteString(e.TimerClock)
-		b.WriteString("  [")
-		b.WriteString(strconv.Itoa(len(sch)))
+	// if len(sch) >= 1 {
+	// 	b.Reset()
+	// 	schs := sliceSummary(sch, 15) // scheduled repo summary
+	// 	b.WriteString(e.TimerClock)
+	// 	b.WriteString("  [")
+	// 	b.WriteString(strconv.Itoa(len(sch)))
 
-		if loginMode(f) {
-			b.WriteString("] pull scheduled (")
+	// 	if loginMode(f) {
+	// 		b.WriteString("] pull scheduled (")
 
-		} else if logoutMode(f) {
-			b.WriteString("] push scheduled (")
-		}
+	// 	} else if logoutMode(f) {
+	// 		b.WriteString("] push scheduled (")
+	// 	}
 
-		b.WriteString(schs)
-		b.WriteString(")")
-		targetPrintln(f, b.String())
-	}
+	// 	b.WriteString(schs)
+	// 	b.WriteString(")")
+	// 	targetPrintln(f, b.String())
+	// }
 
 	// skipped repo info
-	if len(sk) >= 1 {
-		b.Reset()
-		sks := sliceSummary(sk, 15) // skipped repo summary
-		b.WriteString(e.Slash)
-		b.WriteString(" [")
-		b.WriteString(strconv.Itoa(len(sk)))
-		b.WriteString("] skipped (")
-		b.WriteString(sks)
-		b.WriteString(")")
-		targetPrintln(f, b.String())
-	}
+	// if len(sk) >= 1 {
+	// 	b.Reset()
+	// 	sks := sliceSummary(sk, 15) // skipped repo summary
+	// 	b.WriteString(e.Slash)
+	// 	b.WriteString(" [")
+	// 	b.WriteString(strconv.Itoa(len(sk)))
+	// 	b.WriteString("] skipped (")
+	// 	b.WriteString(sks)
+	// 	b.WriteString(")")
+	// 	targetPrintln(f, b.String())
+	// }
 
 	// pending repo info
-	if len(pr) >= 1 {
-		b.Reset()
-		prs := sliceSummary(pr, 15) // pending repo summary
-		b.WriteString(e.Warning)
-		b.WriteString(" [")
-		b.WriteString(strconv.Itoa(len(pr)))
-		b.WriteString("] pending (")
-		b.WriteString(prs)
-		b.WriteString(")")
-		targetPrintln(f, b.String())
-	}
+	// if len(pr) >= 1 {
+	// 	b.Reset()
+	// 	prs := sliceSummary(pr, 15) // pending repo summary
+	// 	b.WriteString(e.Warning)
+	// 	b.WriteString(" [")
+	// 	b.WriteString(strconv.Itoa(len(pr)))
+	// 	b.WriteString("] pending (")
+	// 	b.WriteString(prs)
+	// 	b.WriteString(")")
+	// 	targetPrintln(f, b.String())
+	// }
 
 }
 
-func (rs Repos) verifyChanges(e Emoji, f Flags, t *Timer) {
+func (rs Repos) verifyChanges(e Emoji, f Flags) {
 
 	prs := initPendingRepos(rs)
 
@@ -1907,7 +1853,7 @@ func (rs Repos) verifyChanges(e Emoji, f Flags, t *Timer) {
 			}
 		}
 
-		t.MarkMoment("verify-changes")
+		// t.MarkMoment("verify-changes")
 
 		// FLAG:
 		// check again see how many pending remain, should be zero...
@@ -1967,7 +1913,7 @@ func (rs Repos) verifyChanges(e Emoji, f Flags, t *Timer) {
 }
 
 // FLAG: need to fix up messaging here
-func (rs Repos) submitChanges(e Emoji, f Flags, t *Timer) {
+func (rs Repos) submitChanges(e Emoji, f Flags) {
 	srs := initScheludedRepos(rs)
 	skrs := initSkippedRepos(rs)
 
@@ -2042,10 +1988,10 @@ func (rs Repos) debug() {
 
 func main() {
 	e, f, rs, t := initRun()
-	rs.verifyDivs(e, f, t)
-	rs.verifyCloned(e, f, t)
-	rs.verifyRepos(e, f, t)
-	rs.verifyChanges(e, f, t)
-	rs.submitChanges(e, f, t)
+	rs.verifyDivs(e, f)
+	rs.verifyCloned(e, f)
+	rs.verifyRepos(e, f)
+	rs.verifyChanges(e, f)
+	rs.submitChanges(e, f)
 	// rs.debug()
 }

@@ -6,14 +6,13 @@ import (
 	"io"
 	"log"
 	"os"
-	// "os/exec"
 	"os/user"
 	// "path" -> Clean
 	"sort"
 	"strings"
 	"sync"
 
-	// "github.com/jychri/git-in-sync/pkg/brf"
+	"github.com/jychri/git-in-sync/pkg/brf"
 	"github.com/jychri/git-in-sync/pkg/conf"
 	"github.com/jychri/git-in-sync/pkg/emoji"
 	"github.com/jychri/git-in-sync/pkg/flags"
@@ -103,15 +102,6 @@ func (rs Repos) sortByPath() {
 }
 
 // Utility functions.
-
-func tprintln(f flags.Flags, s string, z ...interface{}) {
-
-	if f.Check("oneline") {
-		return
-	}
-
-	fmt.Println(fmt.Sprintf(s, z...))
-}
 
 func noPermission(info os.FileInfo) bool {
 
@@ -275,7 +265,7 @@ func initRun() (e emoji.Emoji, f flags.Flags, rs Repos, t *timer.Timer) {
 	f = flags.Init()
 
 	// targetPrint prints a message with or without an emoji if f.Emoji is true or false.
-	tprintln(f, "%v start", e.Clapper)
+	// tprintln(f, "%v start", e.Clapper)
 
 	// print flag init
 	// if ft, err := t.GetMoment("init-flags"); err == nil {
@@ -832,9 +822,9 @@ func (rs Repos) debug() {
 }
 
 func main() {
-	// f, rs, t := initRun()
-	initRun()
-	// fmt.Println(f)
+	e, f, rs, t := initRun()
+	// initRun()
+	brf.Printv(f, "%v parsing divs|repos -> %v | %v", e.Pager, t.GetSplit(), rs)
 	// rs.verifyDivs(e, f)
 	// rs.verifyCloned(e, f)
 	// rs.verifyRepos(e, f)

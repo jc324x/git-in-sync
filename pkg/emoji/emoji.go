@@ -2,11 +2,13 @@ package emoji
 
 import (
 	"html"
+	"os"
+	"os/exec"
 	"strconv"
 )
 
-// Emoji returns an emoji character as a string value.
-func Printe(s string) string {
+// Eprintln prints a string
+func Eprintln(s string) string {
 	var m = map[string]int{
 		"AlarmClock":           9200,
 		"Boat":                 128676,
@@ -64,4 +66,10 @@ func Printe(s string) string {
 		return html.UnescapeString("&#" + strconv.Itoa(i) + ";")
 	}
 	return ""
+}
+
+func ClearScreen() {
+	cmd := exec.Command("clear")
+	cmd.Stdout = os.Stdout
+	cmd.Run()
 }

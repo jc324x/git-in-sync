@@ -18,8 +18,8 @@ type Timer struct {
 	Moments []Moment
 }
 
-// InitTimer initializes a *Timer with a Start Moment.
-func InitTimer() *Timer {
+// Init initializes a *Timer with a Start Moment.
+func Init() *Timer {
 	t := new(Timer)
 	st := Moment{Name: "Start", Time: time.Now()} // (st)art
 	t.Moments = append(t.Moments, st)

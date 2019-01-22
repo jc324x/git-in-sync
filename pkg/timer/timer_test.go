@@ -6,7 +6,7 @@ import (
 )
 
 func TestTimer(t *testing.T) {
-	tt := InitTimer()   // test Timer
+	tt := Init()        // test Timer
 	sm := tt.Moments[0] // Timer initializes with a (S)tart (M)oment
 
 	if sm.Name != "Start" {

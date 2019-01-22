@@ -2,14 +2,12 @@ package main
 
 import (
 	"bytes"
-	// "fmt"
 	"io"
 	"log"
 	"os"
 	"os/user"
 	// "path" -> Clean
 	"strings"
-	// "sync"
 
 	"github.com/jychri/git-in-sync/pkg/brf"
 	"github.com/jychri/git-in-sync/pkg/conf"
@@ -155,41 +153,50 @@ func sliceSummary(sl []string, l int) string {
 	return b.String()
 }
 
-// --> main fns
-
 func initRun() (e emoji.Emoji, f flags.Flags, rs repos.Repos, t *timer.Timer) {
 
 	// clear the screen
 	emoji.ClearScreen()
 
-	// initialize Timer and Flags
-	e = emoji.Init()
+	// initialize Timer, Emoji and Flags
 	t = timer.Init()
 	f = flags.Init()
+	t.MarkMoment("init-flags")
+	e = emoji.Init()
+	t.MarkMoment("init-emoji")
 
-	// targetPrint prints a message with or without an emoji if f.Emoji is true or false.
-	// tprintln(f, "%v start", e.Clapper)
+	// print "start"
+	brf.Printv(f, "%v start", e.Clapper)
 
-	// print flag init
-	// if ft, err := t.GetMoment("init-flags"); err == nil {
-	// 	targetPrintln(f, "%v parsing flags", e.FlagInHole)
-	// 	targetPrintln(f, "%v [%v] flags (%v) {%v / %v}", e.Flag, f.Count, f.Summary, ft.Split, ft.Start)
-	// }
+	// print "flag(s) set..."
+	if ft, err := t.GetMoment("init-flags"); err == nil {
+		brf.Printv(f, "%v parsing flags", e.FlagInHole)
 
-	// print emoji init
-	// if et, err := t.GetMoment("init-emoji"); err == nil {
-	// 	targetPrintln(f, "%v initializing emoji", e.CrystalBall)
-	// 	targetPrintln(f, "%v [%v] emoji {%v / %v}", e.DirectHit, e.Count, et.Split, et.Start)
-	// }
+		switch {
+		case f.Count == 0 || f.Count >= 2:
+			brf.Printv(f, "%v [%v] flags set (%v) {%v / %v}", e.Flag, f.Count, f.Summary, ft.Split, ft.Start)
+		case f.Count == 1:
+			brf.Printv(f, "%v [%v] flag set (%v) {%v / %v}", e.Flag, f.Count, f.Summary, ft.Split, ft.Start)
+		}
+	}
 
-	// read ~/.gisrc.json, initialize Config
+	// print "emoji..."
+	if et, err := t.GetMoment("init-emoji"); err == nil {
+		brf.Printv(f, "%v initializing emoji", e.CrystalBall)
+		brf.Printv(f, "%v [%v] emoji {%v / %v}", e.DirectHit, e.Count, et.Split, et.Start)
+	}
+
+	// print "reading ~/.gisrc.json"
+	brf.Printv(f, "%v reading ~/.gisrc.json", e.Books)
+
+	// initialize Config from ~/.gisrc.json
 	c := conf.Init()
+	t.MarkMoment("init-config")
 
-	// timer
-	// t.MarkMoment("init-config")
+	// print "read /Users/user/.gisrc.json..."
+	brf.Printv(f, "%v read {%v / %v}", e.Book, t.Split(), t.Time())
 
-	// print
-	// targetPrintln(f, "%v read %v {%v / %v}", e.Book, g, t.GetSplit(), t.GetTime())
+	// print "Repos..."
 
 	// initialize Repos
 	rs = repos.Init(c)
@@ -651,19 +658,9 @@ func initRun() (e emoji.Emoji, f flags.Flags, rs repos.Repos, t *timer.Timer) {
 //	// }
 //}
 
-// debug spits out error info
-// func (rs Repos) debug() {
-// 	for _, r := range rs {
-// 		if r.ErrorShort != "" {
-// 			fmt.Printf("%v|%v (%v)\n", r.Name, r.ErrorName, r.ErrorFirst)
-// 			fmt.Printf("%v\n", r.ErrorShort)
-// 			fmt.Printf("clean: %v, untracked: %v, status: %v\n", r.Clean, r.Untracked, r.Status)
-// 		}
-// 	}
-// }
-
 func main() {
-	e, f, rs, t := initRun()
+	// e, f, rs, t := initRun()
+	initRun()
 	// rs.verifyDivs(e, f)
 	// rs.verifyCloned(e, f)
 	// rs.verifyRepos(e, f)

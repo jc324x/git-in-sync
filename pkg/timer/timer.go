@@ -37,13 +37,13 @@ func (t *Timer) MarkMoment(s string) {
 }
 
 // GetTime returns the elapsed time at the last recorded moment in *Timer.
-func (t *Timer) GetTime() time.Duration {
+func (t *Timer) Time() time.Duration {
 	lm := t.Moments[len(t.Moments)-1] // (l)ast (m)oment
 	return lm.Start
 }
 
 // GetSplit returns the split time for the last recorded moment in *Timer.
-func (t *Timer) GetSplit() time.Duration {
+func (t *Timer) Split() time.Duration {
 	lm := t.Moments[len(t.Moments)-1] // (l)ast (m)oment
 	return lm.Split
 }

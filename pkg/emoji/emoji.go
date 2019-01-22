@@ -4,6 +4,7 @@ import (
 	"html"
 	"os"
 	"os/exec"
+	"reflect"
 	"strconv"
 )
 
@@ -120,6 +121,7 @@ func Init() (e Emoji) {
 	e.Turtle = printEmoji(128034)
 	e.Unicorn = printEmoji(129412)
 	e.Warning = printEmoji(128679)
+	e.Count = reflect.ValueOf(e).NumField() - 1
 	return e
 }
 

@@ -2,104 +2,22 @@ package main
 
 import (
 	"bytes"
-	"fmt"
+	// "fmt"
 	"io"
 	"log"
 	"os"
 	"os/user"
 	// "path" -> Clean
-	"sort"
 	"strings"
-	"sync"
+	// "sync"
 
 	"github.com/jychri/git-in-sync/pkg/brf"
 	"github.com/jychri/git-in-sync/pkg/conf"
 	"github.com/jychri/git-in-sync/pkg/emoji"
 	"github.com/jychri/git-in-sync/pkg/flags"
-	"github.com/jychri/git-in-sync/pkg/repo"
+	"github.com/jychri/git-in-sync/pkg/repos"
 	"github.com/jychri/git-in-sync/pkg/timer"
 )
-
-// initRepo returns a *Repo with initial values set.
-
-// --> Repos: Collection of Repos
-
-type Repos []*repo.Repo
-
-func initRepos(c conf.Config) (rs Repos) {
-
-	// print
-	// targetPrintln(f, "%v parsing divs|repos", e.Pager)
-	// emoji.Eprint("%v parsing divs|repos", "Boat")
-
-	// initialize Repos from Config
-	for _, bl := range c.Bundles {
-		for _, z := range bl.Zones {
-			for _, rn := range z.Repos {
-				r := repo.Init(z.Workspace, z.User, z.Remote, bl.Path, rn)
-				rs = append(rs, r)
-			}
-		}
-	}
-
-	// timer
-	// t.MarkMoment("init-repos")
-
-	// sort
-	rs.sortByPath()
-
-	// get all divs, remove duplicates
-	var dvs []string // divs
-
-	for _, r := range rs {
-		dvs = append(dvs, r.DivPath)
-	}
-
-	dvs = removeDuplicates(dvs)
-
-	// print
-	// targetPrintln(f, "%v [%v|%v] divs|repos {%v / %v}", e.FaxMachine, len(dvs), len(rs), t.GetSplit(), t.GetTime())
-
-	return rs
-}
-
-func initPendingRepos(rs Repos) (prs Repos) {
-	for _, r := range rs {
-		if r.Category == "Pending" {
-			prs = append(prs, r)
-		}
-	}
-	return prs
-}
-
-func initScheludedRepos(rs Repos) (srs Repos) {
-	for _, r := range rs {
-		if r.Category == "Scheduled" {
-			srs = append(srs, r)
-		}
-	}
-	return srs
-}
-
-func initSkippedRepos(rs Repos) (skrs Repos) {
-	for _, r := range rs {
-		if r.Category == "Skipped" {
-			skrs = append(skrs, r)
-		}
-	}
-	return skrs
-}
-
-// sort A-Z by r.Name
-func (rs Repos) sortByName() {
-	sort.SliceStable(rs, func(i, j int) bool { return rs[i].Name < rs[j].Name })
-}
-
-// sort A-Z by r.DivPath, then r.Name
-func (rs Repos) sortByPath() {
-	sort.SliceStable(rs, func(i, j int) bool { return rs[i].Name < rs[j].Name })
-	sort.SliceStable(rs, func(i, j int) bool { return rs[i].DivPath < rs[j].DivPath })
-}
 
 // Utility functions.
 
@@ -200,21 +118,6 @@ func lastPathSelection(p string) string {
 	}
 }
 
-func removeDuplicates(ssl []string) (sl []string) {
-
-	smap := make(map[string]bool)
-
-	for i := range ssl {
-		if smap[ssl[i]] == true {
-		} else {
-			smap[ssl[i]] = true
-			sl = append(sl, ssl[i])
-		}
-	}
-
-	return sl
-}
-
 func firstLine(s string) string {
 	lines := strings.Split(strings.TrimSuffix(s, "\n"), "\n")
 
@@ -254,7 +157,7 @@ func sliceSummary(sl []string, l int) string {
 
 // --> main fns
 
-func initRun() (e emoji.Emoji, f flags.Flags, rs Repos, t *timer.Timer) {
+func initRun() (e emoji.Emoji, f flags.Flags, rs repos.Repos, t *timer.Timer) {
 
 	// clear the screen
 	emoji.ClearScreen()
@@ -280,7 +183,7 @@ func initRun() (e emoji.Emoji, f flags.Flags, rs Repos, t *timer.Timer) {
 	// }
 
 	// read ~/.gisrc.json, initialize Config
-	// c := initConfig(e, f, t)
+	c := conf.Init()
 
 	// timer
 	// t.MarkMoment("init-config")
@@ -289,7 +192,7 @@ func initRun() (e emoji.Emoji, f flags.Flags, rs Repos, t *timer.Timer) {
 	// targetPrintln(f, "%v read %v {%v / %v}", e.Book, g, t.GetSplit(), t.GetTime())
 
 	// initialize Repos
-	// rs = initRepos(c, e, f, t)
+	rs = repos.Init(c)
 
 	return e, f, rs, t
 }
@@ -390,68 +293,6 @@ func initRun() (e emoji.Emoji, f flags.Flags, rs Repos, t *timer.Timer) {
 
 // 	// targetPrintln(f, b.String())
 // }
-
-func (rs Repos) verifyCloned() {
-	var pc []string // pending clone
-
-	for _, r := range rs {
-		// r.gitCheckPending(e, f)
-
-		if r.PendingClone == true {
-			pc = append(pc, r.Name)
-		}
-	}
-
-	// return if there are no pending repos
-
-	if len(pc) <= 0 {
-		return
-	}
-
-	// if there are pending repos
-	// targetPrintln(f, "%v cloning [%v]", e.Sheep, len(pc))
-
-	// verify each repo (async)
-	var wg sync.WaitGroup
-	for i := range rs {
-		wg.Add(1)
-		go func(r *repo.Repo) {
-			defer wg.Done()
-			// r.gitClone(e, f)
-		}(rs[i])
-	}
-	wg.Wait()
-
-	var cr []string // cloned repos
-
-	for _, r := range rs {
-		if r.Cloned == true {
-			cr = append(cr, r.Name)
-		}
-	}
-
-	// timer
-	// t.MarkMoment("verify-repos")
-
-	// summary
-	// var b bytes.Buffer
-
-	// b.WriteString(e.Truck)
-	// b.WriteString(" [")
-	// b.WriteString(strconv.Itoa(len(cr)))
-	// b.WriteString("/")
-	// b.WriteString(strconv.Itoa(len(pc)))
-	// b.WriteString("] cloned")
-
-	// tr := time.Millisecond // truncate
-	// b.WriteString(" {")
-	// b.WriteString(t.GetSplit().Truncate(tr).String())
-	// b.WriteString(" / ")
-	// b.WriteString(t.GetTime().Truncate(tr).String())
-	// b.WriteString("}")
-
-	// targetPrintln(f, b.String())
-}
 
 // // func (rs Repos) verifyRepos(e Emoji, f Flags) {
 // 	var rn []string // repo names
@@ -811,20 +652,18 @@ func (rs Repos) verifyCloned() {
 //}
 
 // debug spits out error info
-func (rs Repos) debug() {
-	for _, r := range rs {
-		if r.ErrorShort != "" {
-			fmt.Printf("%v|%v (%v)\n", r.Name, r.ErrorName, r.ErrorFirst)
-			fmt.Printf("%v\n", r.ErrorShort)
-			fmt.Printf("clean: %v, untracked: %v, status: %v\n", r.Clean, r.Untracked, r.Status)
-		}
-	}
-}
+// func (rs Repos) debug() {
+// 	for _, r := range rs {
+// 		if r.ErrorShort != "" {
+// 			fmt.Printf("%v|%v (%v)\n", r.Name, r.ErrorName, r.ErrorFirst)
+// 			fmt.Printf("%v\n", r.ErrorShort)
+// 			fmt.Printf("clean: %v, untracked: %v, status: %v\n", r.Clean, r.Untracked, r.Status)
+// 		}
+// 	}
+// }
 
 func main() {
 	e, f, rs, t := initRun()
-	// initRun()
-	brf.Printv(f, "%v parsing divs|repos -> %v | %v", e.Pager, t.GetSplit(), rs)
 	// rs.verifyDivs(e, f)
 	// rs.verifyCloned(e, f)
 	// rs.verifyRepos(e, f)

@@ -22,7 +22,7 @@ type Config struct {
 }
 
 // initConfig returns data from ~/.gisrc.json as a Config struct.
-func initConfig() (c Config) {
+func Init() (c Config) {
 
 	// get the current user, otherwise fatal
 	u, err := user.Current()

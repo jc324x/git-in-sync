@@ -1,4 +1,5 @@
 // brf = brief
+
 package brf
 
 import (
@@ -13,4 +14,19 @@ func Printv(f flags.Flags, s string, z ...interface{}) {
 	}
 
 	fmt.Println(fmt.Sprintf(s, z...))
+}
+
+func RemoveDuplicates(ssl []string) (sl []string) {
+
+	smap := make(map[string]bool)
+
+	for i := range ssl {
+		if smap[ssl[i]] == true {
+		} else {
+			smap[ssl[i]] = true
+			sl = append(sl, ssl[i])
+		}
+	}
+
+	return sl
 }

@@ -1,7 +1,9 @@
 package main
 
 import (
-	"github.com/jychri/git-in-sync/pkg/brf" // brief
+	"fmt"
+
+	"github.com/jychri/git-in-sync/pkg/brf"
 	"github.com/jychri/git-in-sync/pkg/conf"
 	"github.com/jychri/git-in-sync/pkg/emoji"
 	"github.com/jychri/git-in-sync/pkg/flags"
@@ -41,28 +43,30 @@ func initRun() (e emoji.Emoji, f flags.Flags, rs repos.Repos, t *timer.Timer) {
 
 	// initialize Config from ~/.gisrc.json
 	c := conf.Init(f)
-
 	t.MarkMoment("init-config")
 
 	// print "read /Users/user/.gisrc.json..."
 	brf.Printv(f, "%v read {%v / %v}", e.Book, t.Split(), t.Time())
 
-	// print "Repos..."
+	// print "parsing Repos..."
+	brf.Printv(f, "parsing repos...")
 
 	// initialize Repos
 	rs = repos.Init(c)
+
+	// print "parsed repos..."
+	brf.Printv(f, "read repos...")
 
 	return e, f, rs, t
 }
 
 func main() {
-	// e, f, rs, t := initRun()
-	// fmt.Printf("%v | %v | %v | %v", e, f, rs, t)
-	initRun()
-	// rs.verifyDivs(e, f)
+	e, f, rs, t := initRun()
+	t.MarkMoment("OK")
+	rs.VerifyDivs(e, f)
+	fmt.Println("OK")
 	// rs.verifyCloned(e, f)
 	// rs.verifyRepos(e, f)
 	// rs.verifyChanges(e, f)
 	// rs.submitChanges(e, f)
-	// rs.debug()
 }

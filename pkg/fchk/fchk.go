@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-func noPermission(info os.FileInfo) bool {
+func NoPermission(info os.FileInfo) bool {
 
 	if info == nil {
 		return false
@@ -26,7 +26,7 @@ func noPermission(info os.FileInfo) bool {
 	return false
 }
 
-func isDirectory(info os.FileInfo) bool {
+func IsDirectory(info os.FileInfo) bool {
 	if info == nil {
 		return false
 	}
@@ -38,7 +38,7 @@ func isDirectory(info os.FileInfo) bool {
 	}
 }
 
-func isEmpty(p string) bool {
+func IsEmpty(p string) bool {
 	f, err := os.Open(p)
 
 	if err != nil {
@@ -54,7 +54,7 @@ func isEmpty(p string) bool {
 	return false
 }
 
-func notEmpty(p string) bool {
+func NotEmpty(p string) bool {
 	f, err := os.Open(p)
 
 	if err != nil {
@@ -70,7 +70,7 @@ func notEmpty(p string) bool {
 	return true
 }
 
-func isFile(info os.FileInfo) bool {
+func IsFile(info os.FileInfo) bool {
 	if info == nil {
 		return false
 	}

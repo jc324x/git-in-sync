@@ -16,6 +16,7 @@ import (
 	"github.com/jychri/git-in-sync/pkg/emoji"
 	"github.com/jychri/git-in-sync/pkg/fchk"
 	"github.com/jychri/git-in-sync/pkg/flags"
+	"github.com/jychri/git-in-sync/pkg/timer"
 )
 
 type Repo struct {
@@ -1340,7 +1341,7 @@ func (rs Repos) verifyCloned() {
 
 // }
 
-func (rs Repos) VerifyDivs(e emoji.Emoji, f flags.Flags) {
+func (rs Repos) VerifyDivs(e emoji.Emoji, f flags.Flags, t *timer.Timer) {
 
 	// sort
 	rs.PathSort()
@@ -1360,7 +1361,7 @@ func (rs Repos) VerifyDivs(e emoji.Emoji, f flags.Flags) {
 	// zds := brf.Summary(zdvs, 25) // zone division summary
 
 	// print
-	// targetPrintln(f, "%v  verifying divs [%v](%v)", e.FileCabinet, len(dvs), zds)
+	brf.Printv(f, "%v  verifying divs [%v](%v)", e.FileCabinet, len(dvs), zdvs)
 
 	// track created, verified and missing divs
 	var cd []string // created divs
@@ -1373,7 +1374,7 @@ func (rs Repos) VerifyDivs(e emoji.Emoji, f flags.Flags) {
 
 		// create div if missing and active run
 		if os.IsNotExist(err) {
-			// targetPrintln(f, "%v creating %v", e.Folder, r.DivPath)
+			brf.Printv(f, "%v creating %v", e.Folder, r.DivPath)
 			os.MkdirAll(r.DivPath, 0777)
 			cd = append(cd, r.DivPath)
 		}

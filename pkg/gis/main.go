@@ -1,8 +1,6 @@
 package main
 
 import (
-	"fmt"
-
 	"github.com/jychri/git-in-sync/pkg/brf"
 	"github.com/jychri/git-in-sync/pkg/conf"
 	"github.com/jychri/git-in-sync/pkg/emoji"
@@ -11,7 +9,7 @@ import (
 	"github.com/jychri/git-in-sync/pkg/timer"
 )
 
-func initRun() (e emoji.Emoji, f flags.Flags, rs repos.Repos, t *timer.Timer) {
+func Init() (e emoji.Emoji, f flags.Flags, rs repos.Repos, t *timer.Timer) {
 
 	// clear the screen
 	emoji.ClearScreen()
@@ -61,12 +59,10 @@ func initRun() (e emoji.Emoji, f flags.Flags, rs repos.Repos, t *timer.Timer) {
 }
 
 func main() {
-	e, f, rs, t := initRun()
-	t.MarkMoment("OK")
-	rs.VerifyDivs(e, f)
-	fmt.Println("OK")
-	// rs.verifyCloned(e, f)
-	// rs.verifyRepos(e, f)
-	// rs.verifyChanges(e, f)
-	// rs.submitChanges(e, f)
+	e, f, rs, t := Init()
+	rs.VerifyDivs(e, f, t)
+	// rs.VerifyCloned(e, f, t)
+	// rs.VerifyRepos(e, f, t)
+	// rs.VerifyChanges(e, f, t)
+	// rs.SubmitChanges(e, f, t)
 }

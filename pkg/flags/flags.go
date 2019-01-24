@@ -48,16 +48,3 @@ func Init() (f Flags) {
 
 	return f
 }
-
-func (f Flags) Check(s string) bool {
-	switch f.Mode {
-	case "oneLine":
-		return true
-	// case s == "logout" && f.Mode == "logout":
-	// 	return true
-	// case s == "login" && f.Mode == "login":
-	// 	return true
-	default:
-		return false
-	}
-}

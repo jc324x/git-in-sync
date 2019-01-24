@@ -1,23 +1,23 @@
-// brf = brief
-
 package brf
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"strings"
 
 	"github.com/jychri/git-in-sync/pkg/flags"
 )
 
-// Printv prints to standard output if not running in "oneline" mode.
-func Printv(f flags.Flags, s string, z ...interface{}) {
+// Printv calls prints to standard output if not running in "oneline" mode.
+func Printv(f flags.Flags, s string, z ...interface{}) (err error) {
 
-	if f.Check("oneline") {
+	if f.Mode != "oneline" {
+		fmt.Println(fmt.Sprintf(s, z...))
 		return
 	}
 
-	fmt.Println(fmt.Sprintf(s, z...))
+	return errors.New("N/A")
 }
 
 // Single returns a string slice with no duplications.
@@ -64,6 +64,7 @@ func Summary(sl []string, l int) string {
 	return b.String()
 }
 
+// First returns the first line from a multi line string.
 func First(s string) string {
 	lines := strings.Split(strings.TrimSuffix(s, "\n"), "\n")
 

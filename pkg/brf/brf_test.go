@@ -58,4 +58,21 @@ func TestSummary(t *testing.T) {
 
 func TestFirst(t *testing.T) {
 
+	s1 := "First line.\n Second line. \n Third line.\n"
+	s2 := "Only one line."
+	s3 := ""
+
+	for _, c := range []struct {
+		in, want string
+	}{
+		{s1, "First line."},
+		{s2, "Only one line."},
+		{s3, ""},
+	} {
+		got := First(c.in)
+
+		if got != c.want {
+			t.Errorf("First: (%v != %v)", got, c.want)
+		}
+	}
 }

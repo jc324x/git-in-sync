@@ -10,7 +10,8 @@ import (
 	"github.com/jychri/git-in-sync/pkg/flags"
 )
 
-// Config holds the data from ~/.gisrc.json after Unmasrhalling.
+// Config holds the data from ~/.gisrc.json
+// or a test gisrc.json file after Unmasrhalling.
 type Config struct {
 	Bundles []struct {
 		Path  string `json:"path"`

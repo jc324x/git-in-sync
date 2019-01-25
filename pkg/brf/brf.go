@@ -77,10 +77,11 @@ func First(s string) string {
 	}
 }
 
-func Relative(s string) (string, error) {
-	var t string
+// Relative returns a path relative to the current user
+func Relative(s string) (t string, err error) {
 	var u *user.User
-	var err error
+
+	u, err = user.Current()
 
 	if err != nil {
 		return "", errors.New("Unable to identify current user")

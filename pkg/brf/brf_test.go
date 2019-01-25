@@ -1,9 +1,10 @@
 package brf
 
 import (
+	"os/user"
 	"reflect"
+	"strings"
 	"testing"
-	// ohoheh
 
 	"github.com/jychri/git-in-sync/pkg/flags"
 )
@@ -79,5 +80,23 @@ func TestFirst(t *testing.T) {
 }
 
 func TestRelative(t *testing.T) {
+
+	u, err := user.Current()
+
+	if err != nil {
+		t.Errorf("Relative: Can't identify current user")
+	}
+
+	for _, c := range []struct {
+		in, want string
+	}{
+		{"~/testing", strings.Join([]string{u.HomeDir, "/testing"}, "")},
+		{"~/testing/", strings.Join([]string{u.HomeDir, "/testing"}, "")},
+		{"~/testing/", "/testing"},
+	} {
+		if got, err := Relative(c.in); err != nil || got != c.want {
+			t.Errorf("Relative: (%v != %v)", got, c.want)
+		}
+	}
 
 }

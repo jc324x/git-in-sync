@@ -8,6 +8,7 @@ import (
 // Flags hold flag input
 type Flags struct {
 	Mode    string
+	Config  string
 	Count   int
 	Summary string
 }
@@ -17,8 +18,8 @@ func Init() (f Flags) {
 	var c, m, s string // config, mode, summary
 	var fc int         // flag count
 
-	flag.StringVar(&c, "c", "~/.gisrc.json", "configuration")
 	flag.StringVar(&m, "m", "verify", "mode")
+	flag.StringVar(&c, "c", "~/.gisrc.json", "configuration")
 	flag.Parse()
 
 	// collect and join (e)nabled (f)lags
@@ -44,7 +45,7 @@ func Init() (f Flags) {
 	s = strings.Join(ef, ", ")
 
 	// set Flags
-	f = Flags{m, fc, s}
+	f = Flags{m, c, fc, s}
 
 	return f
 }

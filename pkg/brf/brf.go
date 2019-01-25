@@ -72,9 +72,9 @@ func First(s string) string {
 
 	if len(lines) >= 1 {
 		return lines[0]
-	} else {
-		return ""
 	}
+
+	return ""
 }
 
 // Relative returns a path relative to the current user

@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"os/user"
+	"path"
 	"strings"
 
 	"github.com/jychri/git-in-sync/pkg/flags"
@@ -73,4 +75,23 @@ func First(s string) string {
 	} else {
 		return ""
 	}
+}
+
+func Relative(s string) (string, error) {
+	var t string
+	var u *user.User
+	var err error
+
+	if err != nil {
+		return "", errors.New("Unable to identify current user")
+	}
+
+	t = strings.TrimPrefix(s, "~/")
+
+	if t != s {
+		t = strings.Join([]string{u.HomeDir, "/", t}, "")
+		return path.Clean(t), nil
+	}
+
+	return s, nil
 }

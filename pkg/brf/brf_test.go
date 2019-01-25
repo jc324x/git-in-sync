@@ -3,6 +3,7 @@ package brf
 import (
 	"reflect"
 	"testing"
+	// ohoheh
 
 	"github.com/jychri/git-in-sync/pkg/flags"
 )
@@ -75,4 +76,8 @@ func TestFirst(t *testing.T) {
 			t.Errorf("First: (%v != %v)", got, c.want)
 		}
 	}
+}
+
+func TestRelative(t *testing.T) {
+
 }

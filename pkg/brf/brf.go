@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"log"
 	"os/user"
 	"path"
 	"strings"
@@ -77,22 +78,30 @@ func First(s string) string {
 	return ""
 }
 
-// Relative returns a path relative to the current user
-func Relative(s string) (t string, err error) {
+// AbsUser expands "~/" to "User/user/" and returns a clean path.
+// Given an absolute path, it returns a clean path.
+func AbsUser(s string) string {
 	var u *user.User
 
-	u, err = user.Current()
+	u, err := user.Current()
 
 	if err != nil {
-		return "", errors.New("Unable to identify current user")
+		log.Fatalf("Unable to identify current user")
 	}
 
-	t = strings.TrimPrefix(s, "~/")
-
-	if t != s {
-		t = strings.Join([]string{u.HomeDir, "/", t}, "")
-		return path.Clean(t), nil
+	if !path.IsAbs(s) {
+		return path.Join(u.HomeDir, strings.TrimPrefix(s, "~/"))
 	}
 
-	return s, nil
+	return path.Clean(s)
 }
+
+// Replace with path.Base()...
+// func LastPath(p string) string {
+// 	if strings.Contains(p, "/") == true {
+// 		sp := strings.SplitAfter(p, "/") // split path
+// 		lp := sp[len(sp)-1]              // last path
+// 		return lp
+// 	}
+// 	return p
+// }

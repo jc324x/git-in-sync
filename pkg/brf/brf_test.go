@@ -79,7 +79,7 @@ func TestFirst(t *testing.T) {
 	}
 }
 
-func TestRelative(t *testing.T) {
+func TestAbsUser(t *testing.T) {
 
 	u, err := user.Current()
 
@@ -92,10 +92,10 @@ func TestRelative(t *testing.T) {
 	}{
 		{"~/testing", strings.Join([]string{u.HomeDir, "/testing"}, "")},
 		{"~/testing/", strings.Join([]string{u.HomeDir, "/testing"}, "")},
-		{"~/testing/", "/testing"},
+		{"/testing/", "/testing"},
 	} {
-		if got, err := Relative(c.in); err != nil || got != c.want {
-			t.Errorf("Relative: (%v != %v)", got, c.want)
+		if got := AbsUser(c.in); err != nil || got != c.want {
+			t.Errorf("AbsUser: (%v != %v)", got, c.want)
 		}
 	}
 

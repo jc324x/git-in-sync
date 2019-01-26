@@ -13,6 +13,8 @@ func printEmoji(n int) string {
 	return html.UnescapeString("&#" + strconv.Itoa(n) + ";")
 }
 
+// Emoji collects emoji values as strings.
+// Yes, I could use a map here, but I don't care.
 type Emoji struct {
 	AlarmClock           string
 	Boat                 string
@@ -68,8 +70,7 @@ type Emoji struct {
 	Count                int
 }
 
-// Emoji holds emoji characters as string values.
-// initEmoji returns an Emoji struct with all values initialized.
+// Init returns an Emoji struct with all values initialized.
 func Init() (e Emoji) {
 	e.AlarmClock = printEmoji(9200)
 	e.Boat = printEmoji(128676)
@@ -125,6 +126,7 @@ func Init() (e Emoji) {
 	return e
 }
 
+// ClearScreen clears the screen.
 func ClearScreen() {
 	cmd := exec.Command("clear")
 	cmd.Stdout = os.Stdout

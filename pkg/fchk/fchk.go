@@ -2,13 +2,10 @@ package fchk
 
 import (
 	"io"
-	"log"
 	"os"
-	"os/user"
-	// "path" -> Clean
-	"strings"
 )
 
+// NoPermission is a function that does a thing...
 func NoPermission(info os.FileInfo) bool {
 
 	if info == nil {
@@ -26,6 +23,7 @@ func NoPermission(info os.FileInfo) bool {
 	return false
 }
 
+// IsDirectory is a function that does a thing...
 func IsDirectory(info os.FileInfo) bool {
 	if info == nil {
 		return false
@@ -33,11 +31,11 @@ func IsDirectory(info os.FileInfo) bool {
 
 	if info.IsDir() {
 		return true
-	} else {
-		return false
 	}
+	return false
 }
 
+// IsEmpty is a function that does a thing...
 func IsEmpty(p string) bool {
 	f, err := os.Open(p)
 
@@ -54,6 +52,7 @@ func IsEmpty(p string) bool {
 	return false
 }
 
+// NotEmpty is a function that does a thing...
 func NotEmpty(p string) bool {
 	f, err := os.Open(p)
 
@@ -70,6 +69,7 @@ func NotEmpty(p string) bool {
 	return true
 }
 
+// IsFile is a function that does a thing...
 func IsFile(info os.FileInfo) bool {
 	if info == nil {
 		return false
@@ -77,31 +77,6 @@ func IsFile(info os.FileInfo) bool {
 
 	if info.IsDir() {
 		return false
-	} else {
-		return true
 	}
-}
-
-func validatePath(p string) string {
-	if t := strings.TrimPrefix(p, "~/"); t != p {
-		u, err := user.Current()
-
-		if err != nil {
-			log.Fatalf("Unable to identify the current user")
-		}
-
-		t := strings.Join([]string{u.HomeDir, "/", t}, "")
-		return strings.TrimSuffix(t, "/")
-	}
-	return strings.TrimSuffix(p, "/")
-}
-
-func lastPathSelection(p string) string {
-	if strings.Contains(p, "/") == true {
-		sp := strings.SplitAfter(p, "/") // split path
-		lp := sp[len(sp)-1]              // last path
-		return lp
-	} else {
-		return p
-	}
+	return true
 }

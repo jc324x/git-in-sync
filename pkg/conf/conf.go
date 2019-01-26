@@ -24,7 +24,7 @@ type Config struct {
 	} `json:"bundles"`
 }
 
-// initConfig returns data from ~/.gisrc.json as a Config struct.
+// Init returns data from ~/.gisrc.json or from... as a Config struct.
 func Init(f flags.Flags) (c Config) {
 
 	// get the current user, otherwise fatal

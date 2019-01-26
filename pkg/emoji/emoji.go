@@ -8,13 +8,16 @@ import (
 	"strconv"
 )
 
+// func Get(s string) string {
+
+// }
+
 // printEmoji returns an emoji character as a string value.
 func printEmoji(n int) string {
 	return html.UnescapeString("&#" + strconv.Itoa(n) + ";")
 }
 
 // Emoji collects emoji values as strings.
-// Yes, I could use a map here, but I don't care.
 type Emoji struct {
 	AlarmClock           string
 	Boat                 string

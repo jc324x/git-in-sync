@@ -14,9 +14,9 @@ func TestPrintEmoji(t *testing.T) {
 	}{
 		{9200, "AlarmClock", "⏰"},
 	} {
-		got := e.c.str
+		got := e.AlarmClock
 		if got != c.want {
-
+			t.Errorf("PrintEmoji: (%v != %v)", got, c.want)
 		}
 		// if got := AbsUser(c.in); err != nil || got != c.want {
 		// 	t.Errorf("AbsUser: (%v != %v)", got, c.want)

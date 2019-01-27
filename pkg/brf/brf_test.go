@@ -42,19 +42,28 @@ func TestSummary(t *testing.T) {
 
 	sl1 := []string{"the", "sly", "brown", "jumped", "over", "the", "lazy", "dog"}
 	sl2 := []string{"Lorem", "ipsum", "dolor", "sit", "amet", "consectetur", "adipiscing", "elit", ".", "Maecenas"}
+	sl3 := []string{"a", "b", "c", "d", "e", "f", "g"}
 
 	for _, c := range []struct {
-		sl []string
-		l  int
+		sl   []string
+		l    int
+		want string
 	}{
-		{sl1, 15},
-		{sl2, 25},
+		{sl1, 15, "the, sly, brown, jumped..."},
+		{sl2, 25, "Lorem, ipsum, dolor, sit, amet..."},
+		{sl3, 20, "a, b, c, d, e, f, g"},
 	} {
+
 		got := Summary(c.sl, c.l)
 
 		if len(got) >= (len(got) + 12) {
 			t.Errorf("Summary: != len(got) (%v >= %v)", len(got), (len(got) + 12))
 		}
+
+		if got != c.want {
+			t.Errorf("Summary: (%v != %v)", got, c.want)
+		}
+
 	}
 }
 
@@ -97,6 +106,7 @@ func TestAbsUser(t *testing.T) {
 		if got := AbsUser(c.in); err != nil || got != c.want {
 			t.Errorf("AbsUser: (%v != %v)", got, c.want)
 		}
+
 	}
 
 }

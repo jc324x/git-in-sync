@@ -95,13 +95,3 @@ func AbsUser(s string) string {
 
 	return path.Clean(s)
 }
-
-// Replace with path.Base()...
-// func LastPath(p string) string {
-// 	if strings.Contains(p, "/") == true {
-// 		sp := strings.SplitAfter(p, "/") // split path
-// 		lp := sp[len(sp)-1]              // last path
-// 		return lp
-// 	}
-// 	return p
-// }

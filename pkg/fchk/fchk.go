@@ -12,6 +12,11 @@ func NoPermission(info os.FileInfo) bool {
 		return false
 	}
 
+   if file, err := os.Open(path); err != nil {
+           log.Print("NO => Cant open file for reading: ", path)
+           return false
+
+
 	if len(info.Mode().String()) <= 4 {
 		return true
 	}

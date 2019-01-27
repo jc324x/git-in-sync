@@ -1,6 +1,7 @@
 package fchk
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"path"
@@ -8,27 +9,77 @@ import (
 	"testing"
 )
 
-func GetTestDir() (os.FileInfo, error) {
+func GetTestDir() (os.FileInfo, string) {
 	var abs string
 	var err error
+	var fi os.FileInfo
 
 	if abs, err = filepath.Abs(""); err != nil {
 		log.Fatalf("GetTestDir: Unable to access current directory")
 	}
 
-	td := path.Join(abs, "test_dir")
-	return os.Stat(td)
+	s := path.Join(abs, "test_dir")
+
+	if fi, err = os.Stat(s); err != nil {
+		log.Fatalf("GetTestDir: Unable to get file info")
+	}
+
+	return fi, s
+}
+
+func GetTestFile() (os.FileInfo, string) {
+	var abs string
+	var err error
+	var fi os.FileInfo
+
+	if abs, err = filepath.Abs(""); err != nil {
+		log.Fatalf("GetTestFile: Unable to access current directory")
+	}
+
+	s := path.Join(abs, "test_dir", "test_file")
+
+	if fi, err = os.Stat(s); err != nil {
+		log.Fatalf("GetTestDir: Unable to get file info")
+	}
+
+	return fi, s
 }
 
 func TestNoPermission(t *testing.T) {
-	want := false
+	var want bool
+	var fm os.FileMode
 
-	if td, err := GetTestDir(); err == nil {
+	tf, s := GetTestFile()
 
-		got := NoPermission(td)
+	want = true
+	fm = 0444
 
-		if got != want {
-			t.Errorf("NoPermission: %v (%v != %v)", td.Name(), got, want)
-		}
+	err := os.Chmod(s, fm)
+
+	if err != nil {
+		fmt.Println(err)
+		t.Errorf("NoPermission: Chmod %v error (%v) ", fm, s)
+	}
+
+	got := NoPermission(tf)
+
+	if got != want {
+		t.Errorf("NoPermission: %v (%v != %v)", tf.Name(), got, want)
+	}
+
+	want = false
+	fm = 0644
+
+	err = os.Chmod(s, fm)
+
+	if err != nil {
+		fmt.Println(err)
+		t.Errorf("NoPermission: Chmod %v error (%v) ", fm, s)
+	}
+
+	got = NoPermission(tf)
+
+	if got != want {
+		t.Errorf("NoPermission: %v (%v != %v)", tf.Name(), got, want)
 	}
 }

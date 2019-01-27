@@ -30,7 +30,6 @@ func GetTestDir() (os.FileInfo, string) {
 func GetTestFile() string {
 	var abs string
 	var err error
-	var fi os.FileInfo
 
 	if abs, err = filepath.Abs(""); err != nil {
 		log.Fatalf("GetTestFile: Unable to access current directory")
@@ -39,41 +38,40 @@ func GetTestFile() string {
 	return path.Join(abs, "test_dir", "test_file")
 }
 
-func TestNoPermission(t *testing.T) {
-	var want bool
-	var fm os.FileMode
+func TestSet(t *testing.T) {
+	tf := GetTestFile()
+	var m os.FileMode
 
-	tf, s := GetTestFile()
+	m = 0666
+	os.Chmod(tf, m)
+	fmt.Printf("0666 -> %v\n", NoPermissionP(tf))
 
-	want = true
-	fm = 0444
+	m = 0444
+	os.Chmod(tf, m)
+	fmt.Printf("0444 -> %v\n", NoPermissionP(tf))
+}
 
-	err := os.Chmod(s, fm)
+func TestNoPermissionP(t *testing.T) {
+	tf := GetTestFile()
 
-	if err != nil {
-		fmt.Println(err)
-		t.Errorf("NoPermission: Chmod %v error (%v) ", fm, s)
-	}
+	for i, c := range []struct {
+		want bool
+		fm   os.FileMode
+	}{
+		{false, 0666},
+		{true, 0444},
+	} {
 
-	got := NoPermission(tf)
+		err := os.Chmod(tf, c.fm)
 
-	if got != want {
-		t.Errorf("NoPermission: %v (%v != %v)", tf.Name(), got, want)
-	}
+		if err != nil {
+			t.Errorf("NoPermission: Chmod %v error (%v) ", c.fm, tf)
+		}
 
-	want = false
-	fm = 0644
+		got := NoPermissionP(tf)
 
-	err = os.Chmod(s, fm)
-
-	if err != nil {
-		fmt.Println(err)
-		t.Errorf("NoPermission: Chmod %v error (%v) ", fm, s)
-	}
-
-	got = NoPermission(tf)
-
-	if got != want {
-		t.Errorf("NoPermission: %v (%v != %v)", tf.Name(), got, want)
+		if got != c.want {
+			t.Errorf("NoPermission: (%v != %v) #%v", got, c.want, i)
+		}
 	}
 }

@@ -9,22 +9,15 @@ import (
 	"testing"
 )
 
-func GetTestDir() (os.FileInfo, string) {
+func GetTestDir() string {
 	var abs string
 	var err error
-	var fi os.FileInfo
 
 	if abs, err = filepath.Abs(""); err != nil {
 		log.Fatalf("GetTestDir: Unable to access current directory")
 	}
 
-	s := path.Join(abs, "test_dir")
-
-	if fi, err = os.Stat(s); err != nil {
-		log.Fatalf("GetTestDir: Unable to get file info")
-	}
-
-	return fi, s
+	return path.Join(abs, "test_dir")
 }
 
 func GetTestFile() string {

@@ -27,7 +27,7 @@ func GetTestDir() (os.FileInfo, string) {
 	return fi, s
 }
 
-func GetTestFile() (os.FileInfo, string) {
+func GetTestFile() string {
 	var abs string
 	var err error
 	var fi os.FileInfo
@@ -36,13 +36,7 @@ func GetTestFile() (os.FileInfo, string) {
 		log.Fatalf("GetTestFile: Unable to access current directory")
 	}
 
-	s := path.Join(abs, "test_dir", "test_file")
-
-	if fi, err = os.Stat(s); err != nil {
-		log.Fatalf("GetTestDir: Unable to get file info")
-	}
-
-	return fi, s
+	return path.Join(abs, "test_dir", "test_file")
 }
 
 func TestNoPermission(t *testing.T) {

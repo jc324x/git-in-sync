@@ -5,7 +5,7 @@ import (
 	"os"
 )
 
-// NoPermission is a function that does a thing...
+// NoPermission returns true target file is inaccessible.
 func NoPermission(info os.FileInfo) bool {
 
 	if info == nil {
@@ -23,7 +23,7 @@ func NoPermission(info os.FileInfo) bool {
 	return false
 }
 
-// IsDirectory is a function that does a thing...
+// IsDirectory returns true if the target file is a directory.
 func IsDirectory(info os.FileInfo) bool {
 	if info == nil {
 		return false
@@ -35,7 +35,7 @@ func IsDirectory(info os.FileInfo) bool {
 	return false
 }
 
-// IsEmpty is a function that does a thing...
+// IsEmpty returns true if the target file is an empty directory.
 func IsEmpty(p string) bool {
 	f, err := os.Open(p)
 
@@ -52,7 +52,7 @@ func IsEmpty(p string) bool {
 	return false
 }
 
-// NotEmpty is a function that does a thing...
+// NotEmpty returns true if the target file is an non-empty directory.
 func NotEmpty(p string) bool {
 	f, err := os.Open(p)
 
@@ -69,7 +69,7 @@ func NotEmpty(p string) bool {
 	return true
 }
 
-// IsFile is a function that does a thing...
+// IsFile returns true if the target file is a file.
 func IsFile(info os.FileInfo) bool {
 	if info == nil {
 		return false

@@ -5,17 +5,38 @@ import (
 	"os"
 )
 
+// NoPermissionP ...
+func NoPermissionP(p string) bool {
+
+	if _, err := os.Open(p); err != nil {
+		return true
+	}
+
+	if _, err := os.Stat(p); err != nil {
+		return true
+	}
+
+	if _, err := os.OpenFile(p, os.O_WRONLY, 0666); err != nil {
+		if os.IsPermission(err) {
+			return true
+		}
+	}
+
+	if _, err := os.OpenFile(p, os.O_RDONLY, 0666); err != nil {
+		if os.IsPermission(err) {
+			return true
+		}
+	}
+
+	return false
+}
+
 // NoPermission returns true target file is inaccessible.
 func NoPermission(info os.FileInfo) bool {
 
 	if info == nil {
 		return false
 	}
-
-   if file, err := os.Open(path); err != nil {
-           log.Print("NO => Cant open file for reading: ", path)
-           return false
-
 
 	if len(info.Mode().String()) <= 4 {
 		return true

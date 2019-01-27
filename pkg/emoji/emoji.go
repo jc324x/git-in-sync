@@ -1,10 +1,10 @@
 package emoji
 
 import (
+	"fmt"
 	"html"
 	"os"
 	"os/exec"
-	// "reflect"
 	"strconv"
 )
 
@@ -81,4 +81,11 @@ func ClearScreen() {
 	cmd := exec.Command("clear")
 	cmd.Stdout = os.Stdout
 	cmd.Run()
+}
+
+// PrintAll prints values in map em.
+func PrintAll() {
+	for _, val := range em {
+		fmt.Printf("%v: \"%v\"\n", val, convert(val))
+	}
 }

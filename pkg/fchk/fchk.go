@@ -5,8 +5,8 @@ import (
 	"os"
 )
 
-// NoPermissionP ...
-func NoPermissionP(p string) bool {
+// NoPermission returns true if the file at path (p) can't be read or written to.
+func NoPermission(p string) bool {
 
 	if _, err := os.Open(p); err != nil {
 		return true
@@ -31,34 +31,20 @@ func NoPermissionP(p string) bool {
 	return false
 }
 
-// NoPermission returns true target file is inaccessible.
-func NoPermission(info os.FileInfo) bool {
+// IsDirectory returns true if the given path targets a directory.
+func IsDirectory(p string) (bool, error) {
+	var fi os.FileInfo
+	var err error
 
-	if info == nil {
-		return false
+	if fi, err = os.Stat(p); err != nil {
+		return false, err
 	}
 
-	if len(info.Mode().String()) <= 4 {
-		return true
+	if fi.IsDir() {
+		return true, nil
 	}
 
-	if s := info.Mode().String()[1:4]; s != "rwx" {
-		return true
-	}
-
-	return false
-}
-
-// IsDirectory returns true if the target file is a directory.
-func IsDirectory(info os.FileInfo) bool {
-	if info == nil {
-		return false
-	}
-
-	if info.IsDir() {
-		return true
-	}
-	return false
+	return false, nil
 }
 
 // IsEmpty returns true if the target file is an empty directory.

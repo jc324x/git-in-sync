@@ -1,7 +1,6 @@
 package fchk
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"path"
@@ -31,23 +30,10 @@ func GetTestFile() string {
 	return path.Join(abs, "test_dir", "test_file")
 }
 
-func TestSet(t *testing.T) {
-	tf := GetTestFile()
-	var m os.FileMode
-
-	m = 0666
-	os.Chmod(tf, m)
-	fmt.Printf("0666 -> %v\n", NoPermissionP(tf))
-
-	m = 0444
-	os.Chmod(tf, m)
-	fmt.Printf("0444 -> %v\n", NoPermissionP(tf))
-}
-
 func TestNoPermissionP(t *testing.T) {
 	tf := GetTestFile()
 
-	for i, c := range []struct {
+	for _, c := range []struct {
 		want bool
 		fm   os.FileMode
 	}{
@@ -61,10 +47,48 @@ func TestNoPermissionP(t *testing.T) {
 			t.Errorf("NoPermission: Chmod %v error (%v) ", c.fm, tf)
 		}
 
-		got := NoPermissionP(tf)
+		got := NoPermission(tf)
 
 		if got != c.want {
-			t.Errorf("NoPermission: (%v != %v) #%v", got, c.want, i)
+			t.Errorf("NoPermission: (got: %v,  want: %v)", got, c.want)
 		}
 	}
+}
+
+func TestIsDir(t *testing.T) {
+	td := GetTestDir()
+	tf := GetTestFile()
+
+	for _, c := range []struct {
+		in   string
+		want bool
+	}{
+		{td, true},
+		{tf, false},
+	} {
+
+		got, err := IsDirectory(c.in)
+
+		if err != nil {
+			t.Errorf("IsDirectory: err = %v\n", err.Error())
+		}
+
+		if got != c.want {
+			t.Errorf("IsDirectory: (got: %v, want: %v) {%v}\n", got, c.want, c.in)
+		}
+	}
+}
+
+func TestIsEmpty(t *testing.T) {
+	td := GetTestDir()
+
+	if IsEmpty(td) == true {
+
+	}
+
+}
+
+func TestNotEmpty(t *testing.T) {
+	// td := GetTestDir()
+
 }

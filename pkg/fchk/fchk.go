@@ -5,7 +5,6 @@ import (
 	"os"
 )
 
-// NoPermission returns true if the file at path (p) can't be read or written to.
 func NoPermission(p string) bool {
 
 	if _, err := os.Open(p); err != nil {
@@ -48,20 +47,27 @@ func IsDirectory(p string) (bool, error) {
 }
 
 // IsEmpty returns true if the target file is an empty directory.
-func IsEmpty(p string) bool {
-	f, err := os.Open(p)
+func IsEmpty(p string) (bool, error) {
+	var f *os.File
+	var err error
+
+	if c, err := IsDirectory(p); c != true || err != nil {
+		return false, err
+	}
+
+	f, err = os.Open(p)
 
 	if err != nil {
-		return false
+		return false, err
 	}
 
 	_, err = f.Readdir(1)
 
 	if err == io.EOF {
-		return true
+		return true, nil
 	}
 
-	return false
+	return false, nil
 }
 
 // NotEmpty returns true if the target file is an non-empty directory.

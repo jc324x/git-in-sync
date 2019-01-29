@@ -74,7 +74,7 @@ func makeTmpF() string {
 		log.Fatalf("makeTmpF (%v)", err.Error())
 	}
 
-	p = path.Join(p, itmp, itda)
+	p = path.Join(p, itmp, itda, itf)
 
 	if _, err = os.OpenFile(p, os.O_RDONLY|os.O_CREATE, 0755); err != nil {
 		log.Fatalf("makeTmpF (%v)", err.Error())
@@ -83,19 +83,10 @@ func makeTmpF() string {
 	return p
 }
 
-func restore(sl []string) {
-	for _, tt := range tfs {
-		if err := os.Chmod(tt, 0755); err != nil {
-			log.Fatalf("restore (%v)", err.Error())
-		}
-	}
-}
-
-var tmp = makeTmp()                   // .../fchk/tmp (dir)
-var tda = makeTmpDE()                 // .../fchk/tmp/empty (dir)
-var tde = makeTmpDA()                 // .../fchk/tmp/active (dir)
-var tf = makeTmpF()                   // .../fchk/tmp/active/file (file)
-var tfs = []string{tmp, tda, tde, tf} // test
+var tmp = makeTmp()   // .../fchk/tmp (dir)
+var tda = makeTmpDA() // .../fchk/tmp/empty (dir)
+var tde = makeTmpDE() // .../fchk/tmp/active (dir)
+var tf = makeTmpF()   // .../fchk/tmp/active/file (file)
 
 func TestNoPermission(t *testing.T) {
 
@@ -117,38 +108,52 @@ func TestNoPermission(t *testing.T) {
 	}
 }
 
-// func TestIsDir(t *testing.T) {
-// 	// td := GetTestDir()
-// 	// tf := GetTestFile()
+func TestIsDir(t *testing.T) {
 
-// 	for _, c := range []struct {
-// 		in   string
-// 		want bool
-// 	}{
-// 		{td, true},
-// 		{tf, false},
-// 	} {
+	for _, c := range []struct {
+		in   string
+		want bool
+	}{
+		{tmp, true},
+		{tda, true},
+		{tde, true},
+		{tf, false},
+	} {
 
-// 		got, err := IsDirectory(c.in)
+		got, err := IsDirectory(c.in)
 
-// 		if err != nil {
-// 			t.Errorf("IsDirectory: err = %v\n", err.Error())
-// 		}
+		if err != nil {
+			t.Errorf("IsDirectory: err = %v\n", err.Error())
+		}
 
-// 		if got != c.want {
-// 			t.Errorf("IsDirectory: (got: %v, want: %v) {%v}\n", got, c.want, c.in)
-// 		}
-// 	}
-// }
+		if got != c.want {
+			t.Errorf("IsDirectory: (got: %v, want: %v) {%v}\n", got, c.want, c.in)
+		}
+	}
+}
 
-// func TestIsEmpty(t *testing.T) {
-// 	td := GetTestDir()
+func TestIsEmpty(t *testing.T) {
+	for _, c := range []struct {
+		in   string
+		want bool
+	}{
+		{tmp, false},
+		{tda, false},
+		{tde, true},
+		{tf, false},
+	} {
 
-// 	if IsEmpty(td) == true {
+		got, err := IsEmpty(c.in)
 
-// 	}
+		if err != nil {
+			t.Errorf("IsEmpty: err = %v\n", err.Error())
+		}
 
-// }
+		if got != c.want {
+			t.Errorf("IsEmpty: (got: %v, want: %v) {%v}\n", got, c.want, c.in)
+		}
+	}
+}
 
 func TestClean(t *testing.T) {
 	var p string

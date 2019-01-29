@@ -1,37 +1,45 @@
 package fchk
 
 import (
+	// "io/ioutil"
 	"log"
 	"os"
 	"path"
-	"path/filepath"
+	// "path/filepath"
 	"testing"
 )
 
-func GetTestDir() string {
-	var abs string
-	var err error
+func makeTmpD() (string, string) {
+	tmp := os.TempDir()
+	ed := path.Join(tmp, "fchk_test", "empty_dir")
 
-	if abs, err = filepath.Abs(""); err != nil {
-		log.Fatalf("GetTestDir: Unable to access current directory")
+	if err := os.MkdirAll(ed, 0666); err != nil {
+		log.Fatalf("makeTmpD: Error creating '.../fchk_test/empty_dir' (%v)", err.Error())
 	}
 
-	return path.Join(abs, "test_dir")
-}
+	ad := path.Join(tmp, "fchk_test", "active_dir")
 
-func GetTestFile() string {
-	var abs string
-	var err error
-
-	if abs, err = filepath.Abs(""); err != nil {
-		log.Fatalf("GetTestFile: Unable to access current directory")
+	if err := os.MkdirAll(ad, 0666); err != nil {
+		log.Fatalf("makeTmpD: Error creatin  '.../fchk_test/active_dir' (%v)", err.Error())
 	}
 
-	return path.Join(abs, "test_dir", "test_file")
+	return ed, ad
 }
+
+func makeTmpF(ad string) string {
+	p := path.Join(ad, "test_file")
+
+	if _, err := os.Create(p); err != nil {
+		log.Fatalf("makeTmpF: Error creating '.../fchk_test/active_dir/test_file'")
+	}
+
+	return p
+}
+
+var ad, ed = makeTmpD()
+var f = makeTmpF(ad)
 
 func TestNoPermissionP(t *testing.T) {
-	tf := GetTestFile()
 
 	for _, c := range []struct {
 		want bool
@@ -41,13 +49,13 @@ func TestNoPermissionP(t *testing.T) {
 		{true, 0444},
 	} {
 
-		err := os.Chmod(tf, c.fm)
+		err := os.Chmod(f, c.fm)
 
 		if err != nil {
-			t.Errorf("NoPermission: Chmod %v error (%v) ", c.fm, tf)
+			t.Errorf("NoPermission: Chmod %v error (%v) ", c.fm, f)
 		}
 
-		got := NoPermission(tf)
+		got := NoPermission(f)
 
 		if got != c.want {
 			t.Errorf("NoPermission: (got: %v,  want: %v)", got, c.want)
@@ -55,40 +63,43 @@ func TestNoPermissionP(t *testing.T) {
 	}
 }
 
-func TestIsDir(t *testing.T) {
-	td := GetTestDir()
-	tf := GetTestFile()
+// func TestIsDir(t *testing.T) {
+// 	// td := GetTestDir()
+// 	// tf := GetTestFile()
 
-	for _, c := range []struct {
-		in   string
-		want bool
-	}{
-		{td, true},
-		{tf, false},
-	} {
+// 	for _, c := range []struct {
+// 		in   string
+// 		want bool
+// 	}{
+// 		{td, true},
+// 		{tf, false},
+// 	} {
 
-		got, err := IsDirectory(c.in)
+// 		got, err := IsDirectory(c.in)
 
-		if err != nil {
-			t.Errorf("IsDirectory: err = %v\n", err.Error())
-		}
+// 		if err != nil {
+// 			t.Errorf("IsDirectory: err = %v\n", err.Error())
+// 		}
 
-		if got != c.want {
-			t.Errorf("IsDirectory: (got: %v, want: %v) {%v}\n", got, c.want, c.in)
-		}
-	}
-}
+// 		if got != c.want {
+// 			t.Errorf("IsDirectory: (got: %v, want: %v) {%v}\n", got, c.want, c.in)
+// 		}
+// 	}
+// }
 
-func TestIsEmpty(t *testing.T) {
-	td := GetTestDir()
+// func TestIsEmpty(t *testing.T) {
+// 	td := GetTestDir()
 
-	if IsEmpty(td) == true {
+// 	if IsEmpty(td) == true {
 
-	}
+// 	}
 
-}
+// }
 
 func TestNotEmpty(t *testing.T) {
-	// td := GetTestDir()
-
+	t.Log(os.TempDir())
 }
+
+// func Testy(t *testing.T) {
+
+// }

@@ -9,22 +9,58 @@ import (
 )
 
 const (
-	tmpd string = "tmp_dir"
-	tmpf string = "tmp_file"
+	itmp string = "tmp"
+	itde string = "empty"
+	itda string = "active"
+	itf  string = "file"
 )
 
-func makeTmpD() string {
-	var p string
+func makeTmp() string {
+	var abs, p string
 	var err error
 
 	if p, err = filepath.Abs(""); err != nil {
-		log.Fatalf("makeTmpD (%v)", err.Error())
+		log.Fatalf("makeTmp (%v)", err.Error())
 	}
 
-	p = path.Join(p, tmpd)
+	p = path.Join(abs, itmp)
 
-	if err = os.Mkdir(p, 0777); err != nil {
-		log.Fatalf("makeTmpD (%v)", err.Error())
+	if err = os.Mkdir(p, 0755); err != nil {
+		log.Fatalf("makeTmp (%v)", err.Error())
+	}
+
+	return p
+}
+
+func makeTmpDE() string {
+	var abs, p string
+	var err error
+
+	if p, err = filepath.Abs(""); err != nil {
+		log.Fatalf("makeTmpDE (%v)", err.Error())
+	}
+
+	p = path.Join(abs, itmp, itde)
+
+	if err = os.Mkdir(p, 0755); err != nil {
+		log.Fatalf("makeTmpDE (%v)", err.Error())
+	}
+
+	return p
+}
+
+func makeTmpDA() string {
+	var abs, p string
+	var err error
+
+	if p, err = filepath.Abs(""); err != nil {
+		log.Fatalf("makeTmpDA (%v)", err.Error())
+	}
+
+	p = path.Join(abs, itmp, itda)
+
+	if err = os.Mkdir(p, 0755); err != nil {
+		log.Fatalf("makeTmpDA (%v)", err.Error())
 	}
 
 	return p
@@ -38,35 +74,42 @@ func makeTmpF() string {
 		log.Fatalf("makeTmpF (%v)", err.Error())
 	}
 
-	p = path.Join(p, tmpd, tmpf)
+	p = path.Join(p, itmp, itda)
 
-	if _, err = os.OpenFile(p, os.O_RDONLY|os.O_CREATE, 0777); err != nil {
+	if _, err = os.OpenFile(p, os.O_RDONLY|os.O_CREATE, 0755); err != nil {
 		log.Fatalf("makeTmpF (%v)", err.Error())
 	}
 
 	return p
 }
 
-var td = makeTmpD()
-var tf = makeTmpF()
+func restore(sl []string) {
+	for _, tt := range tfs {
+		if err := os.Chmod(tt, 0755); err != nil {
+			log.Fatalf("restore (%v)", err.Error())
+		}
+	}
+}
 
-func TestNoPermissionP(t *testing.T) {
+var tmp = makeTmp()                   // .../fchk/tmp (dir)
+var tda = makeTmpDE()                 // .../fchk/tmp/empty (dir)
+var tde = makeTmpDA()                 // .../fchk/tmp/active (dir)
+var tf = makeTmpF()                   // .../fchk/tmp/active/file (file)
+var tfs = []string{tmp, tda, tde, tf} // test
+
+func TestNoPermission(t *testing.T) {
 
 	for _, c := range []struct {
+		in   string
 		want bool
-		fm   os.FileMode
 	}{
-		{false, 0666},
-		{true, 0444},
+		{tmp, false},
+		{tda, false},
+		{tde, false},
+		{tf, false},
 	} {
 
-		err := os.Chmod(tf, c.fm)
-
-		if err != nil {
-			t.Errorf("NoPermission: Chmod %v error (%v) ", c.fm, tf)
-		}
-
-		got := NoPermission(tf)
+		got := NoPermission(c.in)
 
 		if got != c.want {
 			t.Errorf("NoPermission: (got: %v,  want: %v)", got, c.want)
@@ -115,7 +158,7 @@ func TestClean(t *testing.T) {
 		t.Errorf("Clean: (%v)", err.Error())
 	}
 
-	p = path.Join(p, tmpd)
+	p = path.Join(p, tmp)
 
 	if err = os.RemoveAll(p); err != nil {
 		t.Errorf("Clean: (%v)", err.Error())

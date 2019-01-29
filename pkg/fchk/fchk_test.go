@@ -1,43 +1,54 @@
 package fchk
 
 import (
-	// "io/ioutil"
 	"log"
 	"os"
 	"path"
-	// "path/filepath"
+	"path/filepath"
 	"testing"
 )
 
-func makeTmpD() (string, string) {
-	tmp := os.TempDir()
-	ed := path.Join(tmp, "fchk_test", "empty_dir")
+const (
+	tmpd string = "tmp_dir"
+	tmpf string = "tmp_file"
+)
 
-	if err := os.MkdirAll(ed, 0666); err != nil {
-		log.Fatalf("makeTmpD: Error creating '.../fchk_test/empty_dir' (%v)", err.Error())
+func makeTmpD() string {
+	var p string
+	var err error
+
+	if p, err = filepath.Abs(""); err != nil {
+		log.Fatalf("makeTmpD (%v)", err.Error())
 	}
 
-	ad := path.Join(tmp, "fchk_test", "active_dir")
+	p = path.Join(p, tmpd)
 
-	if err := os.MkdirAll(ad, 0666); err != nil {
-		log.Fatalf("makeTmpD: Error creatin  '.../fchk_test/active_dir' (%v)", err.Error())
-	}
-
-	return ed, ad
-}
-
-func makeTmpF(ad string) string {
-	p := path.Join(ad, "test_file")
-
-	if _, err := os.Create(p); err != nil {
-		log.Fatalf("makeTmpF: Error creating '.../fchk_test/active_dir/test_file'")
+	if err = os.Mkdir(p, 0777); err != nil {
+		log.Fatalf("makeTmpD (%v)", err.Error())
 	}
 
 	return p
 }
 
-var ad, ed = makeTmpD()
-var f = makeTmpF(ad)
+func makeTmpF() string {
+	var p string
+	var err error
+
+	if p, err = filepath.Abs(""); err != nil {
+		log.Fatalf("makeTmpF (%v)", err.Error())
+	}
+
+	p = path.Join(p, tmpd, tmpf)
+
+	if _, err = os.OpenFile(p, os.O_RDONLY|os.O_CREATE, 0777); err != nil {
+		log.Fatalf("makeTmpF (%v)", err.Error())
+	}
+
+	return p
+}
+
+var td = makeTmpD()
+var tf = makeTmpF()
 
 func TestNoPermissionP(t *testing.T) {
 
@@ -49,13 +60,13 @@ func TestNoPermissionP(t *testing.T) {
 		{true, 0444},
 	} {
 
-		err := os.Chmod(f, c.fm)
+		err := os.Chmod(tf, c.fm)
 
 		if err != nil {
-			t.Errorf("NoPermission: Chmod %v error (%v) ", c.fm, f)
+			t.Errorf("NoPermission: Chmod %v error (%v) ", c.fm, tf)
 		}
 
-		got := NoPermission(f)
+		got := NoPermission(tf)
 
 		if got != c.want {
 			t.Errorf("NoPermission: (got: %v,  want: %v)", got, c.want)
@@ -96,10 +107,17 @@ func TestNoPermissionP(t *testing.T) {
 
 // }
 
-func TestNotEmpty(t *testing.T) {
-	t.Log(os.TempDir())
+func TestClean(t *testing.T) {
+	var p string
+	var err error
+
+	if p, err = filepath.Abs(""); err != nil {
+		t.Errorf("Clean: (%v)", err.Error())
+	}
+
+	p = path.Join(p, tmpd)
+
+	if err = os.RemoveAll(p); err != nil {
+		t.Errorf("Clean: (%v)", err.Error())
+	}
 }
-
-// func Testy(t *testing.T) {
-
-// }

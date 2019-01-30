@@ -5,32 +5,42 @@ import (
 	"os"
 )
 
-func NoPermission(p string) bool {
+// NoPermission returns true if the target can't be read,
+// can't be written to or doesn't exist.
+func NoPermission(p string) (bool, error) {
+	var f *os.File
+	var err error
 
-	if _, err := os.Open(p); err != nil {
-		return true
+	if f, err = os.Open(p); err != nil {
+		return true, err
 	}
 
-	if _, err := os.Stat(p); err != nil {
-		return true
+	defer f.Close()
+
+	if _, err = os.Stat(p); err != nil {
+		return true, err
 	}
 
-	if _, err := os.OpenFile(p, os.O_WRONLY, 0666); err != nil {
+	if f, err = os.OpenFile(p, os.O_WRONLY, 0666); err != nil {
 		if os.IsPermission(err) {
-			return true
+			return true, err
 		}
 	}
 
-	if _, err := os.OpenFile(p, os.O_RDONLY, 0666); err != nil {
+	defer f.Close()
+
+	if f, err = os.OpenFile(p, os.O_RDONLY, 0666); err != nil {
 		if os.IsPermission(err) {
-			return true
+			return true, err
 		}
 	}
 
-	return false
+	defer f.Close()
+
+	return false, nil
 }
 
-// IsDirectory returns true if the given path targets a directory.
+// IsDirectory returns true if the target is a directory.
 func IsDirectory(p string) (bool, error) {
 	var fi os.FileInfo
 	var err error
@@ -46,7 +56,7 @@ func IsDirectory(p string) (bool, error) {
 	return false, nil
 }
 
-// IsEmpty returns true if the target file is an empty directory.
+// IsEmpty returns true if the target is an empty directory.
 func IsEmpty(p string) (bool, error) {
 	var f *os.File
 	var err error
@@ -56,6 +66,7 @@ func IsEmpty(p string) (bool, error) {
 	}
 
 	f, err = os.Open(p)
+	defer f.Close()
 
 	if err != nil {
 		return false, err
@@ -70,31 +81,34 @@ func IsEmpty(p string) (bool, error) {
 	return false, nil
 }
 
-// NotEmpty returns true if the target file is an non-empty directory.
-func NotEmpty(p string) bool {
-	f, err := os.Open(p)
+// NotEmpty returns true if the target is an non-empty directory.
+func NotEmpty(p string) (bool, error) {
+	var f *os.File
+	var err error
 
-	if err != nil {
-		return false
+	if f, err = os.Open(p); err != nil {
+		return false, err
 	}
 
-	_, err = f.Readdir(1)
-
-	if err == io.EOF {
-		return false
+	if _, err = f.Readdir(1); err == io.EOF {
+		return false, err
 	}
 
-	return true
+	return true, nil
 }
 
-// IsFile returns true if the target file is a file.
-func IsFile(info os.FileInfo) bool {
-	if info == nil {
-		return false
+// IsFile returns true if the target is a file.
+func IsFile(p string) (bool, error) {
+	var fi os.FileInfo
+	var err error
+
+	if fi, err = os.Stat(p); err != nil {
+		return false, err
 	}
 
-	if info.IsDir() {
-		return false
+	if fi.IsDir() {
+		return false, nil
 	}
-	return true
+
+	return true, nil
 }

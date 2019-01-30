@@ -100,7 +100,11 @@ func TestNoPermission(t *testing.T) {
 		{tf, false},
 	} {
 
-		got := NoPermission(c.in)
+		got, err := NoPermission(c.in)
+
+		if err != nil {
+			t.Errorf("NoPermission: error (%v)", err.Error())
+		}
 
 		if got != c.want {
 			t.Errorf("NoPermission: (got: %v,  want: %v)", got, c.want)
@@ -155,6 +159,31 @@ func TestIsEmpty(t *testing.T) {
 	}
 }
 
+func TestIsFile(t *testing.T) {
+	for _, c := range []struct {
+		in   string
+		want bool
+	}{
+		{tmp, false},
+		{tda, false},
+		{tde, false},
+		{tf, true},
+	} {
+
+		got, err := IsFile(c.in)
+
+		if err != nil {
+			t.Errorf("IsFile: err = %v\n", err.Error())
+		}
+
+		if got != c.want {
+			t.Errorf("IsFile: (got: %v, want: %v) {%v}\n", got, c.want, c.in)
+		}
+	}
+
+}
+
+// Removes the temporary directory and files created for these tests.
 func TestClean(t *testing.T) {
 	var p string
 	var err error

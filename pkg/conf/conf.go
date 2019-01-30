@@ -10,8 +10,7 @@ import (
 	"github.com/jychri/git-in-sync/pkg/flags"
 )
 
-// Config holds the data from ~/.gisrc.json
-// or a test gisrc.json file after Unmasrhalling.
+// Config holds the data from gisrc.json file.
 type Config struct {
 	Bundles []struct {
 		Path  string `json:"path"`
@@ -24,7 +23,7 @@ type Config struct {
 	} `json:"bundles"`
 }
 
-// Init returns data from ~/.gisrc.json or from... as a Config struct.
+// Init returns unmarshalled data from a gisrc.json file.
 func Init(f flags.Flags) (c Config) {
 
 	// get the current user, otherwise fatal

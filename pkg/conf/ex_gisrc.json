@@ -1,0 +1,46 @@
+{
+  "bundles": [{
+    "path": "~/testing_gis",
+    "zones": [{
+        "user": "hendricius",
+        "remote": "github",
+        "division": "recipes",
+        "repositories": [
+          "pizza-dough"
+        ]
+      },
+      {
+        "user": "cocktails-for-programmers",
+        "remote": "github",
+        "division": "recipes",
+        "repositories": [
+          "cocktails-for-programmers"
+        ]
+      },
+      {
+        "user": "rochacbruno",
+        "remote": "github",
+        "division": "recipes",
+        "repositories": [
+          "vegan_recipes"
+        ]
+      },
+      {
+        "user": "niw",
+        "remote": "github",
+        "division": "recipes",
+        "repositories": [
+          "ramen"
+        ]
+      },
+      {
+        "user": "hendricius",
+        "remote": "github",
+        "division": "recipes",
+        "repositories": [
+          "the-bread-code"
+        ]
+      }
+    ]
+  }]
+}

@@ -10,7 +10,7 @@ import (
 	"github.com/jychri/git-in-sync/pkg/flags"
 )
 
-// Config holds the data from gisrc.json file.
+// Config holds unmrashalled data from gisrc.json.
 type Config struct {
 	Bundles []struct {
 		Path  string `json:"path"`
@@ -23,31 +23,30 @@ type Config struct {
 	} `json:"bundles"`
 }
 
-// Init returns unmarshalled data from a gisrc.json file.
+// Init returns unmarshalled data from gisrc.json.
 func Init(f flags.Flags) (c Config) {
+	var u *user.User
+	var err error
+	var p string
+	var bs []byte
 
-	// get the current user, otherwise fatal
-	u, err := user.Current()
-
-	if err != nil {
-		log.Fatal(err)
+	if u, err = user.Current(); err != nil {
+		log.Fatalf("Can't id the current user (%v)", err.Error())
 	}
 
-	// expand "~/" to "/Users/user"
-	g := fmt.Sprintf("%v/.gisrc.json", u.HomeDir)
-
-	// read file
-	r, err := ioutil.ReadFile(g)
-
-	if err != nil {
-		log.Fatalf("No file found at %v\n", g)
+	switch f.Config {
+	case "~/.gisrc.json":
+		p = fmt.Sprintf("%v/.gisrc.json", u.HomeDir)
+	default:
+		p = f.Config
 	}
 
-	// unmarshall json
-	err = json.Unmarshal(r, &c)
+	if bs, err = ioutil.ReadFile(p); err != nil {
+		log.Fatalf("Can't read file at (%v)\n", p)
+	}
 
-	if err != nil {
-		log.Fatalf("Can't unmarshal JSON from %v\n", g)
+	if err = json.Unmarshal(bs, &c); err != nil {
+		log.Fatalf("Can't unmarshal JSON from (%v)\n", p)
 	}
 
 	return c

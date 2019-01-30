@@ -13,6 +13,7 @@ type Flags struct {
 	Summary string
 }
 
+// Init ...
 func Init() (f Flags) {
 
 	var c, m, s string // config, mode, summary
@@ -27,11 +28,11 @@ func Init() (f Flags) {
 
 	// mode
 	if m != "" {
-		fc += 1
+		fc++
 	}
 
 	ef = append(ef, c)
-	fc += 1
+	fc++
 
 	// set unsupported modes to "verify"
 	switch m {

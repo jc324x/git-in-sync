@@ -2,37 +2,22 @@ package flags
 
 import (
 	"flag"
-	"strings"
 )
 
-// Flags hold flag input
+// Flags ...
 type Flags struct {
-	Mode    string
-	Config  string
-	Count   int
-	Summary string
+	Mode   string
+	Config string
 }
 
 // Init ...
 func Init() (f Flags) {
 
-	var c, m, s string // config, mode, summary
-	var fc int         // flag count
+	var c, m string
 
 	flag.StringVar(&m, "m", "verify", "mode")
 	flag.StringVar(&c, "c", "~/.gisrc.json", "configuration")
 	flag.Parse()
-
-	// collect and join (e)nabled (f)lags
-	var ef []string
-
-	// mode
-	if m != "" {
-		fc++
-	}
-
-	ef = append(ef, c)
-	fc++
 
 	// set unsupported modes to "verify"
 	switch m {
@@ -40,13 +25,9 @@ func Init() (f Flags) {
 	default:
 		m = "verify"
 	}
-	ef = append(ef, m)
-
-	// summary
-	s = strings.Join(ef, ", ")
 
 	// set Flags
-	f = Flags{m, c, fc, s}
+	f = Flags{Mode: m, Config: c}
 
 	return f
 }

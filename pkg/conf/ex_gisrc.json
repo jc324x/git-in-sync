@@ -4,7 +4,7 @@
     "zones": [{
         "user": "hendricius",
         "remote": "github",
-        "division": "recipes",
+        "workspace": "recipes",
         "repositories": [
           "pizza-dough"
         ]
@@ -12,7 +12,7 @@
       {
         "user": "cocktails-for-programmers",
         "remote": "github",
-        "division": "recipes",
+        "workspace": "recipes",
         "repositories": [
           "cocktails-for-programmers"
         ]
@@ -20,7 +20,7 @@
       {
         "user": "rochacbruno",
         "remote": "github",
-        "division": "recipes",
+        "workspace": "recipes",
         "repositories": [
           "vegan_recipes"
         ]
@@ -28,7 +28,7 @@
       {
         "user": "niw",
         "remote": "github",
-        "division": "recipes",
+        "workspace": "recipes",
         "repositories": [
           "ramen"
         ]
@@ -36,7 +36,7 @@
       {
         "user": "hendricius",
         "remote": "github",
-        "division": "recipes",
+        "workspace": "recipes",
         "repositories": [
           "the-bread-code"
         ]

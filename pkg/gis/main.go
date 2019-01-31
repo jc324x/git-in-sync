@@ -9,7 +9,7 @@ import (
 	"github.com/jychri/git-in-sync/pkg/timer"
 )
 
-// Init starts up gis...
+// Init ...
 func Init() (e emoji.Emoji, f flags.Flags, rs repos.Repos, t *timer.Timer) {
 
 	// clear the screen

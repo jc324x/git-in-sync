@@ -23,12 +23,10 @@ type Config struct {
 	} `json:"bundles"`
 }
 
-// Init returns unmarshalled data from gisrc.json.
-func Init(f flags.Flags) (c Config) {
+// Path ...
+func Path(f flags.Flags) string {
 	var u *user.User
 	var err error
-	var p string
-	var bs []byte
 
 	if u, err = user.Current(); err != nil {
 		log.Fatalf("Can't id the current user (%v)", err.Error())
@@ -36,10 +34,19 @@ func Init(f flags.Flags) (c Config) {
 
 	switch f.Config {
 	case "~/.gisrc.json":
-		p = fmt.Sprintf("%v/.gisrc.json", u.HomeDir)
+		return fmt.Sprintf("%v/.gisrc.json", u.HomeDir)
 	default:
-		p = f.Config
+		return f.Config
 	}
+}
+
+// Init returns unmarshalled data from gisrc.json.
+func Init(f flags.Flags) (c Config) {
+	var bs []byte
+	var err error
+	var p string
+
+	p = Path(f)
 
 	if bs, err = ioutil.ReadFile(p); err != nil {
 		log.Fatalf("Can't read file at (%v)\n", p)

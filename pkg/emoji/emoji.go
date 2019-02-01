@@ -66,7 +66,7 @@ func convert(n int) string {
 	return html.UnescapeString("&#" + strconv.Itoa(n) + ";")
 }
 
-// Get returns an emoji character as a string
+// Get returns an emoji character as a string.
 func Get(s string) string {
 
 	if val, ok := em[s]; ok {
@@ -74,6 +74,11 @@ func Get(s string) string {
 	}
 
 	return "#"
+}
+
+// Count returns the number of emoji in the map.
+func Count() int {
+	return len(em)
 }
 
 // ClearScreen clears the screen.

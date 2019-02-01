@@ -2,7 +2,6 @@ package conf
 
 import (
 	"io/ioutil"
-	"log"
 	"os"
 	"path"
 	"path/filepath"
@@ -93,25 +92,18 @@ func TestInit(t *testing.T) {
 			t.Errorf("Init: (%v != %v)", ts[i].user, zs[i].User)
 		}
 
-		log.Printf("User: %v == %v\n", ts[i].user, zs[i].User)
-
 		if ts[i].remote != zs[i].Remote {
 			t.Errorf("Init: (%v != %v)", ts[i].remote, zs[i].Remote)
 		}
-
-		log.Printf("Remote: %v == %v\n", ts[i].remote, zs[i].Remote)
 
 		if ts[i].workspace != zs[i].Workspace {
 			t.Errorf("Init: (%v != %v)", ts[i].workspace, zs[i].Workspace)
 		}
 
-		log.Printf("Workspace: %v == %v\n", ts[i].workspace, zs[i].Workspace)
-
 		if !reflect.DeepEqual(ts[i].repos, zs[i].Repos) {
 			t.Errorf("Init: (%v != %v)", ts[i].repos, zs[i].Repos)
 		}
 
-		log.Printf("Repos: %v == %v\n", ts[i].repos, zs[i].Repos)
 	}
 
 	if err = os.Remove(p); err != nil {

@@ -13,12 +13,13 @@ import (
 
 	"github.com/jychri/git-in-sync/pkg/brf"
 	"github.com/jychri/git-in-sync/pkg/conf"
-	"github.com/jychri/git-in-sync/pkg/emoji"
-	"github.com/jychri/git-in-sync/pkg/fchk"
+	e "github.com/jychri/git-in-sync/pkg/emoji"
+	// "github.com/jychri/git-in-sync/pkg/fchk"
 	"github.com/jychri/git-in-sync/pkg/flags"
 	"github.com/jychri/git-in-sync/pkg/timer"
 )
 
+// Repo ...
 type Repo struct {
 
 	// initRun -> initRepos -> initRepo
@@ -165,9 +166,8 @@ func initR(zd string, zu string, zr string, bp string, rn string) *Repo {
 func notVerified(r *Repo) bool {
 	if r.Verified == false {
 		return true
-	} else {
-		return false
 	}
+	return false
 }
 
 func (r *Repo) markError(err string, name string) {
@@ -844,10 +844,10 @@ func (r *Repo) gitStatusPorcelain() {
 
 // initRepo returns a *Repo with initial values set.
 
-// --> Repos: Collection of Repos
-
+// Repos ...
 type Repos []*Repo
 
+// Init ...
 func Init(c conf.Config) (rs Repos) {
 
 	// print
@@ -913,11 +913,15 @@ func initSkippedRepos(rs Repos) (skrs Repos) {
 }
 
 // sort A-Z by r.Name
+
+// NameSort ...
 func (rs Repos) NameSort() {
 	sort.SliceStable(rs, func(i, j int) bool { return rs[i].Name < rs[j].Name })
 }
 
 // sort A-Z by r.DivPath, then r.Name
+
+// PathSort ...
 func (rs Repos) PathSort() {
 	sort.SliceStable(rs, func(i, j int) bool { return rs[i].Name < rs[j].Name })
 	sort.SliceStable(rs, func(i, j int) bool { return rs[i].DivPath < rs[j].DivPath })
@@ -1341,7 +1345,8 @@ func (rs Repos) verifyCloned() {
 
 // }
 
-func (rs Repos) VerifyDivs(e emoji.Emoji, f flags.Flags, t *timer.Timer) {
+// VerifyDivs ...
+func (rs Repos) VerifyDivs(f flags.Flags, t *timer.Timer) {
 
 	// sort
 	rs.PathSort()
@@ -1361,7 +1366,7 @@ func (rs Repos) VerifyDivs(e emoji.Emoji, f flags.Flags, t *timer.Timer) {
 	// zds := brf.Summary(zdvs, 25) // zone division summary
 
 	// print
-	brf.Printv(f, "%v  verifying divs [%v](%v)", e.FileCabinet, len(dvs), zdvs)
+	brf.Printv(f, "%v  verifying divs [%v](%v)", e.Get("FileCabinet"), len(dvs), zdvs)
 
 	// track created, verified and missing divs
 	var cd []string // created divs
@@ -1374,31 +1379,31 @@ func (rs Repos) VerifyDivs(e emoji.Emoji, f flags.Flags, t *timer.Timer) {
 
 		// create div if missing and active run
 		if os.IsNotExist(err) {
-			brf.Printv(f, "%v creating %v", e.Folder, r.DivPath)
+			brf.Printv(f, "%v creating %v", e.Get("Folder"), r.DivPath)
 			os.MkdirAll(r.DivPath, 0777)
 			cd = append(cd, r.DivPath)
 		}
 
 		// check div status
-		info, err := os.Stat(r.DivPath)
+		// info, err := os.Stat(r.DivPath)
 
-		switch {
-		case fchk.NoPermission(info):
-			// r.markError(e, f, "fatal: No permsission", "verify-divs")
-			id = append(id, r.DivPath)
-		case !info.IsDir():
-			// r.markError(e, f, "fatal: File occupying path", "verify-divs")
-			id = append(id, r.DivPath)
-		case os.IsNotExist(err):
-			// r.markError(e, f, "fatal: No directory", "verify-divs")
-			id = append(id, r.DivPath)
-		case err != nil:
-			// r.markError(e, f, "fatal: No directory", "verify-divs")
-			id = append(id, r.DivPath)
-		default:
-			r.Verified = true
-			vd = append(vd, r.DivPath)
-		}
+		// switch {
+		// case fchk.NoPermission(info):
+		// 	// r.markError(e, f, "fatal: No permsission", "verify-divs")
+		// 	id = append(id, r.DivPath)
+		// case !info.IsDir():
+		// 	// r.markError(e, f, "fatal: File occupying path", "verify-divs")
+		// 	id = append(id, r.DivPath)
+		// case os.IsNotExist(err):
+		// 	// r.markError(e, f, "fatal: No directory", "verify-divs")
+		// 	id = append(id, r.DivPath)
+		// case err != nil:
+		// 	// r.markError(e, f, "fatal: No directory", "verify-divs")
+		// 	id = append(id, r.DivPath)
+		// default:
+		// 	r.Verified = true
+		// 	vd = append(vd, r.DivPath)
+		// }
 	}
 
 	// timer

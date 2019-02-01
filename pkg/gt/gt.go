@@ -44,4 +44,15 @@ var (
 			}]
 		}
 `)
+
+	// TSS is a test slice of structs.
+	TSS = []struct {
+		User, Remote, Workspace string
+		Repos                   []string
+	}{
+		{"hendricius", "github", "recipes", []string{"pizza-dough", "the-bread-code"}},
+		{"cocktails-for-programmers", "github", "recipes", []string{"cocktails-for-programmers"}},
+		{"rochacbruno", "github", "recipes", []string{"vegan_recipes"}},
+		{"niw", "github", "recipes", []string{"ramen"}},
+	}
 )

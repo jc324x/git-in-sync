@@ -8,6 +8,7 @@ import (
 // NoPermission returns true if the target can't be read,
 // can't be written to or doesn't exist.
 func NoPermission(p string) (bool, error) {
+
 	var f *os.File
 	var err error
 
@@ -42,6 +43,7 @@ func NoPermission(p string) (bool, error) {
 
 // IsDirectory returns true if the target is a directory.
 func IsDirectory(p string) (bool, error) {
+
 	var fi os.FileInfo
 	var err error
 
@@ -58,6 +60,7 @@ func IsDirectory(p string) (bool, error) {
 
 // IsEmpty returns true if the target is an empty directory.
 func IsEmpty(p string) (bool, error) {
+
 	var f *os.File
 	var err error
 
@@ -83,6 +86,7 @@ func IsEmpty(p string) (bool, error) {
 
 // NotEmpty returns true if the target is an non-empty directory.
 func NotEmpty(p string) (bool, error) {
+
 	var f *os.File
 	var err error
 
@@ -99,6 +103,7 @@ func NotEmpty(p string) (bool, error) {
 
 // IsFile returns true if the target is a file.
 func IsFile(p string) (bool, error) {
+
 	var fi os.FileInfo
 	var err error
 

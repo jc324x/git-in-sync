@@ -12,6 +12,7 @@ type Flags struct {
 
 // Init returns Flags with a validated mode and a default or set configuration.
 func Init() (f Flags) {
+
 	var c, m string
 
 	flag.StringVar(&m, "m", "verify", "mode")

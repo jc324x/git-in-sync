@@ -818,6 +818,18 @@ func (r *Repo) gitStatusPorcelain() {
 // Repos ...
 type Repos []*Repo
 
+func (rs Repos) workspaces() (wss []string) {
+	for _, r := range rs {
+		wss = append(wss, r.WorkspacePath)
+	}
+
+	if l := len(wss); l == 0 {
+		log.Fatalf("No workspaces. Exiting")
+	}
+
+	return brf.Single(wss)
+}
+
 // Init ...
 func Init(c conf.Config, f flags.Flags, t *timer.Timer) (rs Repos) {
 
@@ -833,27 +845,17 @@ func Init(c conf.Config, f flags.Flags, t *timer.Timer) (rs Repos) {
 		}
 	}
 
-	// timer
-	t.MarkMoment("init-repos")
-
 	if l := len(rs); l == 0 {
 		log.Fatalf("No repos. Exiting")
 	}
 
+	// timer
+	t.MarkMoment("init-repos")
+
 	// sort
 	rs.PathSort()
 
-	var wss []string // workspaces
-
-	for _, r := range rs {
-		wss = append(wss, r.WorkspacePath)
-	}
-
-	if l := len(wss); l == 0 {
-		log.Fatalf("No workspaces. Exiting")
-	}
-
-	wss = brf.Single(wss)
+	wss := rs.workspaces()
 
 	brf.Printv(f, "%v [%v|%v] workspaces|repos {%v / %v}", e.Get("FaxMachine"), len(wss), len(rs), t.Split(), t.Time())
 
@@ -1320,8 +1322,8 @@ func (rs Repos) verifyCloned() {
 
 // }
 
-// VerifyDivs ...
-func (rs Repos) VerifyDivs(f flags.Flags, t *timer.Timer) {
+// VerifyWorkspaces ...
+func (rs Repos) VerifyWorkspaces(f flags.Flags, t *timer.Timer) {
 
 	// sort
 	rs.PathSort()

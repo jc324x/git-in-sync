@@ -81,6 +81,7 @@ func First(s string) string {
 // AbsUser expands "~/" to "User/user/" and returns a clean path.
 // Given an absolute path, it returns a clean path.
 func AbsUser(s string) string {
+
 	var u *user.User
 
 	u, err := user.Current()

@@ -3,6 +3,7 @@ package repos
 import (
 	"bufio"
 	"bytes"
+	"log"
 	"os"
 	"os/exec"
 	"regexp"
@@ -21,127 +22,97 @@ import (
 
 // Repo ...
 type Repo struct {
-
-	// initRun -> initRepos -> initRepo
-	BundlePath string // "~/dev"
-	Division   string // "main" or "go-lang"
-	User       string // "jychri"
-	Remote     string // "github" or "gitlab"
-	Name       string // "git-in-sync"
-	DivPath    string // "/Users/jychri/dev/go-lang/"
-	RepoPath   string // "/Users/jychri/dev/go-lang/git-in-sync"
-	GitPath    string // "/Users/jychri/dev/go-lang/git-in-sync/.git"
-	GitDir     string // "--git-dir=/Users/jychri/dev/go-lang/git-in-sync/.git"
-	WorkTree   string // "--work-tree=/Users/jychri/dev/go-lang/git-in-sync"
-	URL        string // "https://github.com/jychri/git-in-sync"
-
-	// rs.verifyRepos
-	PendingClone bool // true if RepoPath or GitPath are empty
-
-	// rs.verifyDivs, rs.verifyRepos
-	Verified     bool   // true if Repo continues to pass verification
-	ErrorMessage string // the last error message
-	ErrorName    string // name of the last error
-	ErrorFirst   string // first line of the last error message
-	ErrorShort   string // message in matched short form
-
-	// rs.verifyRepos -> gitVerify -> gitClone
-	Cloned bool // true if Repo was cloned
-
-	// rs.verifyRepos -> gitConfigOriginURL
-	OriginURL string // "https://github.com/jychri/git-in-sync"
-
-	// rs.verifyRepos -> gitAbbrevRef
-	LocalBranch string // `git rev-parse --abbrev-ref HEAD`, "master"
-
-	// rs.verifyRepos -> gitLocalSHA
-	LocalSHA string // `git rev-parse @`, "l00000ngSHA1slong324"
-
-	// rs.verifyRepos -> gitUpstreamSHA
-	UpstreamSHA string // `git rev-parse @{u}`, "l00000ngSHA1slong324"
-
-	// rs.verifyRepos -> gitMergeBaseSHA
-	MergeSHA string // `git merge-base @ @{u}`, "l00000ngSHA1slong324"
-
-	// rs.verifyRepos -> gitRevParseUpstream
-	UpstreamBranch string // `git rev-parse --abbrev-ref --symbolic-full-name @{u}`, "..."
-
-	// rs.verifyRepos -> gitDiffsNameOnly
-	DiffsNameOnly []string // `git diff --name-only @{u}`, [a, b, c, d, e]
-	DiffsSummary  string   // "a, b, c..."
-
-	// rs.verifyRepos -> gitShortstat
-	ShortStat        string // `git diff --shortstat`, "x files changed, y insertions(+), z deletions(-)"
-	Changed          int    // x
-	Insertions       int    // y
-	Deletions        int    // z
-	ShortStatSummary string // "+y|-z" or "D" for Deleted if (x >= 1 && y == 0 && z == 0)
-	Clean            bool   // true if Changed, Insertions and Deletions are all 0
-
-	// rs.verifyRepos -> gitUntracked
+	BundlePath       string   // "~/dev"
+	Workspace        string   // "main" or "go-lang"
+	User             string   // "jychri"
+	Remote           string   // "github" or "gitlab"
+	Name             string   // "git-in-sync"
+	WorkspacePath    string   // "/Users/jychri/dev/go-lang/"
+	RepoPath         string   // "/Users/jychri/dev/go-lang/git-in-sync"
+	GitPath          string   // "/Users/jychri/dev/go-lang/git-in-sync/.git"
+	GitDir           string   // "--git-dir=/Users/jychri/dev/go-lang/git-in-sync/.git"
+	WorkTree         string   // "--work-tree=/Users/jychri/dev/go-lang/git-in-sync"
+	URL              string   // "https://github.com/jychri/git-in-sync"
+	PendingClone     bool     // true if RepoPath or GitPath are empty
+	Verified         bool     // true if Repo continues to pass verification
+	ErrorMessage     string   // the last error message
+	ErrorName        string   // name of the last error
+	ErrorFirst       string   // first line of the last error message
+	ErrorShort       string   // message in matched short form
+	Cloned           bool     // true if Repo was cloned
+	OriginURL        string   // "https://github.com/jychri/git-in-sync"
+	LocalBranch      string   // `git rev-parse --abbrev-ref HEAD`, "master"
+	LocalSHA         string   // `git rev-parse @`, "l00000ngSHA1slong324"
+	UpstreamSHA      string   // `git rev-parse @{u}`, "l00000ngSHA1slong324"
+	MergeSHA         string   // `git merge-base @ @{u}`, "l00000ngSHA1slong324"
+	UpstreamBranch   string   // `git rev-parse --abbrev-ref --symbolic-full-name @{u}`, "..."
+	DiffsNameOnly    []string // `git diff --name-only @{u}`, [a, b, c, d, e]
+	DiffsSummary     string   // "a, b, c..."
+	ShortStat        string   // `git diff --shortstat`, "x files changed, y insertions(+), z deletions(-)"
+	Changed          int      // x
+	Insertions       int      // y
+	Deletions        int      // z
+	ShortStatSummary string   // "+y|-z" or "D" for Deleted if (x >= 1 && y == 0 && z == 0)
+	Clean            bool     // true if Changed, Insertions and Deletions are all 0
 	UntrackedFiles   []string // `git ls-files --others --exclude-standard`, [a, b, c, d, e]
 	UntrackedSummary string   // "a, b, c..."
 	Untracked        bool     // true if if len(r.UntrackedFiles) >= 1
-
-	// rs.verifyRepos -> setStatus (verify grouping)
-	Category   string // Complete, Pending, Skipped, Scheduled
-	Status     string // better term?
-	GitAction  string // "..."
-	GitMessage string // "..."
-
-	// rs.verifyChanges -> gitPorcelain
-	Porcelain bool // true if `git status --porcelain` returns ""
+	Category         string   // Complete, Pending, Skipped, Scheduled
+	Status           string   // better term?
+	GitAction        string   // "..."
+	GitMessage       string   // "..."
+	Porcelain        bool     // true if `git status --porcelain` returns ""
 }
 
-func initR(zd string, zu string, zr string, bp string, rn string) *Repo {
+func repo(zw string, zu string, zr string, bp string, rn string) *Repo {
 
 	r := new(Repo)
 
-	// "~/dev", (b)undle(p)ath
-	r.BundlePath = bp
+	// "~/dev"
+	r.BundlePath = bp // bundle path
 
-	// "main" or "go-lang", (z)one(d)ivision
-	r.Division = zd
+	// "main", "go", "bash"
+	r.Workspace = zw // zone workspace
 
-	// "jychri", (z)one(u)ser
-	r.User = zu
+	// "jychri"
+	r.User = zu // zone user
 
-	// "github" or "gitlab", (z)one(r)emote
-	r.Remote = zr
+	// "github" or "gitlab"
+	r.Remote = zr // zone remote
 
-	// "git-in-sync", (r)epo(n)ame
-	r.Name = rn
+	// "git-in-sync"
+	r.Name = rn // repo name
 
 	var b bytes.Buffer
 
-	// "/Users/jychri/dev/go-lang/"
-	// b.WriteString(validatePath(r.BundlePath))
-	if r.Division != "main" {
+	// "/Users/jychri/dev/go-lang/src/github.com/jychri"
+	b.WriteString(brf.AbsUser(r.BundlePath))
+	if r.Workspace != "main" {
 		b.WriteString("/")
-		b.WriteString(r.Division)
+		b.WriteString(r.Workspace)
 	}
-	r.DivPath = b.String()
+	r.WorkspacePath = b.String() // workspace path
 
-	// "/Users/jychri/dev/go-lang/git-in-sync/"
+	// "/Users/jychri/dev/go-lang/src/github.com/jychri/git-in-sync"
 	b.Reset()
-	b.WriteString(r.DivPath)
+	b.WriteString(r.WorkspacePath)
 	b.WriteString("/")
 	b.WriteString(r.Name)
 	r.RepoPath = b.String()
 
-	// "/Users/jychri/dev/go-lang/git-in-sync/.git"
+	// "/Users/jychri/dev/go-lang/src/github.com/jychri/git-in-sync/.git"
 	b.Reset()
 	b.WriteString(r.RepoPath)
 	b.WriteString("/.git")
 	r.GitPath = b.String()
 
-	// "--git-dir=/Users/jychri/dev/go-lang/git-in-sync/.git"
+	// "--git-dir=/Users/jychri/dev/go-lang/src/github.com/jychri/git-in-sync/.git"
 	b.Reset()
 	b.WriteString("--git-dir=")
 	b.WriteString(r.GitPath)
 	r.GitDir = b.String()
 
-	// "--work-tree=/Users/jychri/dev/go-lang/git-in-sync"
+	// "--work-tree=/Users/jychri/dev/go-lang/src/github.com/jychri/git-in-sync"
 	b.Reset()
 	b.WriteString("--work-tree=")
 	b.WriteString(r.RepoPath)
@@ -173,7 +144,7 @@ func notVerified(r *Repo) bool {
 func (r *Repo) markError(err string, name string) {
 	r.ErrorMessage = err
 	r.ErrorName = name
-	// r.ErrorFirst = firstLine(err)
+	r.ErrorFirst = brf.First(err)
 
 	if strings.Contains(r.ErrorFirst, "warning") {
 		r.Verified = true
@@ -217,7 +188,7 @@ func (r *Repo) gitClone() {
 
 	if r.PendingClone == true {
 		// print
-		// targetPrintln(f, "%v cloning %v {%v}", e.Box, r.Name, r.Division)
+		// targetPrintln(f, "%v cloning %v {%v}", e.Box, r.Name, r.Workspace)
 
 		// command
 		args := []string{"clone", r.URL, r.RepoPath}
@@ -850,13 +821,13 @@ type Repos []*Repo
 // Init ...
 func Init(c conf.Config, f flags.Flags, t *timer.Timer) (rs Repos) {
 
-	brf.Printv(f, "%v parsing divs|repos", e.Get("Pager"))
+	brf.Printv(f, "%v parsing workspaces|repos", e.Get("Pager"))
 
 	// initialize Repos from Config
 	for _, bl := range c.Bundles {
 		for _, z := range bl.Zones {
 			for _, rn := range z.Repos {
-				r := initR(z.Workspace, z.User, z.Remote, bl.Path, rn)
+				r := repo(z.Workspace, z.User, z.Remote, bl.Path, rn)
 				rs = append(rs, r)
 			}
 		}
@@ -865,19 +836,26 @@ func Init(c conf.Config, f flags.Flags, t *timer.Timer) (rs Repos) {
 	// timer
 	t.MarkMoment("init-repos")
 
+	if l := len(rs); l == 0 {
+		log.Fatalf("No repos. Exiting")
+	}
+
 	// sort
 	rs.PathSort()
 
-	// get all divs, remove duplicates
-	var dvs []string // divs
+	var wss []string // workspaces
 
 	for _, r := range rs {
-		dvs = append(dvs, r.DivPath)
+		wss = append(wss, r.WorkspacePath)
 	}
 
-	dvs = brf.Single(dvs)
+	if l := len(wss); l == 0 {
+		log.Fatalf("No workspaces. Exiting")
+	}
 
-	brf.Printv(f, "%v [%v|%v] divs|repos {%v / %v}", e.Get("FaxMachine"), len(dvs), len(rs), t.Split(), t.Time())
+	wss = brf.Single(wss)
+
+	brf.Printv(f, "%v [%v|%v] workspaces|repos {%v / %v}", e.Get("FaxMachine"), len(wss), len(rs), t.Split(), t.Time())
 
 	return rs
 }
@@ -916,12 +894,12 @@ func (rs Repos) NameSort() {
 	sort.SliceStable(rs, func(i, j int) bool { return rs[i].Name < rs[j].Name })
 }
 
-// sort A-Z by r.DivPath, then r.Name
+// sort A-Z by r.WorkspacePath, then r.Name
 
 // PathSort ...
 func (rs Repos) PathSort() {
 	sort.SliceStable(rs, func(i, j int) bool { return rs[i].Name < rs[j].Name })
-	sort.SliceStable(rs, func(i, j int) bool { return rs[i].DivPath < rs[j].DivPath })
+	sort.SliceStable(rs, func(i, j int) bool { return rs[i].WorkspacePath < rs[j].WorkspacePath })
 }
 
 func (rs Repos) verifyCloned() {
@@ -1350,20 +1328,20 @@ func (rs Repos) VerifyDivs(f flags.Flags, t *timer.Timer) {
 
 	// get all divs, remove duplicates
 	var dvs []string  // divs
-	var zdvs []string // zone divisions (go, main, google-apps-script etc)
+	var zdvs []string // zone divisions (go, main, google-apps-script etc) WORKSPACE
 
 	for _, r := range rs {
-		dvs = append(dvs, r.DivPath)
-		zdvs = append(zdvs, r.Division)
+		dvs = append(dvs, r.WorkspacePath)
+		zdvs = append(zdvs, r.Workspace)
 	}
+
+	// WorkspacePath    string   // "/Users/jychri/dev/go-lang/"
 
 	dvs = brf.Single(dvs)
 	zdvs = brf.Single(zdvs)
 
-	// zds := brf.Summary(zdvs, 25) // zone division summary
-
 	// print
-	brf.Printv(f, "%v  verifying divs [%v](%v)", e.Get("FileCabinet"), len(dvs), zdvs)
+	brf.Printv(f, "%v  verifying workspaces [%v](%v)", e.Get("FileCabinet"), len(dvs), brf.Summary(zdvs, 25))
 
 	// track created, verified and missing divs
 	var cd []string // created divs
@@ -1372,13 +1350,13 @@ func (rs Repos) VerifyDivs(f flags.Flags, t *timer.Timer) {
 
 	for _, r := range rs {
 
-		_, err := os.Stat(r.DivPath)
+		_, err := os.Stat(r.WorkspacePath)
 
 		// create div if missing and active run
 		if os.IsNotExist(err) {
-			brf.Printv(f, "%v creating %v", e.Get("Folder"), r.DivPath)
-			os.MkdirAll(r.DivPath, 0777)
-			cd = append(cd, r.DivPath)
+			brf.Printv(f, "%v creating %v", e.Get("Folder"), r.WorkspacePath)
+			os.MkdirAll(r.WorkspacePath, 0777)
+			cd = append(cd, r.WorkspacePath)
 		}
 
 		// check div status

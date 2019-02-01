@@ -1,7 +1,8 @@
-package test
+// Package gt holds global variables used by package tests.
+package gt
 
 var (
-	// JSON ...
+	// JSON = sample data for gisrc.json.
 	JSON = []byte(`
 		{
 			"bundles": [{

@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	"github.com/jychri/git-in-sync/pkg/flags"
-	"github.com/jychri/git-in-sync/pkg/test"
+	"github.com/jychri/git-in-sync/pkg/gt"
 )
 
 func TestInit(t *testing.T) {
@@ -23,7 +23,7 @@ func TestInit(t *testing.T) {
 
 	p := path.Join(abs, "ex_gisrc.json")
 
-	if err = ioutil.WriteFile(p, test.JSON, 0644); err != nil {
+	if err = ioutil.WriteFile(p, gt.JSON, 0644); err != nil {
 		t.Errorf("Init (%v)", err.Error())
 	}
 

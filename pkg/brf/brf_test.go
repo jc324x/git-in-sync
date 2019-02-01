@@ -27,7 +27,7 @@ func TestSingle(t *testing.T) {
 	for _, c := range []struct {
 		in, want []string
 	}{
-		{[]string{"a", "b", "b", "c", "c", "c"}, []string{"a", "b", "c"}},
+		{[]string{"a", "b", "b", "c", "c", "c", "c"}, []string{"a", "b", "c"}},
 		{[]string{"x", "y", "z", "z", "z", "z"}, []string{"x", "y", "z"}},
 	} {
 		got := Single(c.in)

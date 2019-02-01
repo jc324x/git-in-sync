@@ -1,57 +1,55 @@
 package conf
 
 import (
-	"fmt"
 	"path"
 	"path/filepath"
+	"reflect"
 	"testing"
 
 	"github.com/jychri/git-in-sync/pkg/flags"
 )
 
 func TestInit(t *testing.T) {
-	var abs, p string
+	var abs string
 	var err error
-	var c Config
 
 	if abs, err = filepath.Abs(""); err != nil {
 		t.Errorf("TestInit: err = %v\n", err.Error())
 	}
 
-	p = path.Join(abs, "ex_gisrc.json")
+	p := path.Join(abs, "ex_gisrc.json")
 
-	var f = flags.Flags{Mode: "verify", Config: p}
+	f := flags.Flags{Mode: "verify", Config: p}
 
-	if c = Init(f); len(c.Bundles) != 1 {
-		t.Errorf("TestInit: err = bundle mismatch")
+	c := Init(f)
+
+	bs := c.Bundles[0]
+
+	zs := bs.Zones
+
+	ts := []struct {
+		user, remote, workspace string
+		repos                   []string
+	}{
+		{"hendricius", "github", "recipes", []string{"pizza-dough"}},
 	}
 
-	b := c.Bundles[0]
+	for i := 0; i < 1; i++ {
 
-	for _, z := range b.Zones {
-		fmt.Println(z.Remote)
+		if ts[i].user != zs[i].User {
+			t.Errorf("Init: (%v != %v)", ts[i].user, zs[i].User)
+		}
+
+		if ts[i].remote != zs[i].Remote {
+			t.Errorf("Init: (%v != %v)", ts[i].remote, zs[i].Remote)
+		}
+
+		if ts[i].workspace != zs[i].Workspace {
+			t.Errorf("Init: (%v != %v)", ts[i].workspace, zs[i].Workspace)
+		}
+
+		if !reflect.DeepEqual(ts[i].repos, zs[i].Repos) {
+			t.Errorf("Init: (%v != %v)", ts[i].repos, zs[i].Repos)
+		}
 	}
-
-	// for i := range []struct {
-	// 	user, remote, workspace string
-	// 	repos                   []string
-	// }{
-	// 	{"hendricius", "github", "recipes", []string{"pizza-dough"}},
-	// } {
-	// 	fmt.Println(i)
-	// 	// fmt.Printf("%v", zs[i])
-
-	// 	// if x.user != zs[i].User {
-	// 	// 	t.Errorf("shit")
-	// 	// }
-
-	// 	// if x.remote != zs[i].Remote {
-	// 	// 	t.Errorf("shit")
-	// 	// }
-
-	// 	// if x.user != zs[i].User {
-	// 	// 	t.Errorf("shit")
-	// 	// }
-
-	// }
 }

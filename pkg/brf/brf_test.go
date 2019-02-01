@@ -106,7 +106,5 @@ func TestAbsUser(t *testing.T) {
 		if got := AbsUser(c.in); err != nil || got != c.want {
 			t.Errorf("AbsUser: (%v != %v)", got, c.want)
 		}
-
 	}
-
 }

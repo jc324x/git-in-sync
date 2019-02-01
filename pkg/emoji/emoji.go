@@ -83,8 +83,8 @@ func ClearScreen() {
 	cmd.Run()
 }
 
-// PrintAll prints values in map em.
-func PrintAll() {
+// printAll prints values in map em, used for tests.
+func printAll() {
 	for _, val := range em {
 		fmt.Printf("%v: \"%v\"\n", val, convert(val))
 	}

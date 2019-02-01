@@ -4,13 +4,13 @@ import (
 	"flag"
 )
 
-// Flags ...
+// Flags holds the user settings for the current run.
 type Flags struct {
 	Mode   string
 	Config string
 }
 
-// Init ...
+// Init returns Flags with a validated mode and a default or set configuration.
 func Init() (f Flags) {
 
 	var c, m string
@@ -19,15 +19,11 @@ func Init() (f Flags) {
 	flag.StringVar(&c, "c", "~/.gisrc.json", "configuration")
 	flag.Parse()
 
-	// set unsupported modes to "verify"
 	switch m {
 	case "login", "logout", "verify", "oneline":
 	default:
 		m = "verify"
 	}
 
-	// set Flags
-	f = Flags{Mode: m, Config: c}
-
-	return f
+	return Flags{Mode: m, Config: c}
 }

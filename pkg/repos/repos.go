@@ -848,11 +848,9 @@ func (r *Repo) gitStatusPorcelain() {
 type Repos []*Repo
 
 // Init ...
-func Init(c conf.Config) (rs Repos) {
+func Init(c conf.Config, f flags.Flags, t *timer.Timer) (rs Repos) {
 
-	// print
-	// targetPrintln(f, "%v parsing divs|repos", e.Pager)
-	// emoji.Eprint("%v parsing divs|repos", "Boat")
+	brf.Printv(f, "%v parsing divs|repos", e.Get("Pager"))
 
 	// initialize Repos from Config
 	for _, bl := range c.Bundles {
@@ -865,7 +863,7 @@ func Init(c conf.Config) (rs Repos) {
 	}
 
 	// timer
-	// t.MarkMoment("init-repos")
+	t.MarkMoment("init-repos")
 
 	// sort
 	rs.PathSort()
@@ -879,8 +877,7 @@ func Init(c conf.Config) (rs Repos) {
 
 	dvs = brf.Single(dvs)
 
-	// print
-	// targetPrintln(f, "%v [%v|%v] divs|repos {%v / %v}", e.FaxMachine, len(dvs), len(rs), t.GetSplit(), t.GetTime())
+	brf.Printv(f, "%v [%v|%v] divs|repos {%v / %v}", e.Get("FaxMachine"), len(dvs), len(rs), t.Split(), t.Time())
 
 	return rs
 }

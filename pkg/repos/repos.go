@@ -813,14 +813,15 @@ func (r *Repo) gitStatusPorcelain() {
 
 }
 
-// initRepo returns a *Repo with initial values set.
-
 // Repos ...
 type Repos []*Repo
 
-func (rs Repos) workspaces() (wss []string) {
+// Workspaces ...
+func (rs Repos) Workspaces() []string {
+	var wss []string
+
 	for _, r := range rs {
-		wss = append(wss, r.WorkspacePath)
+		wss = append(wss, r.Workspace)
 	}
 
 	if l := len(wss); l == 0 {
@@ -829,6 +830,20 @@ func (rs Repos) workspaces() (wss []string) {
 
 	return brf.Single(wss)
 }
+
+// func (rs Repos) workspacePaths() []string {
+// 	var wsps []string
+
+// 	for _, r := range rs {
+// 		wsps = append(wsps, r.WorkspacePath)
+// 	}
+
+// 	if l := len(wsps); l == 0 {
+// 		log.Fatalf("No workspace paths. Exiting")
+// 	}
+
+// 	return brf.Single(wsps)
+// }
 
 // Init ...
 func Init(c conf.Config, f flags.Flags, t *timer.Timer) (rs Repos) {
@@ -853,11 +868,9 @@ func Init(c conf.Config, f flags.Flags, t *timer.Timer) (rs Repos) {
 	t.MarkMoment("init-repos")
 
 	// sort
-	rs.PathSort()
+	ws := rs.Workspaces()
 
-	wss := rs.workspaces()
-
-	brf.Printv(f, "%v [%v|%v] workspaces|repos {%v / %v}", e.Get("FaxMachine"), len(wss), len(rs), t.Split(), t.Time())
+	brf.Printv(f, "%v [%v|%v] workspaces|repos {%v / %v}", e.Get("FaxMachine"), len(ws), len(rs), t.Split(), t.Time())
 
 	return rs
 }
@@ -1327,27 +1340,15 @@ func (rs Repos) VerifyWorkspaces(f flags.Flags, t *timer.Timer) {
 	// sort
 	rs.PathSort()
 
-	// get all divs, remove duplicates
-	var dvs []string  // divs
-	var zdvs []string // zone divisions (go, main, google-apps-script etc) WORKSPACE
+	ws := rs.Workspaces()
 
-	for _, r := range rs {
-		dvs = append(dvs, r.WorkspacePath)
-		zdvs = append(zdvs, r.Workspace)
-	}
-
-	// WorkspacePath    string   // "/Users/jychri/dev/go-lang/"
-
-	dvs = brf.Single(dvs)
-	zdvs = brf.Single(zdvs)
-
-	// print
-	brf.Printv(f, "%v  verifying workspaces [%v](%v)", e.Get("FileCabinet"), len(dvs), brf.Summary(zdvs, 25))
+	// "verifying workspaces..."
+	brf.Printv(f, "%v  verifying workspaces [%v](%v)", e.Get("FileCabinet"), len(ws), brf.Summary(ws, 25))
 
 	// track created, verified and missing divs
-	var cd []string // created divs
-	var vd []string // verified divs
-	var id []string // inaccessible divs // --> FLAG: change to unverified?
+	var cw []string // created workspaces
+	var vw []string // verified workspaces
+	var iw []string // inaccessible workspaces
 
 	for _, r := range rs {
 
@@ -1357,7 +1358,7 @@ func (rs Repos) VerifyWorkspaces(f flags.Flags, t *timer.Timer) {
 		if os.IsNotExist(err) {
 			brf.Printv(f, "%v creating %v", e.Get("Folder"), r.WorkspacePath)
 			os.MkdirAll(r.WorkspacePath, 0777)
-			cd = append(cd, r.WorkspacePath)
+			cw = append(cw, r.WorkspacePath)
 		}
 
 		// check div status
@@ -1386,27 +1387,27 @@ func (rs Repos) VerifyWorkspaces(f flags.Flags, t *timer.Timer) {
 	// t.MarkMoment("verify-divs")
 
 	// remove duplicates from slices
-	vd = brf.Single(vd)
-	id = brf.Single(id)
+	vw = brf.Single(vw)
+	iw = brf.Single(iw)
 
 	// summary
 	var b bytes.Buffer
 
-	if len(dvs) == len(vd) {
+	if len(ws) == len(vw) {
 		// b.WriteString(e.Briefcase)
 	} else {
 		// b.WriteString(e.Slash)
 	}
 
 	b.WriteString(" [")
-	b.WriteString(strconv.Itoa(len(vd)))
+	b.WriteString(strconv.Itoa(len(vw)))
 	b.WriteString("/")
-	b.WriteString(strconv.Itoa(len(dvs)))
+	b.WriteString(strconv.Itoa(len(ws)))
 	b.WriteString("] divs verified")
 
-	if len(cd) >= 1 {
+	if len(cw) >= 1 {
 		b.WriteString(", created [")
-		b.WriteString(strconv.Itoa(len(cd)))
+		b.WriteString(strconv.Itoa(len(cw)))
 		b.WriteString("]")
 	}
 

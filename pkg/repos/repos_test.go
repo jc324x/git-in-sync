@@ -1,6 +1,7 @@
 package repos
 
 import (
+	// "log"
 	"testing"
 
 	"github.com/jychri/git-in-sync/pkg/atp"
@@ -10,23 +11,19 @@ import (
 )
 
 func TestVerify(t *testing.T) {
-	p, _ := atp.Setup("testing", "recipes")
+	p, cleanup := atp.Setup("testing", "recipes")
 	ti := timer.Init()
 	f := flags.Testing(p)
 	c := conf.Init(f)
 	rs := Init(c, f, ti)
 
-	// defer cleanup()
+	// twsp := rs.workspaces()
+	// log.Println(len(twsp))
 
-	rs.VerifyWorkspaces(f, ti)
-}
-
-func TestAgain(t *testing.T) {
-	_, cleanup := atp.Setup("testing", "recipes")
-	// ti := timer.Init()
-	// // f := flags.Testing(p)
-	// c := conf.Init(f)
-	// rs := Init(c, f, ti)
+	// tws := rs.workspacePaths()
+	// log.Println(len(tws))
 
 	defer cleanup()
+
+	rs.VerifyWorkspaces(f, ti)
 }

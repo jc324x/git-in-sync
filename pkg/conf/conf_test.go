@@ -9,7 +9,7 @@ import (
 )
 
 func TestInit(t *testing.T) {
-	p, clean := atp.Setup("conf", "recipes", "gisrc")
+	p, clean := atp.Setup("conf", "recipes")
 
 	defer clean()
 
@@ -21,24 +21,24 @@ func TestInit(t *testing.T) {
 
 	zs := bs.Zones
 
-	ts := atp.Want("recipes")
+	rs := atp.Resulter("recipes")
 
-	for i := range ts {
+	for i := range rs {
 
-		if ts[i].User != zs[i].User {
-			t.Errorf("Init: (%v != %v)", ts[i].User, zs[i].User)
+		if rs[i].User != zs[i].User {
+			t.Errorf("Init: (%v != %v)", rs[i].User, zs[i].User)
 		}
 
-		if ts[i].Remote != zs[i].Remote {
-			t.Errorf("Init: (%v != %v)", ts[i].Remote, zs[i].Remote)
+		if rs[i].Remote != zs[i].Remote {
+			t.Errorf("Init: (%v != %v)", rs[i].Remote, zs[i].Remote)
 		}
 
-		if ts[i].Workspace != zs[i].Workspace {
-			t.Errorf("Init: (%v != %v)", ts[i].Workspace, zs[i].Workspace)
+		if rs[i].Workspace != zs[i].Workspace {
+			t.Errorf("Init: (%v != %v)", rs[i].Workspace, zs[i].Workspace)
 		}
 
-		if !reflect.DeepEqual(ts[i].Repos, zs[i].Repos) {
-			t.Errorf("Init: (%v != %v)", ts[i].Repos, zs[i].Repos)
+		if !reflect.DeepEqual(rs[i].Repos, zs[i].Repos) {
+			t.Errorf("Init: (%v != %v)", rs[i].Repos, zs[i].Repos)
 		}
 
 	}

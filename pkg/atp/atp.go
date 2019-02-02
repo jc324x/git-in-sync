@@ -2,7 +2,6 @@
 package atp
 
 import (
-	// "encoding/json"
 	"io/ioutil"
 	"log"
 	"os"
@@ -54,29 +53,16 @@ var jmap = map[string][]byte{
 `),
 }
 
-// Tmap ...
-var Tmap = map[string][]struct {
-	User, Remote, Workspace string
-	Repos                   []string
-}{
-	"recipes": {
-		{"hendricius", "github", "recipes", []string{"pizza-dough", "the-bread-code"}},
-		{"cocktails-for-programmers", "github", "recipes", []string{"cocktails-for-programmers"}},
-		{"rochacbruno", "github", "recipes", []string{"vegan_recipes"}},
-		{"niw", "github", "recipes", []string{"ramen"}},
-	},
-}
-
 // Setup creates "~/tmpgis/%pkg/gisrc.json",
 // writes the sample JSON to gisrc.json and
 // returns the path to the file.
-func Setup(pkg string, jkey string) string {
+func Setup(pkg string, k string) string {
 	if pkg == "" {
 		log.Fatalf("pkg is empty")
 	}
 
-	if _, ok := jmap[jkey]; ok != true {
-		log.Fatalf("%v not found in jmap", jkey)
+	if _, ok := jmap[k]; ok != true {
+		log.Fatalf("%v not found in jmap", k)
 	}
 
 	var u *user.User
@@ -95,11 +81,40 @@ func Setup(pkg string, jkey string) string {
 
 	p = path.Join(p, "gisrc.json")
 
-	if err = ioutil.WriteFile(p, jmap[jkey], 0777); err != nil {
+	if err = ioutil.WriteFile(p, jmap[k], 0777); err != nil {
 		log.Fatalf("Unable to write to %v (%v)", p, err.Error())
 	}
 
 	return p
+}
+
+// Result ...
+type Result struct {
+	User, Remote, Workspace string
+	Repos                   []string
+}
+
+// Results ...
+type Results []Result
+
+var rmap = map[string]Results{
+	"recipes": {
+		{"hendricius", "github", "recipes", []string{"pizza-dough", "the-bread-code"}},
+		{"cocktails-for-programmers", "github", "recipes", []string{"cocktails-for-programmers"}},
+		{"rochacbruno", "github", "recipes", []string{"vegan_recipes"}},
+		{"niw", "github", "recipes", []string{"ramen"}},
+	},
+}
+
+// Resulter returns expected results for testing.
+
+// Wanter returns expected results for testing.
+func Wanter(k string) Results {
+	if _, ok := rmap[k]; ok != true {
+		log.Fatalf("%v not found in rmap", k)
+	}
+
+	return rmap[k]
 }
 
 // Clean removes "~/tmpgis/%pkg" and all child file/directories.

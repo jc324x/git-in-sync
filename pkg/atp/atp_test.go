@@ -1,11 +1,11 @@
 package atp
 
 import (
-	"log"
+	// "log"
 	"testing"
 )
 
 func TestSetup(t *testing.T) {
-	Setup("atp", "recipes")
-	log.Print(Tmap)
+	// p := Setup("atp", "recipes")
+	// Wanter("recipes")
 }

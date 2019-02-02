@@ -3,6 +3,7 @@
 package atp
 
 import (
+	"bytes"
 	"io/ioutil"
 	"log"
 	"os"
@@ -14,7 +15,7 @@ var jmap = map[string][]byte{
 	"recipes": []byte(`
 		{
 			"bundles": [{
-				"path": "~/tmpgis",
+				"path": "SETPATH",
 				"zones": [{
 						"user": "hendricius",
 						"remote": "github",
@@ -57,13 +58,16 @@ var jmap = map[string][]byte{
 // Setup creates a test environment at ~/tmpgis/$pkg/.
 // ~/tmpgis/$pkg/gisrc.json is created, written with data from jmap[k]
 // and its path is returned along with a cleanup function that removes
-// ~/tmpgis/$pkg and all of its contents.
+// ~/tmpgis/$pkg and all of its contents. (SETPATH is set)
 func Setup(pkg string, k string) (string, func()) {
+	var j []byte
+	var ok bool
+
 	if pkg == "" {
 		log.Fatalf("pkg is empty")
 	}
 
-	if _, ok := jmap[k]; ok != true {
+	if j, ok = jmap[k]; ok != true {
 		log.Fatalf("%v not found in jmap", k)
 	}
 
@@ -85,11 +89,18 @@ func Setup(pkg string, k string) (string, func()) {
 
 	tg := path.Join(td, "gisrc.json") // test gisrc
 
-	if err = ioutil.WriteFile(tg, jmap[k], 0777); err != nil {
+	j = bytes.Replace(j, []byte("SETPATH"), []byte(td), -1)
+
+	if err = ioutil.WriteFile(tg, j, 0777); err != nil {
 		log.Fatalf("Unable to write to %v (%v)", tg, err.Error())
 	}
 
 	return tg, func() { os.RemoveAll(tb) }
+}
+
+// Cleanup ...
+func Cleanup(pkg string) {
+
 }
 
 // Result holds the expected values for a zone.

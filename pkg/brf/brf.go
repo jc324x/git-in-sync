@@ -15,7 +15,7 @@ import (
 // Printv calls prints to standard output if not running in "oneline" mode.
 func Printv(f flags.Flags, s string, z ...interface{}) (err error) {
 
-	if f.Mode != "oneline" {
+	if f.Mode != "oneline" && f.Mode != "testing" {
 		fmt.Println(fmt.Sprintf(s, z...))
 		return
 	}

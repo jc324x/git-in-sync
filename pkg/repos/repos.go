@@ -1319,7 +1319,6 @@ func (rs Repos) verifyCloned() {
 // 	// 	b.WriteString(")")
 // 	// 	targetPrintln(f, b.String())
 // 	// }
-
 // }
 
 // VerifyWorkspaces ...

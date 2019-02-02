@@ -1,41 +1,32 @@
 package repos
 
 import (
-	"log"
-	// "os"
-	"path"
-	"path/filepath"
 	"testing"
 
-	// "github.com/jychri/git-in-sync/pkg/brf"
+	"github.com/jychri/git-in-sync/pkg/atp"
 	"github.com/jychri/git-in-sync/pkg/conf"
-	// "github.com/jychri/git-in-sync/pkg/emoji"
-	// "github.com/jychri/git-in-sync/pkg/fchk"
 	"github.com/jychri/git-in-sync/pkg/flags"
-	// "github.com/jychri/git-in-sync/pkg/test"
 	"github.com/jychri/git-in-sync/pkg/timer"
 )
 
-func setup(c conf.Config, f flags.Flags, t *timer.Timer) {
+func TestVerify(t *testing.T) {
+	p, _ := atp.Setup("testing", "recipes")
+	ti := timer.Init()
+	f := flags.Testing(p)
+	c := conf.Init(f)
+	rs := Init(c, f, ti)
 
-	var abs string
-	var err error
+	// defer cleanup()
 
-	if abs, err = filepath.Abs(""); err != nil {
-		log.Fatalf("setup (%v)", err.Error())
-	}
-
-	p := path.Join(abs, "test")
-
-	f = flags.Flags{Mode: "verify", Config: p}
-	f.Config = p
-
+	rs.VerifyWorkspaces(f, ti)
 }
 
-func TestInit(t *testing.T) {
+func TestAgain(t *testing.T) {
+	_, cleanup := atp.Setup("testing", "recipes")
+	// ti := timer.Init()
+	// // f := flags.Testing(p)
+	// c := conf.Init(f)
+	// rs := Init(c, f, ti)
 
+	defer cleanup()
 }
-
-// func TestVerifyDivs(t *testing.T) {
-
-// }

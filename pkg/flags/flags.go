@@ -27,3 +27,8 @@ func Init() (f Flags) {
 
 	return Flags{Mode: m, Config: c}
 }
+
+// Testing is used to set values directly.
+func Testing(c string) Flags {
+	return Flags{Mode: "testing", Config: c}
+}

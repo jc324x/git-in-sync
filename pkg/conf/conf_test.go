@@ -20,37 +20,30 @@ func TestInit(t *testing.T) {
 
 	zs := bs.Zones
 
-	ts := []struct {
-		user, remote, workspace string
-		repos                   []string
-	}{
-		{"hendricius", "github", "recipes", []string{"pizza-dough", "the-bread-code"}},
-		{"cocktails-for-programmers", "github", "recipes", []string{"cocktails-for-programmers"}},
-		{"rochacbruno", "github", "recipes", []string{"vegan_recipes"}},
-		{"niw", "github", "recipes", []string{"ramen"}},
-	}
+	// yeah, but with a function instead
+	ts := atp.Tmap["recipes"]
 
 	for i := range ts {
 
-		if ts[i].user != zs[i].User {
-			t.Errorf("Init: (%v != %v)", ts[i].user, zs[i].User)
+		if ts[i].User != zs[i].User {
+			t.Errorf("Init: (%v != %v)", ts[i].User, zs[i].User)
 		}
 
-		if ts[i].remote != zs[i].Remote {
-			t.Errorf("Init: (%v != %v)", ts[i].remote, zs[i].Remote)
+		if ts[i].Remote != zs[i].Remote {
+			t.Errorf("Init: (%v != %v)", ts[i].Remote, zs[i].Remote)
 		}
 
-		if ts[i].workspace != zs[i].Workspace {
-			t.Errorf("Init: (%v != %v)", ts[i].workspace, zs[i].Workspace)
+		if ts[i].Workspace != zs[i].Workspace {
+			t.Errorf("Init: (%v != %v)", ts[i].Workspace, zs[i].Workspace)
 		}
 
-		if !reflect.DeepEqual(ts[i].repos, zs[i].Repos) {
-			t.Errorf("Init: (%v != %v)", ts[i].repos, zs[i].Repos)
+		if !reflect.DeepEqual(ts[i].Repos, zs[i].Repos) {
+			t.Errorf("Init: (%v != %v)", ts[i].Repos, zs[i].Repos)
 		}
 
 	}
 
-	if err = os.Remove(p); err != nil {
+	if err := os.Remove(p); err != nil {
 		t.Errorf("Init (%v)", err.Error())
 	}
 }

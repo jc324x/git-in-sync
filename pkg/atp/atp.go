@@ -54,21 +54,17 @@ var jmap = map[string][]byte{
 `),
 }
 
-// var tmap
-var tmap = map[string][]struct {
-	User, Remote, Workspace string
-	Repos                   []string
-}{}
-
-// TSS is a test slice of structs.
-var TSS = []struct {
+// Tmap ...
+var Tmap = map[string][]struct {
 	User, Remote, Workspace string
 	Repos                   []string
 }{
-	{"hendricius", "github", "recipes", []string{"pizza-dough", "the-bread-code"}},
-	{"cocktails-for-programmers", "github", "recipes", []string{"cocktails-for-programmers"}},
-	{"rochacbruno", "github", "recipes", []string{"vegan_recipes"}},
-	{"niw", "github", "recipes", []string{"ramen"}},
+	"recipes": {
+		{"hendricius", "github", "recipes", []string{"pizza-dough", "the-bread-code"}},
+		{"cocktails-for-programmers", "github", "recipes", []string{"cocktails-for-programmers"}},
+		{"rochacbruno", "github", "recipes", []string{"vegan_recipes"}},
+		{"niw", "github", "recipes", []string{"ramen"}},
+	},
 }
 
 // Setup creates "~/tmpgis/%pkg/gisrc.json",

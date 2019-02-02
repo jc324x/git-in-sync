@@ -1,4 +1,5 @@
-// Package atp (a test package) sets up a test environment for git-in-sync.
+// Package atp (a test package) sets up testing environments
+// for packages conf, gis and repos
 package atp
 
 import (
@@ -53,10 +54,11 @@ var jmap = map[string][]byte{
 `),
 }
 
-// Setup creates "~/tmpgis/%pkg/gisrc.json",
-// writes the sample JSON to gisrc.json and
-// returns the path to the file.
-func Setup(pkg string, k string) string {
+// Setup creates a test environment at ~/tmpgis/$pkg/.
+// ~/tmpgis/$pkg/gisrc.json is created, written with data from jmap[k]
+// and its path is returned along with a cleanup function that removes
+// ~/tmpgis/$pkg and all of its contents.
+func Setup(pkg string, k string) (string, func()) {
 	if pkg == "" {
 		log.Fatalf("pkg is empty")
 	}
@@ -73,28 +75,30 @@ func Setup(pkg string, k string) string {
 		log.Fatalf("Unable to identify current user (%v)", err.Error())
 	}
 
-	p := path.Join(u.HomeDir, "tmpgis", pkg)
+	tb := path.Join(u.HomeDir, "tmpgis") // test base
 
-	if err = os.MkdirAll(p, 0777); err != nil {
-		log.Fatalf("Unable to create %v", p)
+	td := path.Join(tb, pkg) // test dir
+
+	if err = os.MkdirAll(td, 0777); err != nil {
+		log.Fatalf("Unable to create %v", td)
 	}
 
-	p = path.Join(p, "gisrc.json")
+	tg := path.Join(td, "gisrc.json") // test gisrc
 
-	if err = ioutil.WriteFile(p, jmap[k], 0777); err != nil {
-		log.Fatalf("Unable to write to %v (%v)", p, err.Error())
+	if err = ioutil.WriteFile(tg, jmap[k], 0777); err != nil {
+		log.Fatalf("Unable to write to %v (%v)", tg, err.Error())
 	}
 
-	return p
+	return tg, func() { os.RemoveAll(tb) }
 }
 
-// Result ...
+// Result holds the expected values for a zone.
 type Result struct {
 	User, Remote, Workspace string
 	Repos                   []string
 }
 
-// Results ...
+// Results is a collection of Result structs.
 type Results []Result
 
 var rmap = map[string]Results{
@@ -107,17 +111,10 @@ var rmap = map[string]Results{
 }
 
 // Resulter returns expected results for testing.
-
-// Wanter returns expected results for testing.
-func Wanter(k string) Results {
+func Resulter(k string) Results {
 	if _, ok := rmap[k]; ok != true {
 		log.Fatalf("%v not found in rmap", k)
 	}
 
 	return rmap[k]
-}
-
-// Clean removes "~/tmpgis/%pkg" and all child file/directories.
-func Clean() {
-
 }

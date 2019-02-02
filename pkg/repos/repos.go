@@ -14,7 +14,7 @@ import (
 
 	"github.com/jychri/git-in-sync/pkg/brf"
 	"github.com/jychri/git-in-sync/pkg/conf"
-	e "github.com/jychri/git-in-sync/pkg/emoji"
+	"github.com/jychri/git-in-sync/pkg/e"
 	// "github.com/jychri/git-in-sync/pkg/fchk"
 	"github.com/jychri/git-in-sync/pkg/flags"
 	"github.com/jychri/git-in-sync/pkg/timer"

@@ -1,4 +1,5 @@
-package emoji
+// Package e is for emoji.
+package e
 
 import (
 	"fmt"
@@ -88,7 +89,7 @@ func ClearScreen() {
 	cmd.Run()
 }
 
-// printAll prints values in map em, used for tests.
+// printAll prints values in map em.
 func printAll() {
 	for _, val := range em {
 		fmt.Printf("%v: \"%v\"\n", val, convert(val))

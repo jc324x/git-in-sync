@@ -143,10 +143,11 @@ func notVerified(r *Repo) bool {
 	return false
 }
 
-func (r *Repo) markError(err string, name string) {
-	r.ErrorMessage = err
-	r.ErrorName = name
-	r.ErrorFirst = brf.First(err)
+// Mark ...
+func (r *Repo) Mark(em string, n string) {
+	r.ErrorMessage = em
+	r.ErrorName = n
+	r.ErrorFirst = brf.First(em)
 
 	if strings.Contains(r.ErrorFirst, "warning") {
 		r.Verified = true
@@ -1350,17 +1351,17 @@ func (rs Repos) VerifyWorkspaces(f flags.Flags, t *timer.Timer) {
 		}
 
 		if np, err := fchk.NoPermission(r.WorkspacePath); np == true || err != nil {
-			r.markError("fatal: No permsission", "verify-workspaces")
+			r.Mark("fatal: No permsission", "verify-workspaces")
 			iw = append(iw, r.WorkspacePath)
 		}
 
 		if id, err := fchk.IsDirectory(r.WorkspacePath); id == false || err != nil {
-			r.markError("fatal: No directory", "verify-workspaces")
+			r.Mark("fatal: No directory", "verify-workspaces")
 			iw = append(iw, r.WorkspacePath)
 		}
 
 		if _, err := os.Stat(r.WorkspacePath); os.IsNotExist(err) {
-			r.markError("fatal: No directory", "verify-workspaces")
+			r.Mark("fatal: No directory", "verify-workspaces")
 			iw = append(iw, r.WorkspacePath)
 		}
 

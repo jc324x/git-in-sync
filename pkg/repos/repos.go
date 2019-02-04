@@ -3,6 +3,7 @@ package repos
 import (
 	"bufio"
 	"bytes"
+	"fmt"
 	"log"
 	"os"
 	"os/exec"
@@ -15,7 +16,7 @@ import (
 	"github.com/jychri/git-in-sync/pkg/brf"
 	"github.com/jychri/git-in-sync/pkg/conf"
 	"github.com/jychri/git-in-sync/pkg/e"
-	// "github.com/jychri/git-in-sync/pkg/fchk"
+	"github.com/jychri/git-in-sync/pkg/fchk"
 	"github.com/jychri/git-in-sync/pkg/flags"
 	"github.com/jychri/git-in-sync/pkg/timer"
 )
@@ -1340,37 +1341,34 @@ func (rs Repos) VerifyWorkspaces(f flags.Flags, t *timer.Timer) {
 
 		_, err := os.Stat(r.WorkspacePath)
 
-		// create div if missing and active run
+		// create workspace if missing
 		if os.IsNotExist(err) {
 			brf.Printv(f, "%v creating %v", e.Get("Folder"), r.WorkspacePath)
 			os.MkdirAll(r.WorkspacePath, 0777)
 			cw = append(cw, r.WorkspacePath)
 		}
 
-		// check div status
-		// info, err := os.Stat(r.DivPath)
+		if np, err := fchk.NoPermission(r.WorkspacePath); np == true || err != nil {
+			r.markError("fatal: No permsission", "verify-workspaces")
+			iw = append(iw, r.WorkspacePath)
+		}
 
-		// switch {
-		// case fchk.NoPermission(info):
-		// 	// r.markError(e, f, "fatal: No permsission", "verify-divs")
-		// 	id = append(id, r.DivPath)
-		// case !info.IsDir():
-		// 	// r.markError(e, f, "fatal: File occupying path", "verify-divs")
-		// 	id = append(id, r.DivPath)
-		// case os.IsNotExist(err):
-		// 	// r.markError(e, f, "fatal: No directory", "verify-divs")
-		// 	id = append(id, r.DivPath)
-		// case err != nil:
-		// 	// r.markError(e, f, "fatal: No directory", "verify-divs")
-		// 	id = append(id, r.DivPath)
-		// default:
-		// 	r.Verified = true
-		// 	vd = append(vd, r.DivPath)
-		// }
+		if id, err := fchk.IsDirectory(r.WorkspacePath); id == false || err != nil {
+			r.markError("fatal: No directory", "verify-workspaces")
+			iw = append(iw, r.WorkspacePath)
+		}
+
+		if _, err := os.Stat(r.WorkspacePath); os.IsNotExist(err) {
+			r.markError("fatal: No directory", "verify-workspaces")
+			iw = append(iw, r.WorkspacePath)
+		}
+
+		if id, _ := fchk.IsDirectory(r.WorkspacePath); id == true {
+			r.Verified = true
+			vw = append(vw, r.WorkspacePath)
+		}
+
 	}
-
-	// timer
-	// t.MarkMoment("verify-divs")
 
 	// remove duplicates from slices
 	vw = brf.Single(vw)
@@ -1380,28 +1378,18 @@ func (rs Repos) VerifyWorkspaces(f flags.Flags, t *timer.Timer) {
 	var b bytes.Buffer
 
 	if len(ws) == len(vw) {
-		// b.WriteString(e.Briefcase)
+		b.WriteString(e.Get("Briefcase"))
 	} else {
-		// b.WriteString(e.Slash)
+		b.WriteString(e.Get("Slash"))
 	}
 
-	b.WriteString(" [")
-	b.WriteString(strconv.Itoa(len(vw)))
-	b.WriteString("/")
-	b.WriteString(strconv.Itoa(len(ws)))
-	b.WriteString("] divs verified")
+	b.WriteString(fmt.Sprintf(" [%v/%v] divs verified", len(vw), len(ws)))
 
 	if len(cw) >= 1 {
-		b.WriteString(", created [")
-		b.WriteString(strconv.Itoa(len(cw)))
-		b.WriteString("]")
+		b.WriteString(fmt.Sprintf(", created [%v]", strconv.Itoa(len(cw))))
 	}
 
-	// b.WriteString(" {")
-	// b.WriteString(t.GetSplit().String())
-	// b.WriteString(" / ")
-	// b.WriteString(t.GetTime().String())
-	// b.WriteString("}")
+	b.WriteString(fmt.Sprintf(" {%v/%v}", t.Split().String(), t.Time().String()))
 
-	// targetPrintln(f, b.String())
+	brf.Printv(f, b.String())
 }

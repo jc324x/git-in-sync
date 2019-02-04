@@ -1,7 +1,8 @@
 package repos
 
 import (
-	// "log"
+	"os"
+	"path"
 	"testing"
 
 	"github.com/jychri/git-in-sync/pkg/atp"
@@ -10,20 +11,30 @@ import (
 	"github.com/jychri/git-in-sync/pkg/timer"
 )
 
-func TestVerify(t *testing.T) {
-	p, cleanup := atp.Setup("testing", "recipes")
-	ti := timer.Init()
-	f := flags.Testing(p)
-	c := conf.Init(f)
-	rs := Init(c, f, ti)
+func TestVerifyWorkspaces(t *testing.T) {
 
-	// twsp := rs.workspaces()
-	// log.Println(len(twsp))
+	for _, tr := range []struct {
+		pkg, k string
+	}{
+		{"repos", "recipes"},
+	} {
 
-	// tws := rs.workspacePaths()
-	// log.Println(len(tws))
+		p, cleanup := atp.Setup(tr.pkg, tr.k)
+		ti := timer.Init()
+		f := flags.Testing(p)
+		c := conf.Init(f)
+		rs := Init(c, f, ti)
 
-	defer cleanup()
+		defer cleanup()
 
-	rs.VerifyWorkspaces(f, ti)
+		rs.VerifyWorkspaces(f, ti)
+
+		td := atp.Dir(tr.pkg)
+		tp := path.Join(td, tr.k)
+
+		if _, err := os.Stat(tp); os.IsNotExist(err) {
+			t.Errorf("VerifyWorkspaces: %v does not exist", td)
+		}
+
+	}
 }

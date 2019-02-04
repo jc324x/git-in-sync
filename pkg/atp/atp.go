@@ -98,6 +98,27 @@ func Setup(pkg string, k string) (string, func()) {
 	return tg, func() { os.RemoveAll(tb) }
 }
 
+// Dir returns the path of the testing directory.
+func Dir(pkg string) string {
+	if pkg == "" {
+		log.Fatalf("pkg is empty")
+	}
+
+	var u *user.User
+
+	u, err := user.Current()
+
+	if err != nil {
+		log.Fatalf("Unable to identify current user (%v)", err.Error())
+	}
+
+	tb := path.Join(u.HomeDir, "tmpgis") // test base
+
+	td := path.Join(tb, pkg) // test dir
+
+	return td
+}
+
 // Cleanup ...
 func Cleanup(pkg string) {
 

@@ -831,20 +831,6 @@ func (rs Repos) Workspaces() []string {
 	return brf.Single(wss)
 }
 
-// func (rs Repos) workspacePaths() []string {
-// 	var wsps []string
-
-// 	for _, r := range rs {
-// 		wsps = append(wsps, r.WorkspacePath)
-// 	}
-
-// 	if l := len(wsps); l == 0 {
-// 		log.Fatalf("No workspace paths. Exiting")
-// 	}
-
-// 	return brf.Single(wsps)
-// }
-
 // Init ...
 func Init(c conf.Config, f flags.Flags, t *timer.Timer) (rs Repos) {
 

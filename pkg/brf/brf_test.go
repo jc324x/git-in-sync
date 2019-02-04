@@ -5,23 +5,22 @@ import (
 	"reflect"
 	"strings"
 	"testing"
-
-	"github.com/jychri/git-in-sync/pkg/flags"
+	// "github.com/jychri/git-in-sync/pkg/flags"
 )
 
-func TestPrintv(t *testing.T) {
-	var tf = flags.Flags{Mode: "oneline"}
+// func TestPrintv(t *testing.T) {
+// 	var tf = flags.Flags{Mode: "oneline"}
 
-	if err := Printv(tf, "testing"); err == nil {
-		t.Errorf("Printv: Print condition flipped")
-	}
+// 	if err := Printv(tf, "testing"); err == nil {
+// 		t.Errorf("Printv: Print condition flipped")
+// 	}
 
-	tf.Mode = "verify"
+// 	tf.Mode = "verify"
 
-	if err := Printv(tf, "testing"); err != nil {
-		t.Errorf("Printv: Print condition flipped")
-	}
-}
+// 	if err := Printv(tf, "testing"); err != nil {
+// 		t.Errorf("Printv: Print condition flipped")
+// 	}
+// }
 
 func TestSingle(t *testing.T) {
 	for _, c := range []struct {

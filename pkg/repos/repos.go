@@ -30,6 +30,7 @@ type Repo struct {
 	Remote           string   // "github" or "gitlab"
 	Name             string   // "git-in-sync"
 	WorkspacePath    string   // "/Users/jychri/dev/go-lang/"
+	WorkspaceStat    string   // "verified", "created" or inacessible
 	RepoPath         string   // "/Users/jychri/dev/go-lang/git-in-sync"
 	GitPath          string   // "/Users/jychri/dev/go-lang/git-in-sync/.git"
 	GitDir           string   // "--git-dir=/Users/jychri/dev/go-lang/git-in-sync/.git"
@@ -1326,9 +1327,10 @@ func (rs Repos) verifyCloned() {
 // VerifyWorkspaces ...
 func (rs Repos) VerifyWorkspaces(f flags.Flags, t *timer.Timer) {
 
-	// sort
+	// sort Repos by path
 	rs.PathSort()
 
+	// get Workspaces -> []string
 	ws := rs.Workspaces()
 
 	// "verifying workspaces..."

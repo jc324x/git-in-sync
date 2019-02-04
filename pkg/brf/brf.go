@@ -3,7 +3,7 @@ package brf
 
 import (
 	"bytes"
-	"errors"
+	// "errors"
 	"fmt"
 	"log"
 	"os/user"
@@ -14,14 +14,16 @@ import (
 )
 
 // Printv calls prints to standard output if not running in 'oneline' or 'testing' mode.
-func Printv(f flags.Flags, s string, z ...interface{}) (err error) {
+func Printv(f flags.Flags, s string, z ...interface{}) {
 
-	if f.Mode != "oneline" && f.Mode != "testing" {
+	switch f.Mode {
+	case "oneline":
+	case "testing":
+	default:
 		fmt.Println(fmt.Sprintf(s, z...))
-		return
 	}
 
-	return errors.New("N/A")
+	// return errors.New("N/A")
 }
 
 // Single returns a string slice with no duplicate entries.

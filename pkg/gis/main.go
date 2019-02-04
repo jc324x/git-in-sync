@@ -17,7 +17,7 @@ func Init() (f flags.Flags, rs repos.Repos, t *timer.Timer) {
 	// initialize Timer and Flags
 	t = timer.Init()
 	f = flags.Init()
-	t.MarkMoment("init-flags")
+	t.Mark("init-flags")
 
 	// "start"
 	brf.Printv(f, "%v start", e.Get("Clapper"))
@@ -33,7 +33,7 @@ func Init() (f flags.Flags, rs repos.Repos, t *timer.Timer) {
 
 	// initialize Config from conf.Path(f)
 	c := conf.Init(f)
-	t.MarkMoment("init-config")
+	t.Mark("init-config")
 
 	// "read conf.Path(f)"
 	brf.Printv(f, "%v read %v {%v / %v}", e.Get("Book"), (f.Config), t.Split(), t.Time())

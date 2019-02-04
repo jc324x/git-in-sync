@@ -852,7 +852,7 @@ func Init(c conf.Config, f flags.Flags, t *timer.Timer) (rs Repos) {
 	}
 
 	// timer
-	t.MarkMoment("init-repos")
+	t.Mark("init-repos")
 
 	// sort
 	ws := rs.Workspaces()

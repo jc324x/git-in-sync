@@ -26,7 +26,7 @@ func TestTimer(t *testing.T) {
 		{"TestMoment2"},
 		{"TestMoment3"},
 	} {
-		tt.MarkMoment(c.name)
+		tt.Mark(c.name)
 	}
 
 	// Timer.Moments should have 4 Moments: Start, TestMoment1, ...

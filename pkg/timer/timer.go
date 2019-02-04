@@ -1,3 +1,4 @@
+// Package timer records Moments
 package timer
 
 import (
@@ -26,8 +27,8 @@ func Init() *Timer {
 	return t
 }
 
-// MarkMoment marks a moment in time as a Moment and appends t.Moments.
-func (t *Timer) MarkMoment(s string) {
+// Mark marks a moment in time as a Moment and appends t.Moments.
+func (t *Timer) Mark(s string) {
 	sm := t.Moments[0]                           // (s)tarting (m)oment
 	lm := t.Moments[len(t.Moments)-1]            // (l)ast (m)oment
 	m := Moment{Name: s, Time: time.Now()}       // name and time

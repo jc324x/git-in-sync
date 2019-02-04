@@ -1,4 +1,4 @@
-// Package timer records Moments
+// Package timer records Moments.
 package timer
 
 import (
@@ -49,8 +49,8 @@ func (t *Timer) Split() time.Duration {
 	return lm.Split
 }
 
-// GetMoment returns a Moment and an error value from a *Timer.
-func (t *Timer) GetMoment(s string) (Moment, error) {
+// Get returns a Moment and an error value from a *Timer.
+func (t *Timer) Get(s string) (Moment, error) {
 	for _, m := range t.Moments {
 		if m.Name == s {
 			return m, nil

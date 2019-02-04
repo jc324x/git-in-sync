@@ -42,7 +42,7 @@ func TestTimer(t *testing.T) {
 		{"TestMoment2"},
 		{"TestMoment3"},
 	} {
-		if m, err := tt.GetMoment(c.name); err != nil {
+		if m, err := tt.Get(c.name); err != nil {
 			t.Errorf("TestTimer: GetMoment error (%v)", c.name)
 		} else {
 			switch {
@@ -54,7 +54,7 @@ func TestTimer(t *testing.T) {
 		}
 	}
 
-	if _, err := tt.GetMoment("UndefinedMoment4"); err == nil {
+	if _, err := tt.Get("UndefinedMoment4"); err == nil {
 		t.Errorf("TestTimer: GetMoment didn't error w/ UndefinedMoment4")
 	}
 

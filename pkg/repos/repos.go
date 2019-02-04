@@ -1,3 +1,4 @@
+// Package repos implements access to Git repositories for git-in-sync.
 package repos
 
 import (

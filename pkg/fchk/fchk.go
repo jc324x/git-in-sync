@@ -1,3 +1,4 @@
+// Package fchk tests files and directories.
 package fchk
 
 import (

@@ -1,4 +1,4 @@
-// Package flags implements Mode and Config flags for git-in-sync.
+// Package flags adds Mode and Config flags to git-in-sync.
 package flags
 
 import (

@@ -1,3 +1,4 @@
+// Package gis is the main package of git-in-sync.
 package main
 
 import (
@@ -23,7 +24,7 @@ func Init() (f flags.Flags, rs repos.Repos, t *timer.Timer) {
 	brf.Printv(f, "%v start", e.Get("Clapper"))
 
 	// "flag(s) set..."
-	if ft, err := t.GetMoment("init-flags"); err == nil {
+	if ft, err := t.Get("init-flags"); err == nil {
 		brf.Printv(f, "%v parsing flags", e.Get("FlagInHole"))
 		brf.Printv(f, "%v running in '%v' mode {%v / %v}", e.Get("Flag"), f.Mode, ft.Split, ft.Start)
 	}

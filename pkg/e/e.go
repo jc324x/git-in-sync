@@ -1,4 +1,4 @@
-// Package e is for emoji.
+// Package e adds emoji to git-in-sync.
 package e
 
 import (

@@ -1,3 +1,4 @@
+// Package conf implements access to gisrc.json files.
 package conf
 
 import (

@@ -1,3 +1,4 @@
+// Package brf implements functions with brief output.
 package brf
 
 import (
@@ -12,7 +13,7 @@ import (
 	"github.com/jychri/git-in-sync/pkg/flags"
 )
 
-// Printv calls prints to standard output if not running in "oneline" mode.
+// Printv calls prints to standard output if not running in 'oneline' or 'testing' mode.
 func Printv(f flags.Flags, s string, z ...interface{}) (err error) {
 
 	if f.Mode != "oneline" && f.Mode != "testing" {
@@ -23,7 +24,7 @@ func Printv(f flags.Flags, s string, z ...interface{}) (err error) {
 	return errors.New("N/A")
 }
 
-// Single returns a string slice with no duplications.
+// Single returns a string slice with no duplicate entries.
 func Single(ssl []string) (sl []string) {
 
 	smap := make(map[string]bool)
@@ -78,7 +79,7 @@ func First(s string) string {
 	return ""
 }
 
-// AbsUser expands "~/" to "User/user/" and returns a clean path.
+// AbsUser expands "~/" to "User/$user/" and returns a clean path.
 // Given an absolute path, it returns a clean path.
 func AbsUser(s string) string {
 

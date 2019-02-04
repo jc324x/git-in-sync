@@ -3,11 +3,10 @@ package conf
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"log"
-	"os/user"
 
+	"github.com/jychri/git-in-sync/pkg/brf"
 	"github.com/jychri/git-in-sync/pkg/flags"
 )
 
@@ -24,37 +23,21 @@ type Config struct {
 	} `json:"bundles"`
 }
 
-// Path ...
-func Path(f flags.Flags) string {
-	var u *user.User
-	var err error
-
-	if u, err = user.Current(); err != nil {
-		log.Fatalf("Can't id the current user (%v)", err.Error())
-	}
-
-	switch f.Config {
-	case "~/.gisrc.json":
-		return fmt.Sprintf("%v/.gisrc.json", u.HomeDir)
-	default:
-		return f.Config
-	}
-}
-
 // Init returns unmarshalled data from gisrc.json.
 func Init(f flags.Flags) (c Config) {
 	var bs []byte
 	var err error
-	var p string
 
-	p = Path(f)
+	if f.Config == "~/.gisrc.json" {
+		f.Config = brf.AbsUser("~/.gisrc.json")
+	}
 
-	if bs, err = ioutil.ReadFile(p); err != nil {
-		log.Fatalf("Can't read file at (%v)\n", p)
+	if bs, err = ioutil.ReadFile(f.Config); err != nil {
+		log.Fatalf("Can't read file at (%v)\n", f.Config)
 	}
 
 	if err = json.Unmarshal(bs, &c); err != nil {
-		log.Fatalf("Can't unmarshal JSON from (%v)\n", p)
+		log.Fatalf("Can't unmarshal JSON from (%v)\n", f.Config)
 	}
 
 	return c

@@ -4,6 +4,6 @@ import (
 	"testing"
 )
 
-func TestResulter(t *testing.T) {
+func TestInit(t *testing.T) {
 	Init()
 }

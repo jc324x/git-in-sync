@@ -1,16 +1,17 @@
+// Package flags implements Mode and Config flags for git-in-sync.
 package flags
 
 import (
 	"flag"
 )
 
-// Flags holds the user settings for the current run.
+// Flags records values for Mode and Config.
 type Flags struct {
 	Mode   string
 	Config string
 }
 
-// Init returns Flags with a validated mode and a default or set configuration.
+// Init returns validated user input as Flags.
 func Init() (f Flags) {
 
 	var c, m string
@@ -28,7 +29,9 @@ func Init() (f Flags) {
 	return Flags{Mode: m, Config: c}
 }
 
-// Testing is used to set values directly.
+// Testing returns a Flags instance:
+// Mode: testing
+// Config: c
 func Testing(c string) Flags {
 	return Flags{Mode: "testing", Config: c}
 }

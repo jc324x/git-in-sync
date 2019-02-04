@@ -36,7 +36,7 @@ func Init() (f flags.Flags, rs repos.Repos, t *timer.Timer) {
 	t.MarkMoment("init-config")
 
 	// "read conf.Path(f)"
-	brf.Printv(f, "%v read %v {%v / %v}", e.Get("Book"), conf.Path(f), t.Split(), t.Time())
+	brf.Printv(f, "%v read %v {%v / %v}", e.Get("Book"), (f.Config), t.Split(), t.Time())
 
 	// initialize Repos
 	rs = repos.Init(c, f, t)

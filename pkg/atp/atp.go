@@ -1,5 +1,4 @@
-// Package atp (a test package) sets up testing environments
-// for packages conf, gis and repos
+// Package atp manages test environments for git-in-sync packages.
 package atp
 
 import (
@@ -11,7 +10,8 @@ import (
 	"path"
 )
 
-var jmap = map[string][]byte{
+// Jmap maps strings to sample gisrc.json JSON.
+var Jmap = map[string][]byte{
 	"recipes": []byte(`
 		{
 			"bundles": [{
@@ -56,9 +56,11 @@ var jmap = map[string][]byte{
 }
 
 // Setup creates a test environment at ~/tmpgis/$pkg/.
-// ~/tmpgis/$pkg/gisrc.json is created, written with data from jmap[k]
-// and its path is returned along with a cleanup function that removes
-// ~/tmpgis/$pkg and all of its contents. (SETPATH is set)
+// ~/tmpgis/$pkg/ and ~/tmpgis/$pkg/gisrc.json are created,
+// key k is matched to Jmap, returning j ([]byte) if valid,
+// $td replaces 'SETPATH' in j, which is written to gisrc.json.
+// Setup returns the absolute path of ~/tmpgis/$pkg/gisrc.json
+// and a cleanup function that removes ~/tmpgis/$pkg/.
 func Setup(pkg string, k string) (string, func()) {
 	var j []byte
 	var ok bool
@@ -67,8 +69,8 @@ func Setup(pkg string, k string) (string, func()) {
 		log.Fatalf("pkg is empty")
 	}
 
-	if j, ok = jmap[k]; ok != true {
-		log.Fatalf("%v not found in jmap", k)
+	if j, ok = Jmap[k]; ok != true {
+		log.Fatalf("%v not found in Jmap", k)
 	}
 
 	var u *user.User
@@ -98,7 +100,8 @@ func Setup(pkg string, k string) (string, func()) {
 	return tg, func() { os.RemoveAll(tb) }
 }
 
-// Dir returns the path of the testing directory.
+// Dir returns the absolute path of the testing environment.
+// ~/tmpgis/$pkg
 func Dir(pkg string) string {
 	if pkg == "" {
 		log.Fatalf("pkg is empty")
@@ -119,11 +122,6 @@ func Dir(pkg string) string {
 	return td
 }
 
-// Cleanup ...
-func Cleanup(pkg string) {
-
-}
-
 // Result holds the expected values for a zone.
 type Result struct {
 	User, Remote, Workspace string
@@ -133,7 +131,8 @@ type Result struct {
 // Results is a collection of Result structs.
 type Results []Result
 
-var rmap = map[string]Results{
+// Rmap maps strings to expected results.
+var Rmap = map[string]Results{
 	"recipes": {
 		{"hendricius", "github", "recipes", []string{"pizza-dough", "the-bread-code"}},
 		{"cocktails-for-programmers", "github", "recipes", []string{"cocktails-for-programmers"}},
@@ -144,9 +143,9 @@ var rmap = map[string]Results{
 
 // Resulter returns expected results for testing.
 func Resulter(k string) Results {
-	if _, ok := rmap[k]; ok != true {
-		log.Fatalf("%v not found in rmap", k)
+	if _, ok := Rmap[k]; ok != true {
+		log.Fatalf("%v not found in Rmap", k)
 	}
 
-	return rmap[k]
+	return Rmap[k]
 }

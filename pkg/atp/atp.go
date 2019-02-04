@@ -10,6 +10,42 @@ import (
 	"path"
 )
 
+// Pulled from gisrc.json at repo base. Roll into *map and test files
+
+// {
+// 	"bundles": [{
+// 		"path": "~/git-in-sync-example",
+// 		"zones": [{
+// 				"user": "jychri",
+// 				"remote": "github",
+// 				"workspace": "google-apps-script",
+// 				"repositories": [
+// 					"crunchy-calendar",
+// 					"daily-sign-up",
+// 					"data-flipper",
+// 					"easy-csv",
+// 					"frequency-responder",
+// 					"google-apps-script-cheat-sheet",
+// 					"mega-merge",
+// 					"missing-homework"
+// 				]
+// 			}, {
+// 				"user": "jychri",
+// 				"remote": "github",
+// 				"workspace": "main",
+// 				"repositories": [
+//           "empty-ex",
+// 					"tmp1",
+// 					"tmp2",
+// 					"tmp3",
+// 					"tmp4",
+// 					"tmp5"
+//         ]
+//       }
+// 		]
+// 	}]
+// }
+
 // Jmap maps strings to sample gisrc.json JSON.
 var Jmap = map[string][]byte{
 	"recipes": []byte(`

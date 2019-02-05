@@ -8,8 +8,6 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-	// "sync"
-	// "time"
 
 	"github.com/jychri/git-in-sync/pkg/brf"
 	"github.com/jychri/git-in-sync/pkg/e"
@@ -165,7 +163,7 @@ func (r *Repo) VerifyWorkspace(f flags.Flags, ru *run.Run) {
 		brf.Printv(f, "%v creating %v", e.Get("Folder"), r.WorkspacePath)
 		os.MkdirAll(r.WorkspacePath, 0777)
 		r.Verified = true
-		ru.CreatedW = append(ru.CreatedW, r.Workspace)
+		ru.CWS = append(ru.CWS, r.Workspace)
 	}
 
 	_, err = os.Stat(r.WorkspacePath)
@@ -175,13 +173,13 @@ func (r *Repo) VerifyWorkspace(f flags.Flags, ru *run.Run) {
 	switch {
 	case id == true && np == false:
 		r.Verified = true
-		ru.VerifiedW = append(ru.VerifiedW, r.Workspace)
+		ru.VWS = append(ru.VWS, r.Workspace)
 	case np == true:
 		r.Mark("fatal: No permsission", "verify-workspaces")
-		ru.InaccessibleW = append(ru.InaccessibleW, r.Workspace)
+		ru.IWS = append(ru.IWS, r.Workspace)
 	case id == false:
 		r.Mark("fatal: No directory", "verify-workspaces")
-		ru.InaccessibleW = append(ru.InaccessibleW, r.Workspace)
+		ru.IWS = append(ru.IWS, r.Workspace)
 	}
 
 	ru.Reduce()

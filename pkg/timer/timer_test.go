@@ -6,8 +6,8 @@ import (
 )
 
 func TestTimer(t *testing.T) {
-	tt := Init()        // test Timer
-	sm := tt.Moments[0] // Timer initializes with a (S)tart (M)oment
+	ti := Init()
+	sm := ti.Moments[0]
 
 	if sm.Name != "Start" {
 		t.Errorf("TestTimer: Start Moment Name error")
@@ -26,12 +26,12 @@ func TestTimer(t *testing.T) {
 		{"TestMoment2"},
 		{"TestMoment3"},
 	} {
-		tt.Mark(c.name)
+		ti.Mark(c.name)
 	}
 
 	// Timer.Moments should have 4 Moments: Start, TestMoment1, ...
 
-	if len(tt.Moments) != 4 {
+	if len(ti.Moments) != 4 {
 		t.Errorf("TestTimer: Moments length error")
 	}
 
@@ -42,7 +42,7 @@ func TestTimer(t *testing.T) {
 		{"TestMoment2"},
 		{"TestMoment3"},
 	} {
-		if m, err := tt.Get(c.name); err != nil {
+		if m, err := ti.Get(c.name); err != nil {
 			t.Errorf("TestTimer: GetMoment error (%v)", c.name)
 		} else {
 			switch {
@@ -54,7 +54,7 @@ func TestTimer(t *testing.T) {
 		}
 	}
 
-	if _, err := tt.Get("UndefinedMoment4"); err == nil {
+	if _, err := ti.Get("UndefinedMoment4"); err == nil {
 		t.Errorf("TestTimer: GetMoment didn't error w/ UndefinedMoment4")
 	}
 

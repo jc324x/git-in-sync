@@ -29,7 +29,7 @@ func TestSingle(t *testing.T) {
 		{[]string{"a", "b", "b", "c", "c", "c", "c"}, []string{"a", "b", "c"}},
 		{[]string{"x", "y", "z", "z", "z", "z"}, []string{"x", "y", "z"}},
 	} {
-		got := Single(c.in)
+		got := Reduce(c.in)
 
 		if !reflect.DeepEqual(got, c.want) {
 			t.Errorf("Single: != DeepEqual (%v -> %v != %v)", c.in, got, c.want)

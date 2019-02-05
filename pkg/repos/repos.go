@@ -19,7 +19,7 @@ import (
 	"github.com/jychri/git-in-sync/pkg/timer"
 )
 
-// Repos ...
+// Repos collects pointers to Repo structs.
 type Repos []*repo.Repo
 
 // Workspaces returns the names of all Workspaces,
@@ -35,7 +35,7 @@ func (rs Repos) Workspaces() []string {
 		log.Fatalf("No workspaces. Exiting")
 	}
 
-	return brf.Single(wss)
+	return brf.Reduce(wss)
 }
 
 // Init ...
@@ -104,8 +104,8 @@ func (rs Repos) NameSort() {
 
 // sort A-Z by r.WorkspacePath, then r.Name
 
-// PathSort ...
-func (rs Repos) PathSort() {
+// WorkspacePathSort  ...
+func (rs Repos) WorkspacePathSort() {
 	sort.SliceStable(rs, func(i, j int) bool { return rs[i].Name < rs[j].Name })
 	sort.SliceStable(rs, func(i, j int) bool { return rs[i].WorkspacePath < rs[j].WorkspacePath })
 }
@@ -338,44 +338,31 @@ func (rs Repos) PathSort() {
 // VerifyWorkspaces ...
 func (rs Repos) VerifyWorkspaces(f flags.Flags, ru *run.Run, t *timer.Timer) {
 
-	// sort Repos by path
-	rs.PathSort()
+	// sort Repos A-Z by *r.WorkspacePath
+	rs.WorkspacePathSort()
 
-	// get Workspaces -> []string
+	// []string of *r.Workspace
 	ws := rs.Workspaces()
 
-	// "verifying workspaces..."
 	brf.Printv(f, "%v  verifying workspaces [%v](%v)", e.Get("FileCabinet"), len(ws), brf.Summary(ws, 25))
-
-	// created, verified and inaccessible workspaces
-	var cw []string // created workspaces
-	var vw []string // verified workspaces
-	var iw []string // inaccessible workspaces
 
 	for _, r := range rs {
 		r.VerifyWorkspace(f, ru)
 	}
 
-	// remove duplicates from slices
-	vw = brf.Single(vw)
-	iw = brf.Single(iw)
-
 	// summary
 	var b bytes.Buffer
 
-	switch {
-	case len(ws) == len(vw):
+	if len(ws) == ru.VWC {
 		b.WriteString(e.Get("Briefcase"))
-	case len(iw) >= 1:
-		b.WriteString(e.Get("Slash"))
-	default:
+	} else {
 		b.WriteString(e.Get("Slash"))
 	}
 
-	b.WriteString(fmt.Sprintf(" [%v/%v] divs verified", len(vw), len(ws)))
+	b.WriteString(fmt.Sprintf(" [%v/%v] divs verified", ru.VWC, len(ws)))
 
-	if len(cw) >= 1 {
-		b.WriteString(fmt.Sprintf(", created [%v]", strconv.Itoa(len(cw))))
+	if ru.CWC >= 1 {
+		b.WriteString(fmt.Sprintf(", created [%v]", strconv.Itoa(ru.CWC)))
 	}
 
 	b.WriteString(fmt.Sprintf(" {%v/%v}", t.Split().String(), t.Time().String()))

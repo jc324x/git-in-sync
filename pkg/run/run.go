@@ -6,9 +6,12 @@ import (
 
 // Run tracks stats for the current run
 type Run struct {
-	CreatedW      []string // created workspaces
-	VerifiedW     []string // verified workspaces
-	InaccessibleW []string // inaccessible workspaces
+	CWS []string // created workspaces
+	VWS []string // verified workspaces
+	IWS []string // inaccessible workspaces
+	CWC int      // len(CWS)
+	VWC int      // len(VWS)
+	IWC int      // len(IWS)
 }
 
 // Init ...
@@ -19,7 +22,10 @@ func Init() *Run {
 
 // Reduce reduces slices in the *Run to their unique elements; no duplicates.
 func (ru *Run) Reduce() {
-	ru.CreatedW = brf.Single(ru.CreatedW)
-	ru.VerifiedW = brf.Single(ru.VerifiedW)
-	ru.InaccessibleW = brf.Single(ru.InaccessibleW)
+	ru.CWS = brf.Reduce(ru.CWS)
+	ru.VWS = brf.Reduce(ru.VWS)
+	ru.IWS = brf.Reduce(ru.IWS)
+	ru.CWC = len(ru.CWS)
+	ru.VWC = len(ru.VWS)
+	ru.IWC = len(ru.IWS)
 }

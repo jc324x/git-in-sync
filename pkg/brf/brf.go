@@ -22,8 +22,8 @@ func Printv(f flags.Flags, s string, z ...interface{}) {
 	// return errors.New("N/A")
 }
 
-// Single returns a string slice with no duplicate entries.
-func Single(ssl []string) (sl []string) {
+// Reduce returns a string slice with no duplicate entries.
+func Reduce(ssl []string) (sl []string) {
 
 	smap := make(map[string]bool)
 

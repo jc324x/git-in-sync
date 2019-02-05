@@ -7,17 +7,19 @@ import (
 	"github.com/jychri/git-in-sync/pkg/e"
 	"github.com/jychri/git-in-sync/pkg/flags"
 	"github.com/jychri/git-in-sync/pkg/repos"
+	"github.com/jychri/git-in-sync/pkg/run"
 	"github.com/jychri/git-in-sync/pkg/timer"
 )
 
 // Init ...
-func Init() (f flags.Flags, rs repos.Repos, t *timer.Timer) {
+func Init() (f flags.Flags, rs repos.Repos, ru *run.Run, t *timer.Timer) {
 
 	e.ClearScreen()
 
 	// initialize Timer and Flags
 	t = timer.Init()
 	f = flags.Init()
+	ru = run.Init()
 	t.Mark("init-flags")
 
 	// "start"
@@ -42,13 +44,13 @@ func Init() (f flags.Flags, rs repos.Repos, t *timer.Timer) {
 	// initialize Repos
 	rs = repos.Init(c, f, t)
 
-	return f, rs, t
+	return f, rs, ru, t
 }
 
 func main() {
-	f, rs, t := Init()
-	rs.VerifyWorkspaces(f, t)
-	rs.VerifyCloned(f, t)
+	f, rs, ru, t := Init()
+	rs.VerifyWorkspaces(f, ru, t)
+	// rs.VerifyCloned(f, t)
 	// rs.VerifyRepos(e, f, t)
 	// rs.VerifyChanges(e, f, t)
 	// rs.SubmitChanges(e, f, t)

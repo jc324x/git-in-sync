@@ -6,6 +6,10 @@ import (
 	"os"
 )
 
+// VerifyDir
+// func VerifyDir(p string) bool {
+// }
+
 // NoPermission returns true if the target can't be read,
 // can't be written to or doesn't exist.
 func NoPermission(p string) bool {

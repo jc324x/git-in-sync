@@ -20,6 +20,7 @@ import (
 	"github.com/jychri/git-in-sync/pkg/e"
 	"github.com/jychri/git-in-sync/pkg/fchk"
 	"github.com/jychri/git-in-sync/pkg/flags"
+	"github.com/jychri/git-in-sync/pkg/run"
 	"github.com/jychri/git-in-sync/pkg/tilde"
 	"github.com/jychri/git-in-sync/pkg/timer"
 )
@@ -158,6 +159,37 @@ func (r *Repo) Mark(em string, n string) {
 	if strings.Contains(r.ErrorFirst, "fatal") {
 		r.Verified = false
 	}
+}
+
+// VerifyWorkspace ...
+func (r *Repo) VerifyWorkspace(f flags.Flags, ru *run.Run) {
+	var err error
+	var np, id bool
+
+	if _, err = os.Stat(r.WorkspacePath); os.IsNotExist(err) {
+		brf.Printv(f, "%v creating %v", e.Get("Folder"), r.WorkspacePath)
+		os.MkdirAll(r.WorkspacePath, 0777)
+		r.Verified = true
+		ru.CreatedW = append(ru.CreatedW, r.Workspace)
+	}
+
+	_, err = os.Stat(r.WorkspacePath)
+	np = fchk.NoPermission(r.WorkspacePath)
+	id = fchk.IsDirectory(r.WorkspacePath)
+
+	switch {
+	case id == true && np == false:
+		r.Verified = true
+		ru.VerifiedW = append(ru.VerifiedW, r.Workspace)
+	case np == true:
+		r.Mark("fatal: No permsission", "verify-workspaces")
+		ru.InaccessibleW = append(ru.InaccessibleW, r.Workspace)
+	case id == false:
+		r.Mark("fatal: No directory", "verify-workspaces")
+		ru.InaccessibleW = append(ru.InaccessibleW, r.Workspace)
+	}
+
+	ru.Reduce()
 }
 
 func captureOut(b bytes.Buffer) string {
@@ -822,7 +854,8 @@ func (r *Repo) gitStatusPorcelain() {
 // Repos ...
 type Repos []*Repo
 
-// Workspaces ...
+// Workspaces returns the names of all Workspaces,
+// reduced to single entries.
 func (rs Repos) Workspaces() []string {
 	var wss []string
 
@@ -1135,7 +1168,7 @@ func (rs Repos) PathSort() {
 // }
 
 // VerifyWorkspaces ...
-func (rs Repos) VerifyWorkspaces(f flags.Flags, t *timer.Timer) {
+func (rs Repos) VerifyWorkspaces(f flags.Flags, ru *run.Run, t *timer.Timer) {
 
 	// sort Repos by path
 	rs.PathSort()
@@ -1152,32 +1185,7 @@ func (rs Repos) VerifyWorkspaces(f flags.Flags, t *timer.Timer) {
 	var iw []string // inaccessible workspaces
 
 	for _, r := range rs {
-		_, err := os.Stat(r.WorkspacePath)
-		np := fchk.NoPermission(r.WorkspacePath)
-		id := fchk.IsDirectory(r.WorkspacePath)
-
-		switch {
-		case os.IsNotExist(err):
-			brf.Printv(f, "%v creating %v", e.Get("Folder"), r.WorkspacePath)
-			os.MkdirAll(r.WorkspacePath, 0777)
-			r.Verified = true
-			cw = append(cw, r.Workspace)
-			id = fchk.IsDirectory(r.WorkspacePath)
-			np = fchk.NoPermission(r.WorkspacePath)
-			fallthrough
-		case id == true:
-			r.Verified = true
-			vw = append(vw, r.Workspace)
-			fmt.Printf("Fall: %v (%v)\n", r.Name, r.Verified)
-		case np == true:
-			r.Mark("fatal: No permsission", "verify-workspaces")
-			iw = append(iw, r.Workspace)
-		case id == false:
-			r.Mark("fatal: No directory", "verify-workspaces")
-			iw = append(iw, r.Workspace)
-		}
-
-		fmt.Printf("InLoop: %v (%v)\n", r.Name, r.Verified)
+		r.VerifyWorkspace(f, ru)
 	}
 
 	// remove duplicates from slices
@@ -1205,19 +1213,10 @@ func (rs Repos) VerifyWorkspaces(f flags.Flags, t *timer.Timer) {
 	b.WriteString(fmt.Sprintf(" {%v/%v}", t.Split().String(), t.Time().String()))
 
 	brf.Printv(f, b.String())
-
-	for _, r := range rs {
-		fmt.Printf("VerifyWorkspaces: %v (%v)\n ", r.Name, r.Verified)
-	}
-
 }
 
 // VerifyCloned ...
 func (rs Repos) VerifyCloned(f flags.Flags, t *timer.Timer) {
-
-	for _, r := range rs {
-		fmt.Printf("VerifyCloned: %v (%v)\n ", r.Name, r.Verified)
-	}
 
 	var pc []string // pending clone
 

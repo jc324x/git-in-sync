@@ -132,6 +132,12 @@ func Init(zw string, zu string, zr string, bp string, rn string) *Repo {
 	return r
 }
 
+// Private
+
+func captureOut(b bytes.Buffer) string {
+	return strings.TrimSuffix(b.String(), "\n")
+}
+
 func notVerified(r *Repo) bool {
 	if r.Verified == false {
 		return true
@@ -159,6 +165,8 @@ func (r *Repo) VerifyWorkspace(f flags.Flags, ru *run.Run) {
 	var err error
 	var np, id bool
 
+	// if not directory or no permission, rm it then create it...
+
 	if _, err = os.Stat(r.WorkspacePath); os.IsNotExist(err) {
 		brf.Printv(f, "%v creating %v", e.Get("Folder"), r.WorkspacePath)
 		os.MkdirAll(r.WorkspacePath, 0777)
@@ -185,13 +193,10 @@ func (r *Repo) VerifyWorkspace(f flags.Flags, ru *run.Run) {
 	ru.Reduce()
 }
 
-// PRIVATE FUNCTIONS
+// VerifyClone ...
+func (r *Repo) VerifyClone(f flags.Flags, ru *run.Run) {
 
-func captureOut(b bytes.Buffer) string {
-	return strings.TrimSuffix(b.String(), "\n")
 }
-
-// GIT FUNCTIONS
 
 func (r *Repo) gitCheckPending() {
 	// fmt.Println(r.Verified)

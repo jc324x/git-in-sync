@@ -100,11 +100,7 @@ func TestNoPermission(t *testing.T) {
 		{tf, false},
 	} {
 
-		got, err := NoPermission(c.in)
-
-		if err != nil {
-			t.Errorf("NoPermission: error (%v)", err.Error())
-		}
+		got := NoPermission(c.in)
 
 		if got != c.want {
 			t.Errorf("NoPermission: (got: %v,  want: %v)", got, c.want)
@@ -124,11 +120,7 @@ func TestIsDir(t *testing.T) {
 		{tf, false},
 	} {
 
-		got, err := IsDirectory(c.in)
-
-		if err != nil {
-			t.Errorf("IsDirectory: err = %v\n", err.Error())
-		}
+		got := IsDirectory(c.in)
 
 		if got != c.want {
 			t.Errorf("IsDirectory: (got: %v, want: %v) {%v}\n", got, c.want, c.in)
@@ -147,11 +139,11 @@ func TestIsEmpty(t *testing.T) {
 		{tf, false},
 	} {
 
-		got, err := IsEmpty(c.in)
+		got := IsEmpty(c.in)
 
-		if err != nil {
-			t.Errorf("IsEmpty: err = %v\n", err.Error())
-		}
+		// if err != nil {
+		// 	t.Errorf("IsEmpty: err = %v\n", err.Error())
+		// }
 
 		if got != c.want {
 			t.Errorf("IsEmpty: (got: %v, want: %v) {%v}\n", got, c.want, c.in)

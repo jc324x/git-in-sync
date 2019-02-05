@@ -30,7 +30,7 @@ type Repo struct {
 	Remote           string   // "github" or "gitlab"
 	Name             string   // "git-in-sync"
 	WorkspacePath    string   // "/Users/jychri/dev/go-lang/"
-	WorkspaceStat    string   // "verified", "created" or inacessible
+	WorkspaceStat    string   // "verified", "created" or "inaccessible"
 	RepoPath         string   // "/Users/jychri/dev/go-lang/git-in-sync"
 	GitPath          string   // "/Users/jychri/dev/go-lang/git-in-sync/.git"
 	GitDir           string   // "--git-dir=/Users/jychri/dev/go-lang/git-in-sync/.git"
@@ -1342,33 +1342,35 @@ func (rs Repos) VerifyWorkspaces(f flags.Flags, t *timer.Timer) {
 	var iw []string // inaccessible workspaces
 
 	for _, r := range rs {
-
 		_, err := os.Stat(r.WorkspacePath)
+		var np, id bool
 
-		// create workspace if missing
-		if os.IsNotExist(err) {
+		switch {
+		case os.IsNotExist(err):
 			brf.Printv(f, "%v creating %v", e.Get("Folder"), r.WorkspacePath)
 			os.MkdirAll(r.WorkspacePath, 0777)
-			cw = append(cw, r.WorkspacePath)
+			r.WorkspaceStat = "created"
 		}
 
 		if np, err := fchk.NoPermission(r.WorkspacePath); np == true || err != nil {
 			r.Mark("fatal: No permsission", "verify-workspaces")
-			iw = append(iw, r.WorkspacePath)
+			r.WorkspaceStat = "inaccessible"
+			// iw = append(iw, r.WorkspacePath)
 		}
 
 		if id, err := fchk.IsDirectory(r.WorkspacePath); id == false || err != nil {
 			r.Mark("fatal: No directory", "verify-workspaces")
-			iw = append(iw, r.WorkspacePath)
+			r.WorkspaceStat = "inacessible"
 		}
 
 		if _, err := os.Stat(r.WorkspacePath); os.IsNotExist(err) {
 			r.Mark("fatal: No directory", "verify-workspaces")
-			iw = append(iw, r.WorkspacePath)
+			r.WorkspaceStat = "inacessible"
 		}
 
 		if id, _ := fchk.IsDirectory(r.WorkspacePath); id == true {
 			r.Verified = true
+			r.WorkspaceStat = "verified"
 			vw = append(vw, r.WorkspacePath)
 		}
 

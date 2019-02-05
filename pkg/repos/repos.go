@@ -88,7 +88,10 @@ func repo(zw string, zu string, zr string, bp string, rn string) *Repo {
 	var b bytes.Buffer
 
 	// "/Users/jychri/dev/go-lang/src/github.com/jychri"
-	b.WriteString(brf.AbsUser(r.BundlePath))
+	// FLAG: simplify the need for AbsUser fn?
+	// FIX THIS IN THE MORNING
+
+	// b.WriteString(brf.AbsUser(r.BundlePath))
 	if r.Workspace != "main" {
 		b.WriteString("/")
 		b.WriteString(r.Workspace)

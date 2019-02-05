@@ -6,7 +6,6 @@ import (
 	"io/ioutil"
 	"log"
 
-	"github.com/jychri/git-in-sync/pkg/brf"
 	"github.com/jychri/git-in-sync/pkg/flags"
 )
 
@@ -28,9 +27,9 @@ func Init(f flags.Flags) (c Config) {
 	var bs []byte
 	var err error
 
-	if f.Config == "~/.gisrc.json" {
-		f.Config = brf.AbsUser("~/.gisrc.json")
-	}
+	// if f.Config == "~/.gisrc.json" {
+	// 	f.Config = brf.AbsUser("~/.gisrc.json")
+	// }
 
 	if bs, err = ioutil.ReadFile(f.Config); err != nil {
 		log.Fatalf("Can't read file at (%v)\n", f.Config)

@@ -3,6 +3,10 @@ package flags
 
 import (
 	"flag"
+	"log"
+	"os/user"
+	"path"
+	"strings"
 )
 
 // Flags records values for Mode and Config.
@@ -25,6 +29,20 @@ func Init() (f Flags) {
 	default:
 		m = "verify"
 	}
+
+	var u *user.User
+
+	u, err := user.Current()
+
+	if err != nil {
+		log.Fatalf("Unable to identify current user")
+	}
+
+	if !path.IsAbs(c) {
+		c = path.Join(u.HomeDir, strings.TrimPrefix(c, "~/"))
+	}
+
+	c = path.Clean(c)
 
 	return Flags{Mode: m, Config: c}
 }

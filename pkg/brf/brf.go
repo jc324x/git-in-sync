@@ -3,11 +3,7 @@ package brf
 
 import (
 	"bytes"
-	// "errors"
 	"fmt"
-	"log"
-	"os/user"
-	"path"
 	"strings"
 
 	"github.com/jychri/git-in-sync/pkg/flags"
@@ -83,19 +79,19 @@ func First(s string) string {
 
 // AbsUser expands "~/" to "User/$user/" and returns a clean path.
 // Given an absolute path, it returns a clean path.
-func AbsUser(s string) string {
+// func AbsUser(s string) string {
 
-	var u *user.User
+// 	var u *user.User
 
-	u, err := user.Current()
+// 	u, err := user.Current()
 
-	if err != nil {
-		log.Fatalf("Unable to identify current user")
-	}
+// 	if err != nil {
+// 		log.Fatalf("Unable to identify current user")
+// 	}
 
-	if !path.IsAbs(s) {
-		return path.Join(u.HomeDir, strings.TrimPrefix(s, "~/"))
-	}
+// 	if !path.IsAbs(s) {
+// 		return path.Join(u.HomeDir, strings.TrimPrefix(s, "~/"))
+// 	}
 
-	return path.Clean(s)
-}
+// 	return path.Clean(s)
+// }

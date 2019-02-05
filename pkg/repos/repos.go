@@ -370,69 +370,68 @@ func (rs Repos) VerifyWorkspaces(f flags.Flags, ru *run.Run, t *timer.Timer) {
 	brf.Printv(f, b.String())
 }
 
-// VerifyCloned ...
-// func (rs Repos) VerifyCloned(f flags.Flags, t *timer.Timer) {
+// VerifyClones ...
+func (rs Repos) VerifyClones(f flags.Flags, ru *run.Run, t *timer.Timer) {
 
-// 	var pc []string // pending clone
+	for _, r := range rs {
+		// naming... maybe dispatch clone or something to that effect?
+		r.VerifyClone(f, ru)
+	}
 
-// 	for _, r := range rs {
-// 		r.gitCheckPending()
+	ru.Reduce()
 
-// 		if r.PendingClone == true {
-// 			pc = append(pc, r.Name)
-// 		}
-// 	}
+	// return if there are no pending repos
+	if len(ru.PCS) <= 0 {
+		return
+	}
 
-// 	// return if there are no pending repos
+	// "standardize print comment?"
+	// if there are pending repos
+	brf.Printv(f, "%v cloning [%v]", e.Get("Sheep"), ru.PCC)
 
-// 	if len(pc) <= 0 {
-// 		return
-// 	}
+	// verify each repo (async)
+	var wg sync.WaitGroup
+	for i := range rs {
+		wg.Add(1)
+		go func(r *repo.Repo) {
+			defer wg.Done()
+			r.GitClone(f)
+		}(rs[i])
+	}
+	wg.Wait()
 
-// 	// if there are pending repos
-// 	brf.Printv(f, "%v cloning [%v]", e.Get("Sheep"), len(pc))
+	// move this someplace else...
+	// var cr []string // cloned repos
+	for _, r := range rs {
+		if r.Cloned == true {
+			ru.CRS = append(ru.CRS, r.Name)
+		}
+	}
 
-// 	// verify each repo (async)
-// 	var wg sync.WaitGroup
-// 	for i := range rs {
-// 		wg.Add(1)
-// 		go func(r *Repo) {
-// 			defer wg.Done()
-// 			r.gitClone(f)
-// 		}(rs[i])
-// 	}
-// 	wg.Wait()
+	ru.Reduce()
 
-// 	var cr []string // cloned repos
+	// timer
+	t.Mark("verify-repos")
 
-// 	for _, r := range rs {
-// 		if r.Cloned == true {
-// 			cr = append(cr, r.Name)
-// 		}
-// 	}
+	// summary
+	var b bytes.Buffer
 
-// 	// timer
-// 	t.Mark("verify-repos")
+	b.WriteString(e.Get("Truck"))
+	b.WriteString(" [")
+	b.WriteString(strconv.Itoa(ru.CRC))
+	b.WriteString("/")
+	b.WriteString(strconv.Itoa(ru.PCC))
+	b.WriteString("] cloned")
 
-// 	// summary
-// 	var b bytes.Buffer
+	tr := time.Millisecond // truncate
+	b.WriteString(" {")
+	b.WriteString(t.Split().Truncate(tr).String())
+	b.WriteString(" / ")
+	b.WriteString(t.Time().Truncate(tr).String())
+	b.WriteString("}")
 
-// 	b.WriteString(e.Get("Truck"))
-// 	b.WriteString(" [")
-// 	b.WriteString(strconv.Itoa(len(cr)))
-// 	b.WriteString("/")
-// 	b.WriteString(strconv.Itoa(len(pc)))
-// 	b.WriteString("] cloned")
-
-// 	tr := time.Millisecond // truncate
-// 	b.WriteString(" {")
-// 	b.WriteString(t.Split().Truncate(tr).String())
-// 	b.WriteString(" / ")
-// 	b.WriteString(t.Time().Truncate(tr).String())
-// 	b.WriteString("}")
-
-// 	brf.Printv(f, b.String())
-// }
+	brf.Printv(f, b.String())
+}
 
 // VerifyRepos ...
 func (rs Repos) VerifyRepos(f flags.Flags, t *timer.Timer) {

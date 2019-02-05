@@ -1,3 +1,4 @@
+// Package repo ...
 package repo
 
 import (
@@ -17,7 +18,7 @@ import (
 	"github.com/jychri/git-in-sync/pkg/tilde"
 )
 
-// Repo ...
+// Repo details the status of Git repository.
 type Repo struct {
 	BundlePath       string   // "~/dev"
 	Workspace        string   // "main" or "go-lang"
@@ -61,7 +62,7 @@ type Repo struct {
 	Porcelain        bool     // true if `git status --porcelain` returns ""
 }
 
-// Init ...
+// Init returns an initialized *Repo.
 func Init(zw string, zu string, zr string, bp string, rn string) *Repo {
 
 	r := new(Repo)
@@ -85,6 +86,7 @@ func Init(zw string, zu string, zr string, bp string, rn string) *Repo {
 
 	// "/Users/jychri/dev/go-lang/src/github.com/jychri"
 	b.WriteString(tilde.AbsUser(r.BundlePath))
+
 	if r.Workspace != "main" {
 		b.WriteString("/")
 		b.WriteString(r.Workspace)
@@ -195,18 +197,6 @@ func (r *Repo) VerifyWorkspace(f flags.Flags, ru *run.Run) {
 
 // VerifyClone ...
 func (r *Repo) VerifyClone(f flags.Flags, ru *run.Run) {
-
-}
-
-func (r *Repo) gitCheckPending() {
-	// fmt.Println(r.Verified)
-
-	// return if not verified
-	// if notVerified(r) {
-	// 	return
-	// }
-
-	// check if RepoPath and GitPath are accessible
 	_, rerr := os.Stat(r.RepoPath)
 	_, gerr := os.Stat(r.GitPath)
 
@@ -217,14 +207,18 @@ func (r *Repo) gitCheckPending() {
 		r.Mark("fatal: directory occupying path", "git-verify")
 	case fchk.IsDirectory(r.RepoPath) && fchk.IsEmpty(r.RepoPath):
 		r.PendingClone = true
+		ru.PCS = append(ru.PCS, r.Name)
 	case os.IsNotExist(rerr) && os.IsNotExist(gerr):
 		r.PendingClone = true
+		ru.PCS = append(ru.PCS, r.Name)
 	case fchk.IsDirectory(r.RepoPath) && fchk.IsDirectory(r.GitPath):
 		r.Verified = true
 	}
+
 }
 
-func (r *Repo) gitClone(f flags.Flags) {
+// GitClone ...
+func (r *Repo) GitClone(f flags.Flags) {
 
 	if r.PendingClone == true {
 		// print

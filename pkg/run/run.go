@@ -12,6 +12,10 @@ type Run struct {
 	CWC int      // len(CWS)
 	VWC int      // len(VWS)
 	IWC int      // len(IWS)
+	PCS []string // pending clones
+	PCC int      // lens(PCS)
+	CRS []string // cloned repos
+	CRC int      // len(CRS)
 }
 
 // Init ...
@@ -28,4 +32,6 @@ func (ru *Run) Reduce() {
 	ru.CWC = len(ru.CWS)
 	ru.VWC = len(ru.VWS)
 	ru.IWC = len(ru.IWS)
+	ru.PCC = len(ru.PCS)
+	ru.CRC = len(ru.CRS)
 }

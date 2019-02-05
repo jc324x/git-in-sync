@@ -164,21 +164,15 @@ func (r *Repo) Mark(em string, n string) {
 
 // VerifyWorkspace ...
 func (r *Repo) VerifyWorkspace(f flags.Flags, ru *run.Run) {
-	var err error
-	var np, id bool
 
-	// if not directory or no permission, rm it then create it...
-
-	if _, err = os.Stat(r.WorkspacePath); os.IsNotExist(err) {
+	if _, err := os.Stat(r.WorkspacePath); os.IsNotExist(err) {
 		brf.Printv(f, "%v creating %v", e.Get("Folder"), r.WorkspacePath)
 		os.MkdirAll(r.WorkspacePath, 0777)
-		r.Verified = true
 		ru.CWS = append(ru.CWS, r.Workspace)
 	}
 
-	_, err = os.Stat(r.WorkspacePath)
-	np = fchk.NoPermission(r.WorkspacePath)
-	id = fchk.IsDirectory(r.WorkspacePath)
+	np := fchk.NoPermission(r.WorkspacePath)
+	id := fchk.IsDirectory(r.WorkspacePath)
 
 	switch {
 	case id == true && np == false:
@@ -195,8 +189,8 @@ func (r *Repo) VerifyWorkspace(f flags.Flags, ru *run.Run) {
 	ru.Reduce()
 }
 
-// VerifyClone ...
-func (r *Repo) VerifyClone(f flags.Flags, ru *run.Run) {
+// CheckClone ...
+func (r *Repo) CheckClone(f flags.Flags, ru *run.Run) {
 	_, rerr := os.Stat(r.RepoPath)
 	_, gerr := os.Stat(r.GitPath)
 
@@ -213,6 +207,7 @@ func (r *Repo) VerifyClone(f flags.Flags, ru *run.Run) {
 		ru.PCS = append(ru.PCS, r.Name)
 	case fchk.IsDirectory(r.RepoPath) && fchk.IsDirectory(r.GitPath):
 		r.Verified = true
+		r.PendingClone = false
 	}
 
 }
@@ -220,28 +215,32 @@ func (r *Repo) VerifyClone(f flags.Flags, ru *run.Run) {
 // GitClone ...
 func (r *Repo) GitClone(f flags.Flags) {
 
-	if r.PendingClone == true {
-		// print
-		brf.Printv(f, "%v cloning %v {%v}", e.Get("Box"), r.Name, r.Workspace)
-
-		// command
-		args := []string{"clone", r.URL, r.RepoPath}
-		cmd := exec.Command("git", args...)
-		var out bytes.Buffer
-		var err bytes.Buffer
-		cmd.Stderr = &err
-		cmd.Stdout = &out
-		cmd.Run()
-
-		// check error, set value(s)
-		if err := err.String(); err != "" {
-			// r.markError(e, f, err, "gitClone")
-		}
-
-		r.Cloned = true
-
+	if r.PendingClone == false {
+		return
 	}
 
+	// "cloning..."
+	brf.Printv(f, "%v cloning %v {%v}", e.Get("Box"), r.Name, r.Workspace)
+
+	// if _, err := Command([]string{"clone", r.URL, r.RepoPath}); err != "" {
+
+	// }
+
+	// command
+	args := []string{"clone", r.URL, r.RepoPath}
+	cmd := exec.Command("git", args...)
+	var out bytes.Buffer
+	var err bytes.Buffer
+	cmd.Stderr = &err
+	cmd.Stdout = &out
+	cmd.Run()
+
+	// check error, set value(s)
+	if err := err.String(); err != "" {
+		r.Mark(err, "git-clone")
+	}
+
+	r.Cloned = true
 }
 
 func (r *Repo) gitConfigOriginURL() {

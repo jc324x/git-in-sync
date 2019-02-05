@@ -370,26 +370,8 @@ func (rs Repos) VerifyWorkspaces(f flags.Flags, ru *run.Run, t *timer.Timer) {
 	brf.Printv(f, b.String())
 }
 
-// VerifyClones ...
-func (rs Repos) VerifyClones(f flags.Flags, ru *run.Run, t *timer.Timer) {
-
-	for _, r := range rs {
-		// naming... maybe dispatch clone or something to that effect?
-		r.VerifyClone(f, ru)
-	}
-
-	ru.Reduce()
-
-	// return if there are no pending repos
-	if len(ru.PCS) <= 0 {
-		return
-	}
-
-	// "standardize print comment?"
-	// if there are pending repos
-	brf.Printv(f, "%v cloning [%v]", e.Get("Sheep"), ru.PCC)
-
-	// verify each repo (async)
+// AsyncClone ...
+func (rs Repos) AsyncClone(f flags.Flags) {
 	var wg sync.WaitGroup
 	for i := range rs {
 		wg.Add(1)
@@ -399,6 +381,25 @@ func (rs Repos) VerifyClones(f flags.Flags, ru *run.Run, t *timer.Timer) {
 		}(rs[i])
 	}
 	wg.Wait()
+}
+
+// VerifyClones ...
+func (rs Repos) VerifyClones(f flags.Flags, ru *run.Run, t *timer.Timer) {
+
+	for _, r := range rs {
+		r.CheckClone(f, ru)
+	}
+
+	// return if no pending clones
+	if ru.PCC <= 0 {
+		return
+	}
+
+	// "cloning..."
+	brf.Printv(f, "%v cloning [%v]", e.Get("Sheep"), ru.PCC)
+
+	// verify each repo (async)
+	rs.AsyncClone(f)
 
 	// move this someplace else...
 	// var cr []string // cloned repos

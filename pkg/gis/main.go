@@ -6,6 +6,7 @@ import (
 	"github.com/jychri/git-in-sync/pkg/conf"
 	"github.com/jychri/git-in-sync/pkg/e"
 	"github.com/jychri/git-in-sync/pkg/flags"
+	_ "github.com/jychri/git-in-sync/pkg/repo"
 	"github.com/jychri/git-in-sync/pkg/repos"
 	"github.com/jychri/git-in-sync/pkg/run"
 	"github.com/jychri/git-in-sync/pkg/timer"

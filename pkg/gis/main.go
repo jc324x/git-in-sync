@@ -6,7 +6,6 @@ import (
 	"github.com/jychri/git-in-sync/pkg/conf"
 	"github.com/jychri/git-in-sync/pkg/e"
 	"github.com/jychri/git-in-sync/pkg/flags"
-	_ "github.com/jychri/git-in-sync/pkg/repo"
 	"github.com/jychri/git-in-sync/pkg/repos"
 	"github.com/jychri/git-in-sync/pkg/run"
 	"github.com/jychri/git-in-sync/pkg/timer"
@@ -21,6 +20,7 @@ func Init() (f flags.Flags, rs repos.Repos, ru *run.Run, t *timer.Timer) {
 	t = timer.Init()
 	f = flags.Init()
 	ru = run.Init()
+
 	t.Mark("init-flags")
 
 	// "start"
@@ -51,7 +51,7 @@ func Init() (f flags.Flags, rs repos.Repos, ru *run.Run, t *timer.Timer) {
 func main() {
 	f, rs, ru, t := Init()
 	rs.VerifyWorkspaces(f, ru, t)
-	// rs.VerifyCloned(f, t)
+	rs.VerifyCloned(f, t)
 	// rs.VerifyRepos(e, f, t)
 	// rs.VerifyChanges(e, f, t)
 	// rs.SubmitChanges(e, f, t)

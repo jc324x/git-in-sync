@@ -30,7 +30,6 @@ type Repo struct {
 	Remote           string   // "github" or "gitlab"
 	Name             string   // "git-in-sync"
 	WorkspacePath    string   // "/Users/jychri/dev/go-lang/"
-	WorkspaceStat    string   // "verified", "created" or "inaccessible"
 	RepoPath         string   // "/Users/jychri/dev/go-lang/git-in-sync"
 	GitPath          string   // "/Users/jychri/dev/go-lang/git-in-sync/.git"
 	GitDir           string   // "--git-dir=/Users/jychri/dev/go-lang/git-in-sync/.git"
@@ -1336,44 +1335,37 @@ func (rs Repos) VerifyWorkspaces(f flags.Flags, t *timer.Timer) {
 	// "verifying workspaces..."
 	brf.Printv(f, "%v  verifying workspaces [%v](%v)", e.Get("FileCabinet"), len(ws), brf.Summary(ws, 25))
 
-	// track created, verified and missing divs
+	// created, verified and inaccessible workspaces
 	var cw []string // created workspaces
 	var vw []string // verified workspaces
 	var iw []string // inaccessible workspaces
 
 	for _, r := range rs {
 		_, err := os.Stat(r.WorkspacePath)
-		var np, id bool
+		np := fchk.NoPermission(r.WorkspacePath)
+		id := fchk.IsDirectory(r.WorkspacePath)
 
 		switch {
 		case os.IsNotExist(err):
 			brf.Printv(f, "%v creating %v", e.Get("Folder"), r.WorkspacePath)
 			os.MkdirAll(r.WorkspacePath, 0777)
-			r.WorkspaceStat = "created"
-		}
-
-		if np, err := fchk.NoPermission(r.WorkspacePath); np == true || err != nil {
-			r.Mark("fatal: No permsission", "verify-workspaces")
-			r.WorkspaceStat = "inaccessible"
-			// iw = append(iw, r.WorkspacePath)
-		}
-
-		if id, err := fchk.IsDirectory(r.WorkspacePath); id == false || err != nil {
-			r.Mark("fatal: No directory", "verify-workspaces")
-			r.WorkspaceStat = "inacessible"
-		}
-
-		if _, err := os.Stat(r.WorkspacePath); os.IsNotExist(err) {
-			r.Mark("fatal: No directory", "verify-workspaces")
-			r.WorkspaceStat = "inacessible"
-		}
-
-		if id, _ := fchk.IsDirectory(r.WorkspacePath); id == true {
 			r.Verified = true
-			r.WorkspaceStat = "verified"
-			vw = append(vw, r.WorkspacePath)
+			cw = append(cw, r.Workspace)
+			id = fchk.IsDirectory(r.WorkspacePath)
+			np = fchk.NoPermission(r.WorkspacePath)
+			fallthrough
+		case id == true:
+			r.Verified = true
+			vw = append(vw, r.Workspace)
+			fallthrough
+		case np == true:
+			r.Mark("fatal: No permsission", "verify-workspaces")
+			iw = append(iw, r.Workspace)
+			fallthrough
+		case id == false:
+			r.Mark("fatal: No directory", "verify-workspaces")
+			iw = append(iw, r.Workspace)
 		}
-
 	}
 
 	// remove duplicates from slices
@@ -1383,9 +1375,12 @@ func (rs Repos) VerifyWorkspaces(f flags.Flags, t *timer.Timer) {
 	// summary
 	var b bytes.Buffer
 
-	if len(ws) == len(vw) {
+	switch {
+	case len(ws) == len(vw):
 		b.WriteString(e.Get("Briefcase"))
-	} else {
+	case len(iw) >= 1:
+		b.WriteString(e.Get("Slash"))
+	default:
 		b.WriteString(e.Get("Slash"))
 	}
 

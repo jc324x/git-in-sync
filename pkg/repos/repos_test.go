@@ -39,7 +39,7 @@ func TestVerifyWorkspaces(t *testing.T) {
 	}
 }
 
-// func TestVerifyClone(t *testing.T) {
+// func TestVerifyCloned(t *testing.T) {
 
 // 	for _, tr := range []struct {
 // 		pkg, k string
@@ -56,13 +56,14 @@ func TestVerifyWorkspaces(t *testing.T) {
 // 		defer cleanup()
 
 // 		rs.VerifyWorkspaces(f, ti)
+// 		rs.VerifyCloned(f, ti)
 
-// 		td := atp.Dir(tr.pkg)
-// 		tp := path.Join(td, tr.k)
+// 		// td := atp.Dir(tr.pkg)
+// 		// tp := path.Join(td, tr.k)
 
-// 		if _, err := os.Stat(tp); os.IsNotExist(err) {
-// 			t.Errorf("VerifyWorkspaces: %v does not exist", td)
-// 		}
+// 		// if _, err := os.Stat(tp); os.IsNotExist(err) {
+// 		// 	t.Errorf("VerifyWorkspaces: %v does not exist", td)
+// 		// }
 
 // 	}
 // }

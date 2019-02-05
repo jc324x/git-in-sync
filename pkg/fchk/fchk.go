@@ -103,18 +103,18 @@ func NotEmpty(p string) bool {
 }
 
 // IsFile returns true if the target is a file.
-func IsFile(p string) (bool, error) {
+func IsFile(p string) bool {
 
 	var fi os.FileInfo
 	var err error
 
 	if fi, err = os.Stat(p); err != nil {
-		return false, err
+		return false
 	}
 
 	if fi.IsDir() {
-		return false, nil
+		return false
 	}
 
-	return true, nil
+	return true
 }

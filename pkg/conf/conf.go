@@ -7,6 +7,7 @@ import (
 	"log"
 
 	"github.com/jychri/git-in-sync/pkg/flags"
+	// "github.com/jychri/git-in-sync/pkg/tilde"
 )
 
 // Config holds unmrashalled data from gisrc.json.

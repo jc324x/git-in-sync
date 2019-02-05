@@ -3,10 +3,8 @@ package flags
 
 import (
 	"flag"
-	"log"
-	"os/user"
-	"path"
-	"strings"
+
+	"github.com/jychri/git-in-sync/pkg/tilde"
 )
 
 // Flags records values for Mode and Config.
@@ -30,19 +28,7 @@ func Init() (f Flags) {
 		m = "verify"
 	}
 
-	var u *user.User
-
-	u, err := user.Current()
-
-	if err != nil {
-		log.Fatalf("Unable to identify current user")
-	}
-
-	if !path.IsAbs(c) {
-		c = path.Join(u.HomeDir, strings.TrimPrefix(c, "~/"))
-	}
-
-	c = path.Clean(c)
+	c = tilde.AbsUser(c)
 
 	return Flags{Mode: m, Config: c}
 }

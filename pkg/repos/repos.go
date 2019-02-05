@@ -13,12 +13,14 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/jychri/git-in-sync/pkg/brf"
 	"github.com/jychri/git-in-sync/pkg/conf"
 	"github.com/jychri/git-in-sync/pkg/e"
 	"github.com/jychri/git-in-sync/pkg/fchk"
 	"github.com/jychri/git-in-sync/pkg/flags"
+	"github.com/jychri/git-in-sync/pkg/tilde"
 	"github.com/jychri/git-in-sync/pkg/timer"
 )
 
@@ -88,10 +90,7 @@ func repo(zw string, zu string, zr string, bp string, rn string) *Repo {
 	var b bytes.Buffer
 
 	// "/Users/jychri/dev/go-lang/src/github.com/jychri"
-	// FLAG: simplify the need for AbsUser fn?
-	// FIX THIS IN THE MORNING
-
-	// b.WriteString(brf.AbsUser(r.BundlePath))
+	b.WriteString(tilde.AbsUser(r.BundlePath))
 	if r.Workspace != "main" {
 		b.WriteString("/")
 		b.WriteString(r.Workspace)
@@ -166,35 +165,36 @@ func captureOut(b bytes.Buffer) string {
 }
 
 func (r *Repo) gitCheckPending() {
+	// fmt.Println(r.Verified)
 
 	// return if not verified
-	if notVerified(r) {
-		return
-	}
+	// if notVerified(r) {
+	// 	return
+	// }
 
 	// check if RepoPath and GitPath are accessible
-	// rinfo, rerr := os.Stat(r.RepoPath)
-	// ginfo, gerr := os.Stat(r.GitPath)
+	_, rerr := os.Stat(r.RepoPath)
+	_, gerr := os.Stat(r.GitPath)
 
 	switch {
-	// case isFile(rinfo):
-	// 	// r.markError(e, f, "fatal: file occupying path", "git-verify")
-	// case isDirectory(rinfo) && notEmpty(r.RepoPath) && os.IsNotExist(gerr):
-	// 	// r.markError(e, f, "fatal: directory occupying path", "git-verify")
-	// case isDirectory(rinfo) && isEmpty(r.RepoPath):
-	// 	r.PendingClone = true
-	// case os.IsNotExist(rerr) && os.IsNotExist(gerr):
-	// 	r.PendingClone = true
-	// case isDirectory(rinfo) && isDirectory(ginfo):
-	// 	r.Verified = true
+	case fchk.IsFile(r.RepoPath):
+		r.Mark("fatal: file occupying path", "git-verify")
+	case fchk.IsDirectory(r.RepoPath) && fchk.NotEmpty(r.RepoPath) && os.IsNotExist(gerr):
+		r.Mark("fatal: directory occupying path", "git-verify")
+	case fchk.IsDirectory(r.RepoPath) && fchk.IsEmpty(r.RepoPath):
+		r.PendingClone = true
+	case os.IsNotExist(rerr) && os.IsNotExist(gerr):
+		r.PendingClone = true
+	case fchk.IsDirectory(r.RepoPath) && fchk.IsDirectory(r.GitPath):
+		r.Verified = true
 	}
 }
 
-func (r *Repo) gitClone() {
+func (r *Repo) gitClone(f flags.Flags) {
 
 	if r.PendingClone == true {
 		// print
-		// targetPrintln(f, "%v cloning %v {%v}", e.Box, r.Name, r.Workspace)
+		brf.Printv(f, "%v cloning %v {%v}", e.Get("Box"), r.Name, r.Workspace)
 
 		// command
 		args := []string{"clone", r.URL, r.RepoPath}
@@ -909,68 +909,6 @@ func (rs Repos) PathSort() {
 	sort.SliceStable(rs, func(i, j int) bool { return rs[i].WorkspacePath < rs[j].WorkspacePath })
 }
 
-func (rs Repos) verifyCloned() {
-	var pc []string // pending clone
-
-	for _, r := range rs {
-		// r.gitCheckPending(e, f)
-
-		if r.PendingClone == true {
-			pc = append(pc, r.Name)
-		}
-	}
-
-	// return if there are no pending repos
-
-	if len(pc) <= 0 {
-		return
-	}
-
-	// if there are pending repos
-	// targetPrintln(f, "%v cloning [%v]", e.Sheep, len(pc))
-
-	// verify each repo (async)
-	var wg sync.WaitGroup
-	for i := range rs {
-		wg.Add(1)
-		go func(r *Repo) {
-			defer wg.Done()
-			// r.gitClone(e, f)
-		}(rs[i])
-	}
-	wg.Wait()
-
-	var cr []string // cloned repos
-
-	for _, r := range rs {
-		if r.Cloned == true {
-			cr = append(cr, r.Name)
-		}
-	}
-
-	// timer
-	// t.MarkMoment("verify-repos")
-
-	// summary
-	// var b bytes.Buffer
-
-	// b.WriteString(e.Truck)
-	// b.WriteString(" [")
-	// b.WriteString(strconv.Itoa(len(cr)))
-	// b.WriteString("/")
-	// b.WriteString(strconv.Itoa(len(pc)))
-	// b.WriteString("] cloned")
-
-	// tr := time.Millisecond // truncate
-	// b.WriteString(" {")
-	// b.WriteString(t.GetSplit().Truncate(tr).String())
-	// b.WriteString(" / ")
-	// b.WriteString(t.GetTime().Truncate(tr).String())
-	// b.WriteString("}")
-
-	// targetPrintln(f, b.String())
-}
-
 //func (rs Repos) submitChanges(e Emoji, f Flags) {
 //	srs := initScheludedRepos(rs)
 //	skrs := initSkippedRepos(rs)
@@ -1196,136 +1134,6 @@ func (rs Repos) verifyCloned() {
 
 // }
 
-// // func (rs Repos) verifyRepos(e Emoji, f Flags) {
-// 	var rn []string // repo names
-
-// 	for _, r := range rs {
-// 		rn = append(rn, r.Name)
-// 	}
-
-// 	rns := sliceSummary(rn, 25)
-
-// 	// print
-// 	targetPrintln(f, "%v  verifying repos [%v](%v)", e.Satellite, len(rs), rns)
-
-// 	// verify each repo (async)
-// 	var wg sync.WaitGroup
-// 	for i := range rs {
-// 		wg.Add(1)
-// 		go func(r *Repo) {
-// 			defer wg.Done()
-// 			r.gitConfigOriginURL(e, f)
-// 			r.gitRemoteUpdate(e, f)
-// 			r.gitAbbrevRef(e, f)
-// 			r.gitLocalSHA(e, f)
-// 			r.gitUpstreamSHA(e, f)
-// 			r.gitMergeBaseSHA(e, f)
-// 			r.gitRevParseUpstream(e, f)
-// 			r.gitDiffsNameOnly(e, f)
-// 			r.gitShortstat(e, f)
-// 			r.gitUntracked(e, f)
-// 			r.setStatus(e, f)
-// 		}(rs[i])
-// 	}
-// 	wg.Wait()
-
-// 	// track Complete, Pending, Skipped and Scheduled
-// 	var cr []string  // complete repos
-// 	var pr []string  // pending repos
-// 	var sk []string  // skipped repos
-// 	var sch []string // scheduled repos
-
-// 	for _, r := range rs {
-// 		if r.Category == "Complete" {
-// 			cr = append(cr, r.Name)
-// 		}
-
-// 		if r.Category == "Pending" {
-// 			pr = append(pr, r.Name)
-// 		}
-
-// 		if r.Category == "Skipped" {
-// 			sk = append(sk, r.Name)
-// 		}
-
-// 		if r.Category == "Scheduled" {
-// 			sch = append(sch, r.Name)
-// 		}
-// 	}
-
-// 	// timer
-// 	// t.MarkMoment("verify-repos")
-
-// 	// var b bytes.Buffer
-
-// 	// if len(cr) == len(rs) {
-// 	// 	b.WriteString(e.Checkmark)
-// 	// } else {
-// 	// 	b.WriteString(e.Traffic)
-// 	// }
-
-// 	// b.WriteString(" [")
-// 	// b.WriteString(strconv.Itoa(len(cr)))
-// 	// b.WriteString("/")
-// 	// b.WriteString(strconv.Itoa(len(rs)))
-// 	// b.WriteString("] complete {")
-
-// 	// tr := time.Millisecond // truncate
-// 	// b.WriteString(t.GetSplit().Truncate(tr).String())
-// 	// b.WriteString(" / ")
-// 	// b.WriteString(t.GetTime().Truncate(tr).String())
-// 	// b.WriteString("}")
-
-// 	// targetPrintln(f, b.String())
-
-// 	// scheduled repo info
-
-// 	// if len(sch) >= 1 {
-// 	// 	b.Reset()
-// 	// 	schs := sliceSummary(sch, 15) // scheduled repo summary
-// 	// 	b.WriteString(e.TimerClock)
-// 	// 	b.WriteString("  [")
-// 	// 	b.WriteString(strconv.Itoa(len(sch)))
-
-// 	// 	if loginMode(f) {
-// 	// 		b.WriteString("] pull scheduled (")
-
-// 	// 	} else if logoutMode(f) {
-// 	// 		b.WriteString("] push scheduled (")
-// 	// 	}
-
-// 	// 	b.WriteString(schs)
-// 	// 	b.WriteString(")")
-// 	// 	targetPrintln(f, b.String())
-// 	// }
-
-// 	// skipped repo info
-// 	// if len(sk) >= 1 {
-// 	// 	b.Reset()
-// 	// 	sks := sliceSummary(sk, 15) // skipped repo summary
-// 	// 	b.WriteString(e.Slash)
-// 	// 	b.WriteString(" [")
-// 	// 	b.WriteString(strconv.Itoa(len(sk)))
-// 	// 	b.WriteString("] skipped (")
-// 	// 	b.WriteString(sks)
-// 	// 	b.WriteString(")")
-// 	// 	targetPrintln(f, b.String())
-// 	// }
-
-// 	// pending repo info
-// 	// if len(pr) >= 1 {
-// 	// 	b.Reset()
-// 	// 	prs := sliceSummary(pr, 15) // pending repo summary
-// 	// 	b.WriteString(e.Warning)
-// 	// 	b.WriteString(" [")
-// 	// 	b.WriteString(strconv.Itoa(len(pr)))
-// 	// 	b.WriteString("] pending (")
-// 	// 	b.WriteString(prs)
-// 	// 	b.WriteString(")")
-// 	// 	targetPrintln(f, b.String())
-// 	// }
-// }
-
 // VerifyWorkspaces ...
 func (rs Repos) VerifyWorkspaces(f flags.Flags, t *timer.Timer) {
 
@@ -1360,15 +1168,16 @@ func (rs Repos) VerifyWorkspaces(f flags.Flags, t *timer.Timer) {
 		case id == true:
 			r.Verified = true
 			vw = append(vw, r.Workspace)
-			fallthrough
+			fmt.Printf("Fall: %v (%v)\n", r.Name, r.Verified)
 		case np == true:
 			r.Mark("fatal: No permsission", "verify-workspaces")
 			iw = append(iw, r.Workspace)
-			fallthrough
 		case id == false:
 			r.Mark("fatal: No directory", "verify-workspaces")
 			iw = append(iw, r.Workspace)
 		}
+
+		fmt.Printf("InLoop: %v (%v)\n", r.Name, r.Verified)
 	}
 
 	// remove duplicates from slices
@@ -1396,4 +1205,208 @@ func (rs Repos) VerifyWorkspaces(f flags.Flags, t *timer.Timer) {
 	b.WriteString(fmt.Sprintf(" {%v/%v}", t.Split().String(), t.Time().String()))
 
 	brf.Printv(f, b.String())
+
+	for _, r := range rs {
+		fmt.Printf("VerifyWorkspaces: %v (%v)\n ", r.Name, r.Verified)
+	}
+
+}
+
+// VerifyCloned ...
+func (rs Repos) VerifyCloned(f flags.Flags, t *timer.Timer) {
+
+	for _, r := range rs {
+		fmt.Printf("VerifyCloned: %v (%v)\n ", r.Name, r.Verified)
+	}
+
+	var pc []string // pending clone
+
+	for _, r := range rs {
+		r.gitCheckPending()
+
+		if r.PendingClone == true {
+			pc = append(pc, r.Name)
+		}
+	}
+
+	// return if there are no pending repos
+
+	if len(pc) <= 0 {
+		return
+	}
+
+	// if there are pending repos
+	brf.Printv(f, "%v cloning [%v]", e.Get("Sheep"), len(pc))
+
+	// verify each repo (async)
+	var wg sync.WaitGroup
+	for i := range rs {
+		wg.Add(1)
+		go func(r *Repo) {
+			defer wg.Done()
+			r.gitClone(f)
+		}(rs[i])
+	}
+	wg.Wait()
+
+	var cr []string // cloned repos
+
+	for _, r := range rs {
+		if r.Cloned == true {
+			cr = append(cr, r.Name)
+		}
+	}
+
+	// timer
+	t.Mark("verify-repos")
+
+	// summary
+	var b bytes.Buffer
+
+	b.WriteString(e.Get("Truck"))
+	b.WriteString(" [")
+	b.WriteString(strconv.Itoa(len(cr)))
+	b.WriteString("/")
+	b.WriteString(strconv.Itoa(len(pc)))
+	b.WriteString("] cloned")
+
+	tr := time.Millisecond // truncate
+	b.WriteString(" {")
+	b.WriteString(t.Split().Truncate(tr).String())
+	b.WriteString(" / ")
+	b.WriteString(t.Time().Truncate(tr).String())
+	b.WriteString("}")
+
+	brf.Printv(f, b.String())
+}
+
+// VerifyRepos ...
+func (rs Repos) VerifyRepos(f flags.Flags, t *timer.Timer) {
+	var rn []string // repo names
+
+	for _, r := range rs {
+		rn = append(rn, r.Name)
+	}
+
+	rns := brf.Summary(rn, 25)
+
+	// print
+	brf.Printv(f, "%v  verifying repos [%v](%v)", e.Get("Satellite"), len(rs), rns)
+
+	// verify each repo (async)
+	var wg sync.WaitGroup
+	for i := range rs {
+		wg.Add(1)
+		go func(r *Repo) {
+			defer wg.Done()
+			// r.gitConfigOriginURL(e, f)
+			// r.gitRemoteUpdate(e, f)
+			// r.gitAbbrevRef(e, f)
+			// r.gitLocalSHA(e, f)
+			// r.gitUpstreamSHA(e, f)
+			// r.gitMergeBaseSHA(e, f)
+			// r.gitRevParseUpstream(e, f)
+			// r.gitDiffsNameOnly(e, f)
+			// r.gitShortstat(e, f)
+			// r.gitUntracked(e, f)
+			// r.setStatus(e, f)
+		}(rs[i])
+	}
+	wg.Wait()
+
+	// track Complete, Pending, Skipped and Scheduled
+	var cr []string  // complete repos
+	var pr []string  // pending repos
+	var sk []string  // skipped repos
+	var sch []string // scheduled repos
+
+	for _, r := range rs {
+		if r.Category == "Complete" {
+			cr = append(cr, r.Name)
+		}
+
+		if r.Category == "Pending" {
+			pr = append(pr, r.Name)
+		}
+
+		if r.Category == "Skipped" {
+			sk = append(sk, r.Name)
+		}
+
+		if r.Category == "Scheduled" {
+			sch = append(sch, r.Name)
+		}
+	}
+
+	// timer
+	t.Mark("verify-repos")
+
+	var b bytes.Buffer
+
+	if len(cr) == len(rs) {
+		b.WriteString(e.Get("Checkmark"))
+	} else {
+		b.WriteString(e.Get("Traffic"))
+	}
+
+	b.WriteString(" [")
+	b.WriteString(strconv.Itoa(len(cr)))
+	b.WriteString("/")
+	b.WriteString(strconv.Itoa(len(rs)))
+	b.WriteString("] complete {")
+
+	tr := time.Millisecond // truncate
+	b.WriteString(t.Split().Truncate(tr).String())
+	b.WriteString(" / ")
+	b.WriteString(t.Time().Truncate(tr).String())
+	b.WriteString("}")
+
+	brf.Printv(f, b.String())
+
+	// scheduled repo info
+
+	if len(sch) >= 1 {
+		b.Reset()
+		schs := brf.Summary(sch, 15) // scheduled repo summary
+		b.WriteString(e.Get("TimerClock"))
+		b.WriteString("  [")
+		b.WriteString(strconv.Itoa(len(sch)))
+
+		// if flags.loginMode(f) {
+		// 	b.WriteString("] pull scheduled (")
+
+		// } else if logoutMode(f) {
+		// 	b.WriteString("] push scheduled (")
+		// }
+
+		b.WriteString(schs)
+		b.WriteString(")")
+		brf.Printv(f, b.String())
+	}
+
+	// skipped repo info
+	if len(sk) >= 1 {
+		b.Reset()
+		sks := brf.Summary(sk, 15) // skipped repo summary
+		b.WriteString(e.Get("Slash"))
+		b.WriteString(" [")
+		b.WriteString(strconv.Itoa(len(sk)))
+		b.WriteString("] skipped (")
+		b.WriteString(sks)
+		b.WriteString(")")
+		brf.Printv(f, b.String())
+	}
+
+	// pending repo info
+	if len(pr) >= 1 {
+		b.Reset()
+		prs := brf.Summary(pr, 15) // pending repo summary
+		b.WriteString(e.Get("Warning"))
+		b.WriteString(" [")
+		b.WriteString(strconv.Itoa(len(pr)))
+		b.WriteString("] pending (")
+		b.WriteString(prs)
+		b.WriteString(")")
+		brf.Printv(f, b.String())
+	}
 }

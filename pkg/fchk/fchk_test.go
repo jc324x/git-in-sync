@@ -162,11 +162,7 @@ func TestIsFile(t *testing.T) {
 		{tf, true},
 	} {
 
-		got, err := IsFile(c.in)
-
-		if err != nil {
-			t.Errorf("IsFile: err = %v\n", err.Error())
-		}
+		got := IsFile(c.in)
 
 		if got != c.want {
 			t.Errorf("IsFile: (got: %v, want: %v) {%v}\n", got, c.want, c.in)

@@ -48,8 +48,7 @@ func Init() (f flags.Flags, rs repos.Repos, t *timer.Timer) {
 func main() {
 	f, rs, t := Init()
 	rs.VerifyWorkspaces(f, t)
-
-	// rs.VerifyCloned(e, f, t)
+	rs.VerifyCloned(f, t)
 	// rs.VerifyRepos(e, f, t)
 	// rs.VerifyChanges(e, f, t)
 	// rs.SubmitChanges(e, f, t)

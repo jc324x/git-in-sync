@@ -3,12 +3,11 @@ package repos
 
 import (
 	"bytes"
-	"fmt"
+	// "fmt"
 	"log"
 	"sort"
 	"strconv"
 	"sync"
-	"time"
 
 	"github.com/jychri/git-in-sync/pkg/brf"
 	"github.com/jychri/git-in-sync/pkg/conf"
@@ -342,32 +341,18 @@ func (rs Repos) VerifyWorkspaces(f flags.Flags, ru *run.Run, t *timer.Timer) {
 	rs.WorkspacePathSort()
 
 	// []string of *r.Workspace
-	ws := rs.Workspaces()
+	ru.TWS = rs.Workspaces()
 
-	brf.Printv(f, "%v  verifying workspaces [%v](%v)", e.Get("FileCabinet"), len(ws), brf.Summary(ws, 25))
+	ru.Reduce()
+
+	// "verifying workspaces ..."
+	brf.Printv(f, "%v  verifying workspaces [%v](%v)", e.Get("FileCabinet"), ru.TWC, brf.Summary(ru.TWS, 25))
 
 	for _, r := range rs {
 		r.VerifyWorkspace(f, ru)
 	}
 
-	// summary
-	var b bytes.Buffer
-
-	if len(ws) == ru.VWC {
-		b.WriteString(e.Get("Briefcase"))
-	} else {
-		b.WriteString(e.Get("Slash"))
-	}
-
-	b.WriteString(fmt.Sprintf(" [%v/%v] divs verified", ru.VWC, len(ws)))
-
-	if ru.CWC >= 1 {
-		b.WriteString(fmt.Sprintf(", created [%v]", strconv.Itoa(ru.CWC)))
-	}
-
-	b.WriteString(fmt.Sprintf(" {%v/%v}", t.Split().String(), t.Time().String()))
-
-	brf.Printv(f, b.String())
+	ru.VWSummary(f, t)
 }
 
 // AsyncClone ...
@@ -383,6 +368,11 @@ func (rs Repos) AsyncClone(f flags.Flags, ru *run.Run) {
 	wg.Wait()
 }
 
+// AsyncCheck ...
+func (rs Repos) AsyncCheck(f flags.Flags) {
+
+}
+
 // VerifyRepos ...
 func (rs Repos) VerifyRepos(f flags.Flags, ru *run.Run, t *timer.Timer) {
 
@@ -392,38 +382,13 @@ func (rs Repos) VerifyRepos(f flags.Flags, ru *run.Run, t *timer.Timer) {
 
 	ru.Reduce()
 
-	// return if no pending clones
-	if ru.PCC <= 0 {
-		return
+	// async clone if needed
+	if ru.PCC > 1 {
+		brf.Printv(f, "%v cloning [%v]", e.Get("Sheep"), ru.PCC) // "cloning..."
+		rs.AsyncClone(f, ru)                                     // async clone
+		ru.Reduce()                                              // reduce run
+		t.Mark("async-clone")
+		ru.VCSummary(f, t)
 	}
 
-	// "cloning..."
-	brf.Printv(f, "%v cloning [%v]", e.Get("Sheep"), ru.PCC)
-
-	// verify each repo (async)
-	rs.AsyncClone(f, ru)
-
-	ru.Reduce()
-
-	// timer
-	t.Mark("verify-repos")
-
-	// summary
-	var b bytes.Buffer
-
-	b.WriteString(e.Get("Truck"))
-	b.WriteString(" [")
-	b.WriteString(strconv.Itoa(ru.CRC))
-	b.WriteString("/")
-	b.WriteString(strconv.Itoa(ru.PCC))
-	b.WriteString("] cloned")
-
-	tr := time.Millisecond // truncate
-	b.WriteString(" {")
-	b.WriteString(t.Split().Truncate(tr).String())
-	b.WriteString(" / ")
-	b.WriteString(t.Time().Truncate(tr).String())
-	b.WriteString("}")
-
-	brf.Printv(f, b.String())
 }

@@ -134,16 +134,10 @@ func Init(zw string, zu string, zr string, bp string, rn string) *Repo {
 	return r
 }
 
-// Private
-
-func captureOut(b bytes.Buffer) string {
-	return strings.TrimSuffix(b.String(), "\n")
-}
-
 // Mark ...
-func (r *Repo) Mark(em string, n string) {
+func (r *Repo) Mark(dsc string, em string) {
 	r.ErrorMessage = em
-	r.ErrorName = n
+	r.ErrorName = dsc
 	r.ErrorFirst = brf.First(em)
 
 	if strings.Contains(r.ErrorFirst, "warning") {
@@ -156,8 +150,9 @@ func (r *Repo) Mark(em string, n string) {
 }
 
 // Git runs a Git command. Errors are handled with Mark.
-func (r *Repo) Git(n string, args []string) string {
+func (r *Repo) Git(dsc string, args []string) string {
 	var out, err bytes.Buffer
+	var s string
 
 	cmd := exec.Command("git", args...)
 	cmd.Stderr = &err
@@ -165,14 +160,17 @@ func (r *Repo) Git(n string, args []string) string {
 	cmd.Run()
 
 	if err := err.String(); err != "" {
-		r.Mark(err, n)
+		r.Mark(dsc, err)
 	}
 
-	return out.String()
+	s = out.String()
+	return strings.TrimSuffix(s, "\n")
 }
 
 // VerifyWorkspace verifies that the r.WorkspacePath is present and accessible.
 func (r *Repo) VerifyWorkspace(f flags.Flags, ru *run.Run) {
+
+	const dsc = "verify-workspace"
 
 	if _, err := os.Stat(r.WorkspacePath); os.IsNotExist(err) {
 		brf.Printv(f, "%v creating %v", e.Get("Folder"), r.WorkspacePath)
@@ -188,10 +186,10 @@ func (r *Repo) VerifyWorkspace(f flags.Flags, ru *run.Run) {
 		r.Verified = true
 		ru.VWS = append(ru.VWS, r.Workspace)
 	case np == true:
-		r.Mark("fatal: No permsission", "verify-workspaces")
+		r.Mark(dsc, "fatal: No permsission")
 		ru.IWS = append(ru.IWS, r.Workspace)
 	case id == false:
-		r.Mark("fatal: No directory", "verify-workspaces")
+		r.Mark(dsc, "fatal: No directory")
 		ru.IWS = append(ru.IWS, r.Workspace)
 	}
 
@@ -200,14 +198,17 @@ func (r *Repo) VerifyWorkspace(f flags.Flags, ru *run.Run) {
 
 // VerifyRepo verifies that the Repo is present and accessible.
 func (r *Repo) VerifyRepo(f flags.Flags, ru *run.Run) {
+
+	const dsc = "verify-repo"
+
 	_, rerr := os.Stat(r.RepoPath)
 	_, gerr := os.Stat(r.GitPath)
 
 	switch {
 	case fchk.IsFile(r.RepoPath):
-		r.Mark("fatal: file occupying path", "verify-repo")
+		r.Mark(dsc, "fatal: file occupying path")
 	case fchk.IsDirectory(r.RepoPath) && fchk.NotEmpty(r.RepoPath) && os.IsNotExist(gerr):
-		r.Mark("fatal: directory occupying path", "verify-repo")
+		r.Mark(dsc, "fatal: directory occupying path")
 	case fchk.IsDirectory(r.RepoPath) && fchk.IsEmpty(r.RepoPath):
 		r.PendingClone = true
 		ru.PCS = append(ru.PCS, r.Name)
@@ -223,6 +224,8 @@ func (r *Repo) VerifyRepo(f flags.Flags, ru *run.Run) {
 // GitClone ...
 func (r *Repo) GitClone(f flags.Flags, ru *run.Run) {
 
+	const dsc = "git-clone"
+
 	// return if !Verified or !PendingClone
 	if !r.Verified || !r.PendingClone {
 		return
@@ -232,8 +235,9 @@ func (r *Repo) GitClone(f flags.Flags, ru *run.Run) {
 	brf.Printv(f, "%v cloning %v {%v}", e.Get("Box"), r.Name, r.Workspace)
 
 	// `git clone ...`
-	r.Git("git-clone", []string{"clone", r.URL, r.RepoPath})
+	r.Git(dsc, []string{"clone", r.URL, r.RepoPath})
 
+	// summary
 	r.Cloned = true
 	ru.CRS = append(ru.CRS, r.Name)
 }
@@ -241,34 +245,26 @@ func (r *Repo) GitClone(f flags.Flags, ru *run.Run) {
 // GitConfigOriginURL ...
 func (r *Repo) GitConfigOriginURL() {
 
+	const dsc = "git-config-orgin-url"
+
 	// return if !Verified
 	if !r.Verified {
 		return
 	}
 
-	// command
+	// `git ... config --get remote.origin.url"
 	args := []string{r.GitDir, "config", "--get", "remote.origin.url"}
-	cmd := exec.Command("git", args...)
-	var out bytes.Buffer
-	cmd.Stdout = &out
-	cmd.Run()
+	r.OriginURL = r.Git(dsc, args)
 
-	// trim "\n" from command output
-	s := out.String()
-	s = strings.TrimSuffix(s, "\n")
-
-	// set OriginURL
-	r.OriginURL = s
-
-	// check error, set value(s)
 	switch {
 	case r.OriginURL == "":
-		// r.markError(e, f, "fatal: 'origin' does not appear to be a git repository", "gitConfigOriginURL")
+		r.Mark(dsc, "fatal: 'origin' does not appear to be a git repository")
 	case r.OriginURL != r.URL:
-		// r.markError(e, f, "fatal: URL != OriginURL", "gitConfigOriginURL")
+		r.Mark(dsc, "fatal: URL != OriginURL")
 	}
 }
 
+// GitRemoteUpdate
 func (r *Repo) gitRemoteUpdate() {
 
 	// return if !Verified
@@ -315,7 +311,7 @@ func (r *Repo) gitAbbrevRef() {
 	if err := err.String(); err != "" {
 		// r.markError(e, f, err, "gitAbbrevRef")
 	} else {
-		r.LocalBranch = captureOut(out)
+		// r.LocalBranch = captureOut(out)
 	}
 }
 
@@ -339,7 +335,7 @@ func (r *Repo) gitLocalSHA() {
 	if err := err.String(); err != "" {
 		// r.markError(e, f, err, "gitLocalSHA")
 	} else {
-		r.LocalSHA = captureOut(out)
+		// r.LocalSHA = captureOut(out)
 	}
 }
 
@@ -363,7 +359,7 @@ func (r *Repo) gitUpstreamSHA() {
 	if err := err.String(); err != "" {
 		// r.markError(e, f, err, "gitUpstreamSHA")
 	} else {
-		r.UpstreamSHA = captureOut(out)
+		// r.UpstreamSHA = captureOut(out)
 	}
 }
 
@@ -387,7 +383,7 @@ func (r *Repo) gitMergeBaseSHA() {
 	if err := err.String(); err != "" {
 		// r.markError(e, f, err, "gitUpstreamSHA")
 	} else {
-		r.MergeSHA = captureOut(out)
+		// r.MergeSHA = captureOut(out)
 	}
 }
 
@@ -411,7 +407,7 @@ func (r *Repo) gitRevParseUpstream() {
 	if err := err.String(); err != "" {
 		// r.markError(e, f, err, "gitRevParseUpstream")
 	} else {
-		r.UpstreamBranch = captureOut(out)
+		// r.UpstreamBranch = captureOut(out)
 	}
 }
 
@@ -465,7 +461,7 @@ func (r *Repo) gitShortstat() {
 	if err := err.String(); err != "" {
 		// r.markError(e, f, err, "gitShortstat")
 	} else {
-		r.ShortStat = captureOut(out)
+		// r.ShortStat = captureOut(out)
 	}
 
 	// scrape with regular expressions

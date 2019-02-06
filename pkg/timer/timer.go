@@ -6,6 +6,11 @@ import (
 	"time"
 )
 
+const (
+	// M is a millisecond time.Duration
+	M time.Duration = time.Millisecond
+)
+
 // Moment marks moments in time.
 type Moment struct {
 	Name  string

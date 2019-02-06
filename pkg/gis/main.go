@@ -52,7 +52,6 @@ func main() {
 	f, rs, ru, t := Init()
 	rs.VerifyWorkspaces(f, ru, t)
 	rs.VerifyRepos(f, ru, t)
-	// rs.VerifyRepos(e, f, t)
-	// rs.VerifyChanges(e, f, t)
+	// rs.VerifyChanges(f, ru, t)
 	// rs.SubmitChanges(e, f, t)
 }

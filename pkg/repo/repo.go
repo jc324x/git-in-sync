@@ -150,21 +150,21 @@ func (r *Repo) Mark(dsc string, em string) {
 }
 
 // Git runs a Git command. Errors are handled with Mark.
-func (r *Repo) Git(dsc string, args []string) string {
-	var out, err bytes.Buffer
-	var s string
+func (r *Repo) Git(dsc string, args []string) (out string, em string) {
+	var outb, errb bytes.Buffer
 
 	cmd := exec.Command("git", args...)
-	cmd.Stderr = &err
-	cmd.Stdout = &out
+	cmd.Stderr = &errb
+	cmd.Stdout = &outb
 	cmd.Run()
 
-	if err := err.String(); err != "" {
-		r.Mark(dsc, err)
-	}
+	out = outb.String()
+	em = errb.String()
 
-	s = out.String()
-	return strings.TrimSuffix(s, "\n")
+	out = strings.TrimSuffix(out, "\n")
+	em = strings.TrimSuffix(em, "\n")
+
+	return out, em
 }
 
 // VerifyWorkspace verifies that the r.WorkspacePath is present and accessible.
@@ -235,11 +235,13 @@ func (r *Repo) GitClone(f flags.Flags, ru *run.Run) {
 	brf.Printv(f, "%v cloning %v {%v}", e.Get("Box"), r.Name, r.Workspace)
 
 	// `git clone ...`
-	r.Git(dsc, []string{"clone", r.URL, r.RepoPath})
-
-	// summary
-	r.Cloned = true
-	ru.CRS = append(ru.CRS, r.Name)
+	args := []string{"clone", r.URL, r.RepoPath}
+	if em, _ := r.Git(dsc, args); em != "" {
+		r.Mark(dsc, em)
+	} else {
+		r.Cloned = true
+		ru.CRS = append(ru.CRS, r.Name)
+	}
 }
 
 // GitConfigOriginURL ...
@@ -249,31 +251,38 @@ func (r *Repo) GitConfigOriginURL() {
 
 	// return if !Verified
 	if !r.Verified {
+		// fmt.Printf("%v is unverified", r.Name)
 		return
 	}
 
 	// `git ... config --get remote.origin.url"
 	args := []string{r.GitDir, "config", "--get", "remote.origin.url"}
-	r.OriginURL = r.Git(dsc, args)
+	out, _ := r.Git(dsc, args)
 
 	switch {
-	case r.OriginURL == "":
+	case out == "":
 		r.Mark(dsc, "fatal: 'origin' does not appear to be a git repository")
-	case r.OriginURL != r.URL:
+	case out != r.URL:
 		r.Mark(dsc, "fatal: URL != OriginURL")
+	default:
+		r.OriginURL = out
 	}
 }
 
 // GitRemoteUpdate
 func (r *Repo) gitRemoteUpdate() {
 
+	const dsc = "git-remote-update"
+
 	// return if !Verified
 	if !r.Verified {
 		return
 	}
 
-	// command
+	// `git ... ... fetch origin`
 	args := []string{r.GitDir, r.WorkTree, "fetch", "origin"}
+	r.Git(dsc, args)
+
 	cmd := exec.Command("git", args...)
 	var err bytes.Buffer
 	cmd.Stderr = &err

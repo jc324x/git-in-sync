@@ -2,11 +2,9 @@
 package repos
 
 import (
-	"bytes"
-	// "fmt"
+	"fmt"
 	"log"
 	"sort"
-	"strconv"
 	"sync"
 
 	"github.com/jychri/git-in-sync/pkg/brf"
@@ -369,7 +367,16 @@ func (rs Repos) AsyncClone(f flags.Flags, ru *run.Run) {
 }
 
 // AsyncCheck ...
-func (rs Repos) AsyncCheck(f flags.Flags) {
+func (rs Repos) AsyncCheck() {
+	var wg sync.WaitGroup
+	for i := range rs {
+		wg.Add(1)
+		go func(r *repo.Repo) {
+			defer wg.Done()
+			r.GitConfigOriginURL()
+		}(rs[i])
+	}
+	wg.Wait()
 
 }
 
@@ -382,13 +389,19 @@ func (rs Repos) VerifyRepos(f flags.Flags, ru *run.Run, t *timer.Timer) {
 
 	ru.Reduce()
 
-	// async clone if needed
+	// async clone
 	if ru.PCC > 1 {
 		brf.Printv(f, "%v cloning [%v]", e.Get("Sheep"), ru.PCC) // "cloning..."
 		rs.AsyncClone(f, ru)                                     // async clone
 		ru.Reduce()                                              // reduce run
 		t.Mark("async-clone")
 		ru.VCSummary(f, t)
+	}
+
+	rs.AsyncCheck()
+
+	for _, r := range rs {
+		fmt.Println(r.OriginURL)
 	}
 
 }

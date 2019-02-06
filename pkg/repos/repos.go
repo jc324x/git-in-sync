@@ -371,24 +371,26 @@ func (rs Repos) VerifyWorkspaces(f flags.Flags, ru *run.Run, t *timer.Timer) {
 }
 
 // AsyncClone ...
-func (rs Repos) AsyncClone(f flags.Flags) {
+func (rs Repos) AsyncClone(f flags.Flags, ru *run.Run) {
 	var wg sync.WaitGroup
 	for i := range rs {
 		wg.Add(1)
 		go func(r *repo.Repo) {
 			defer wg.Done()
-			r.GitClone(f)
+			r.GitClone(f, ru)
 		}(rs[i])
 	}
 	wg.Wait()
 }
 
-// VerifyClones ...
-func (rs Repos) VerifyClones(f flags.Flags, ru *run.Run, t *timer.Timer) {
+// VerifyRepos ...
+func (rs Repos) VerifyRepos(f flags.Flags, ru *run.Run, t *timer.Timer) {
 
 	for _, r := range rs {
-		r.CheckClone(f, ru)
+		r.VerifyRepo(f, ru)
 	}
+
+	ru.Reduce()
 
 	// return if no pending clones
 	if ru.PCC <= 0 {
@@ -399,15 +401,7 @@ func (rs Repos) VerifyClones(f flags.Flags, ru *run.Run, t *timer.Timer) {
 	brf.Printv(f, "%v cloning [%v]", e.Get("Sheep"), ru.PCC)
 
 	// verify each repo (async)
-	rs.AsyncClone(f)
-
-	// move this someplace else...
-	// var cr []string // cloned repos
-	for _, r := range rs {
-		if r.Cloned == true {
-			ru.CRS = append(ru.CRS, r.Name)
-		}
-	}
+	rs.AsyncClone(f, ru)
 
 	ru.Reduce()
 
@@ -432,135 +426,4 @@ func (rs Repos) VerifyClones(f flags.Flags, ru *run.Run, t *timer.Timer) {
 	b.WriteString("}")
 
 	brf.Printv(f, b.String())
-}
-
-// VerifyRepos ...
-func (rs Repos) VerifyRepos(f flags.Flags, t *timer.Timer) {
-	var rn []string // repo names
-
-	for _, r := range rs {
-		rn = append(rn, r.Name)
-	}
-
-	rns := brf.Summary(rn, 25)
-
-	// print
-	brf.Printv(f, "%v  verifying repos [%v](%v)", e.Get("Satellite"), len(rs), rns)
-
-	// verify each repo (async)
-	var wg sync.WaitGroup
-	for i := range rs {
-		wg.Add(1)
-		go func(r *repo.Repo) {
-			defer wg.Done()
-			// r.gitConfigOriginURL(e, f)
-			// r.gitRemoteUpdate(e, f)
-			// r.gitAbbrevRef(e, f)
-			// r.gitLocalSHA(e, f)
-			// r.gitUpstreamSHA(e, f)
-			// r.gitMergeBaseSHA(e, f)
-			// r.gitRevParseUpstream(e, f)
-			// r.gitDiffsNameOnly(e, f)
-			// r.gitShortstat(e, f)
-			// r.gitUntracked(e, f)
-			// r.setStatus(e, f)
-		}(rs[i])
-	}
-	wg.Wait()
-
-	// track Complete, Pending, Skipped and Scheduled
-	var cr []string  // complete repos
-	var pr []string  // pending repos
-	var sk []string  // skipped repos
-	var sch []string // scheduled repos
-
-	for _, r := range rs {
-		if r.Category == "Complete" {
-			cr = append(cr, r.Name)
-		}
-
-		if r.Category == "Pending" {
-			pr = append(pr, r.Name)
-		}
-
-		if r.Category == "Skipped" {
-			sk = append(sk, r.Name)
-		}
-
-		if r.Category == "Scheduled" {
-			sch = append(sch, r.Name)
-		}
-	}
-
-	// timer
-	t.Mark("verify-repos")
-
-	var b bytes.Buffer
-
-	if len(cr) == len(rs) {
-		b.WriteString(e.Get("Checkmark"))
-	} else {
-		b.WriteString(e.Get("Traffic"))
-	}
-
-	b.WriteString(" [")
-	b.WriteString(strconv.Itoa(len(cr)))
-	b.WriteString("/")
-	b.WriteString(strconv.Itoa(len(rs)))
-	b.WriteString("] complete {")
-
-	tr := time.Millisecond // truncate
-	b.WriteString(t.Split().Truncate(tr).String())
-	b.WriteString(" / ")
-	b.WriteString(t.Time().Truncate(tr).String())
-	b.WriteString("}")
-
-	brf.Printv(f, b.String())
-
-	// scheduled repo info
-
-	if len(sch) >= 1 {
-		b.Reset()
-		schs := brf.Summary(sch, 15) // scheduled repo summary
-		b.WriteString(e.Get("TimerClock"))
-		b.WriteString("  [")
-		b.WriteString(strconv.Itoa(len(sch)))
-
-		// if flags.loginMode(f) {
-		// 	b.WriteString("] pull scheduled (")
-
-		// } else if logoutMode(f) {
-		// 	b.WriteString("] push scheduled (")
-		// }
-
-		b.WriteString(schs)
-		b.WriteString(")")
-		brf.Printv(f, b.String())
-	}
-
-	// skipped repo info
-	if len(sk) >= 1 {
-		b.Reset()
-		sks := brf.Summary(sk, 15) // skipped repo summary
-		b.WriteString(e.Get("Slash"))
-		b.WriteString(" [")
-		b.WriteString(strconv.Itoa(len(sk)))
-		b.WriteString("] skipped (")
-		b.WriteString(sks)
-		b.WriteString(")")
-		brf.Printv(f, b.String())
-	}
-
-	// pending repo info
-	if len(pr) >= 1 {
-		b.Reset()
-		prs := brf.Summary(pr, 15) // pending repo summary
-		b.WriteString(e.Get("Warning"))
-		b.WriteString(" [")
-		b.WriteString(strconv.Itoa(len(pr)))
-		b.WriteString("] pending (")
-		b.WriteString(prs)
-		b.WriteString(")")
-		brf.Printv(f, b.String())
-	}
 }

@@ -140,13 +140,6 @@ func captureOut(b bytes.Buffer) string {
 	return strings.TrimSuffix(b.String(), "\n")
 }
 
-func notVerified(r *Repo) bool {
-	if r.Verified == false {
-		return true
-	}
-	return false
-}
-
 // Mark ...
 func (r *Repo) Mark(em string, n string) {
 	r.ErrorMessage = em
@@ -162,7 +155,23 @@ func (r *Repo) Mark(em string, n string) {
 	}
 }
 
-// VerifyWorkspace ...
+// Git runs a Git command. Errors are handled with Mark.
+func (r *Repo) Git(n string, args []string) string {
+	var out, err bytes.Buffer
+
+	cmd := exec.Command("git", args...)
+	cmd.Stderr = &err
+	cmd.Stdout = &out
+	cmd.Run()
+
+	if err := err.String(); err != "" {
+		r.Mark(err, n)
+	}
+
+	return out.String()
+}
+
+// VerifyWorkspace verifies that the r.WorkspacePath is present and accessible.
 func (r *Repo) VerifyWorkspace(f flags.Flags, ru *run.Run) {
 
 	if _, err := os.Stat(r.WorkspacePath); os.IsNotExist(err) {
@@ -189,16 +198,16 @@ func (r *Repo) VerifyWorkspace(f flags.Flags, ru *run.Run) {
 	ru.Reduce()
 }
 
-// CheckClone ...
-func (r *Repo) CheckClone(f flags.Flags, ru *run.Run) {
+// VerifyRepo verifies that the Repo is present and accessible.
+func (r *Repo) VerifyRepo(f flags.Flags, ru *run.Run) {
 	_, rerr := os.Stat(r.RepoPath)
 	_, gerr := os.Stat(r.GitPath)
 
 	switch {
 	case fchk.IsFile(r.RepoPath):
-		r.Mark("fatal: file occupying path", "git-verify")
+		r.Mark("fatal: file occupying path", "verify-repo")
 	case fchk.IsDirectory(r.RepoPath) && fchk.NotEmpty(r.RepoPath) && os.IsNotExist(gerr):
-		r.Mark("fatal: directory occupying path", "git-verify")
+		r.Mark("fatal: directory occupying path", "verify-repo")
 	case fchk.IsDirectory(r.RepoPath) && fchk.IsEmpty(r.RepoPath):
 		r.PendingClone = true
 		ru.PCS = append(ru.PCS, r.Name)
@@ -209,44 +218,31 @@ func (r *Repo) CheckClone(f flags.Flags, ru *run.Run) {
 		r.Verified = true
 		r.PendingClone = false
 	}
-
 }
 
 // GitClone ...
-func (r *Repo) GitClone(f flags.Flags) {
+func (r *Repo) GitClone(f flags.Flags, ru *run.Run) {
 
-	if r.PendingClone == false {
+	// return if !Verified or !PendingClone
+	if !r.Verified || !r.PendingClone {
 		return
 	}
 
 	// "cloning..."
 	brf.Printv(f, "%v cloning %v {%v}", e.Get("Box"), r.Name, r.Workspace)
 
-	// if _, err := Command([]string{"clone", r.URL, r.RepoPath}); err != "" {
-
-	// }
-
-	// command
-	args := []string{"clone", r.URL, r.RepoPath}
-	cmd := exec.Command("git", args...)
-	var out bytes.Buffer
-	var err bytes.Buffer
-	cmd.Stderr = &err
-	cmd.Stdout = &out
-	cmd.Run()
-
-	// check error, set value(s)
-	if err := err.String(); err != "" {
-		r.Mark(err, "git-clone")
-	}
+	// `git clone ...`
+	r.Git("git-clone", []string{"clone", r.URL, r.RepoPath})
 
 	r.Cloned = true
+	ru.CRS = append(ru.CRS, r.Name)
 }
 
-func (r *Repo) gitConfigOriginURL() {
+// GitConfigOriginURL ...
+func (r *Repo) GitConfigOriginURL() {
 
-	// return if not verified
-	if notVerified(r) {
+	// return if !Verified
+	if !r.Verified {
 		return
 	}
 
@@ -275,8 +271,8 @@ func (r *Repo) gitConfigOriginURL() {
 
 func (r *Repo) gitRemoteUpdate() {
 
-	// return if not verified
-	if notVerified(r) {
+	// return if !Verified
+	if !r.Verified {
 		return
 	}
 
@@ -301,8 +297,8 @@ func (r *Repo) gitRemoteUpdate() {
 
 func (r *Repo) gitAbbrevRef() {
 
-	// return if not verified
-	if notVerified(r) {
+	// return if !Verified
+	if !r.Verified {
 		return
 	}
 
@@ -325,8 +321,8 @@ func (r *Repo) gitAbbrevRef() {
 
 func (r *Repo) gitLocalSHA() {
 
-	// return if not verified
-	if notVerified(r) {
+	// return if !Verified
+	if !r.Verified {
 		return
 	}
 
@@ -349,8 +345,8 @@ func (r *Repo) gitLocalSHA() {
 
 func (r *Repo) gitUpstreamSHA() {
 
-	// return if not verified
-	if notVerified(r) {
+	// return if !Verified
+	if !r.Verified {
 		return
 	}
 
@@ -373,8 +369,8 @@ func (r *Repo) gitUpstreamSHA() {
 
 func (r *Repo) gitMergeBaseSHA() {
 
-	// return if not verified
-	if notVerified(r) {
+	// return if !Verified
+	if !r.Verified {
 		return
 	}
 
@@ -397,8 +393,8 @@ func (r *Repo) gitMergeBaseSHA() {
 
 func (r *Repo) gitRevParseUpstream() {
 
-	// return if not verified
-	if notVerified(r) {
+	// return if !Verified
+	if !r.Verified {
 		return
 	}
 
@@ -421,8 +417,8 @@ func (r *Repo) gitRevParseUpstream() {
 
 func (r *Repo) gitDiffsNameOnly() {
 
-	// return if not verified
-	if notVerified(r) {
+	// return if !Verified
+	if !r.Verified {
 		return
 	}
 
@@ -451,8 +447,8 @@ func (r *Repo) gitDiffsNameOnly() {
 
 func (r *Repo) gitShortstat() {
 
-	// return if not verified
-	if notVerified(r) {
+	// return if !Verified
+	if !r.Verified {
 		return
 	}
 
@@ -541,8 +537,8 @@ func (r *Repo) gitShortstat() {
 
 func (r *Repo) gitUntracked() {
 
-	// return if not verified
-	if notVerified(r) {
+	// return if !Verified
+	if !r.Verified {
 		return
 	}
 
@@ -816,8 +812,8 @@ func (r *Repo) gitPush() {
 
 func (r *Repo) gitStatusPorcelain() {
 
-	// return if not verified
-	if notVerified(r) {
+	// return if !Verified
+	if !r.Verified {
 		return
 	}
 

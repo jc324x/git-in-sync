@@ -18,7 +18,7 @@ type Run struct {
 	CRC int      // len(CRS)
 }
 
-// Init ...
+// Init returns a new *Run.
 func Init() *Run {
 	ru := new(Run)
 	return ru

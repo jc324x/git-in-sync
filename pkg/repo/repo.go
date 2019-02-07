@@ -1,4 +1,4 @@
-// Package repo ...
+// Package repo implements support for Git repositories.
 package repo
 
 import (

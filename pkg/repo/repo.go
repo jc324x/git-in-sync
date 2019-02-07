@@ -175,7 +175,7 @@ func (r *Repo) VerifyWorkspace(f flags.Flags, ru *run.Run) {
 	if _, err := os.Stat(r.WorkspacePath); os.IsNotExist(err) {
 		brf.Printv(f, "%v creating %v", e.Get("Folder"), r.WorkspacePath)
 		os.MkdirAll(r.WorkspacePath, 0777)
-		ru.CWS = append(ru.CWS, r.Workspace)
+		ru.CreatedWorkspaces = append(ru.CreatedWorkspaces, r.Workspace)
 	}
 
 	np := fchk.NoPermission(r.WorkspacePath)
@@ -184,13 +184,13 @@ func (r *Repo) VerifyWorkspace(f flags.Flags, ru *run.Run) {
 	switch {
 	case id == true && np == false:
 		r.Verified = true
-		ru.VWS = append(ru.VWS, r.Workspace)
+		ru.VerifiedWorkspaces = append(ru.VerifiedWorkspaces, r.Workspace)
 	case np == true:
 		r.Mark(dsc, "fatal: No permsission")
-		ru.IWS = append(ru.IWS, r.Workspace)
+		ru.InaccessibleWorkspaces = append(ru.InaccessibleWorkspaces, r.Workspace)
 	case id == false:
 		r.Mark(dsc, "fatal: No directory")
-		ru.IWS = append(ru.IWS, r.Workspace)
+		ru.InaccessibleWorkspaces = append(ru.InaccessibleWorkspaces, r.Workspace)
 	}
 
 	ru.Reduce()
@@ -211,10 +211,10 @@ func (r *Repo) VerifyRepo(f flags.Flags, ru *run.Run) {
 		r.Mark(dsc, "fatal: directory occupying path")
 	case fchk.IsDirectory(r.RepoPath) && fchk.IsEmpty(r.RepoPath):
 		r.PendingClone = true
-		ru.PCS = append(ru.PCS, r.Name)
+		ru.PendingClones = append(ru.PendingClones, r.Name)
 	case os.IsNotExist(rerr) && os.IsNotExist(gerr):
 		r.PendingClone = true
-		ru.PCS = append(ru.PCS, r.Name)
+		ru.PendingClones = append(ru.PendingClones, r.Name)
 	case fchk.IsDirectory(r.RepoPath) && fchk.IsDirectory(r.GitPath):
 		r.Verified = true
 		r.PendingClone = false
@@ -240,7 +240,7 @@ func (r *Repo) GitClone(f flags.Flags, ru *run.Run) {
 		r.Mark(dsc, em)
 	} else {
 		r.Cloned = true
-		ru.CRS = append(ru.CRS, r.Name)
+		ru.ClonedRepos = append(ru.ClonedRepos, r.Name)
 	}
 }
 

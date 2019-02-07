@@ -11,20 +11,15 @@ import (
 	"github.com/jychri/git-in-sync/pkg/timer"
 )
 
-// Run tracks stats for the current run
+// Run holds values for the current run.
 type Run struct {
-	CWS []string // created workspaces
-	VWS []string // verified workspaces
-	IWS []string // inaccessible workspaces
-	TWS []string // total workspaces
-	CWC int      // len(CWS)
-	VWC int      // len(VWS)
-	IWC int      // len(IWS)
-	TWC int      // len(TWS)
-	PCS []string // pending clones
-	PCC int      // lens(PCS)
-	CRS []string // cloned repos
-	CRC int      // len(CRS)
+	CreatedWorkspaces      []string
+	VerifiedWorkspaces     []string
+	InaccessibleWorkspaces []string
+	TotalWorkspaces        []string
+	PendingClones          []string
+	ClonedRepos            []string
+	TotalRepos             []string
 }
 
 // Init returns a new *Run.
@@ -33,35 +28,35 @@ func Init() *Run {
 	return ru
 }
 
-// Reduce reduces slices in the *Run to their unique elements; no duplicates.
+// Reduce reduces slices in *Run to their unique elements - no duplicates.
 func (ru *Run) Reduce() {
-	ru.CWS = brf.Reduce(ru.CWS)
-	ru.VWS = brf.Reduce(ru.VWS)
-	ru.IWS = brf.Reduce(ru.IWS)
-	ru.CWC = len(ru.CWS)
-	ru.VWC = len(ru.VWS)
-	ru.IWC = len(ru.IWS)
-	ru.TWC = len(ru.TWS)
-	ru.PCC = len(ru.PCS)
-	ru.CRC = len(ru.CRS)
+	ru.CreatedWorkspaces = brf.Reduce(ru.CreatedWorkspaces)
+	ru.VerifiedWorkspaces = brf.Reduce(ru.VerifiedWorkspaces)
+	ru.InaccessibleWorkspaces = brf.Reduce(ru.InaccessibleWorkspaces)
+	ru.TotalWorkspaces = brf.Reduce(ru.TotalWorkspaces)
+	ru.PendingClones = brf.Reduce(ru.PendingClones)
+	ru.ClonedRepos = brf.Reduce(ru.ClonedRepos)
 }
 
-// VWSummary ...
+// VWSummary returns a summary for repos.VerifyWorkspaces
 func (ru *Run) VWSummary(f flags.Flags, t *timer.Timer) {
+	vw := len(ru.VerifiedWorkspaces)
+	tw := len(ru.TotalWorkspaces)
+	cw := len(ru.CreatedWorkspaces)
 
 	// summary
 	var b bytes.Buffer
 
-	if ru.TWC == ru.VWC {
+	if vw == tw {
 		b.WriteString(e.Get("Briefcase"))
 	} else {
 		b.WriteString(e.Get("Slash"))
 	}
 
-	b.WriteString(fmt.Sprintf(" [%v/%v] divs verified", ru.VWC, ru.TWC))
+	b.WriteString(fmt.Sprintf(" [%v/%v] divs verified", vw, tw))
 
-	if ru.CWC >= 1 {
-		b.WriteString(fmt.Sprintf(", created [%v]", strconv.Itoa(ru.CWC)))
+	if len(ru.CreatedWorkspaces) >= 1 {
+		b.WriteString(fmt.Sprintf(", created [%v]", strconv.Itoa(cw)))
 	}
 
 	b.WriteString(fmt.Sprintf(" {%v/%v}", t.Split().String(), t.Time().String()))
@@ -71,19 +66,27 @@ func (ru *Run) VWSummary(f flags.Flags, t *timer.Timer) {
 
 // VCSummary ...
 func (ru *Run) VCSummary(f flags.Flags, t *timer.Timer) {
-	var b bytes.Buffer
 
-	b.WriteString(e.Get("Truck"))
+	et := e.Get("Truck")
+	cr := len(ru.ClonedRepos)
+	pc := len(ru.PendingClones)
+	ts := t.Split().Truncate(timer.M).String()
+	tt := t.Time().Truncate(timer.M).String()
+
+	// s := fmt.Sprintf("")
+
+	var b bytes.Buffer
+	b.WriteString(et)
 	b.WriteString(" [")
-	b.WriteString(strconv.Itoa(ru.CRC))
+	b.WriteString(strconv.Itoa(cr))
 	b.WriteString("/")
-	b.WriteString(strconv.Itoa(ru.PCC))
+	b.WriteString(strconv.Itoa(pc))
 	b.WriteString("] cloned")
 
 	b.WriteString(" {")
-	b.WriteString(t.Split().Truncate(timer.M).String())
+	b.WriteString(ts)
 	b.WriteString(" / ")
-	b.WriteString(t.Time().Truncate(timer.M).String())
+	b.WriteString(tt)
 	b.WriteString("}")
 
 	brf.Printv(f, b.String())

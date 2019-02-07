@@ -2,8 +2,11 @@
 package repos
 
 import (
+	"bytes"
+	"fmt"
 	"log"
 	"sort"
+	"strconv"
 	"sync"
 
 	"github.com/jychri/git-in-sync/pkg/brf"
@@ -42,7 +45,7 @@ func Init(c conf.Config, f flags.Flags, t *timer.Timer) (rs Repos) {
 	t.Mark("init-repos")
 
 	// sort
-	ws := rs.Workspaces()
+	ws := rs.workspaces()
 
 	// "workspaces|repos..."
 	efm := e.Get("FaxMachine")
@@ -55,8 +58,7 @@ func Init(c conf.Config, f flags.Flags, t *timer.Timer) (rs Repos) {
 	return rs
 }
 
-// Names returns all Repo Names.
-func (rs Repos) Names() []string {
+func (rs Repos) names() []string {
 	var rss []string
 
 	for _, r := range rs {
@@ -70,8 +72,7 @@ func (rs Repos) Names() []string {
 	return brf.Reduce(rss)
 }
 
-// Workspaces returns all Repo Workpaces.
-func (rs Repos) Workspaces() []string {
+func (rs Repos) workspaces() []string {
 	var wss []string
 
 	for _, r := range rs {
@@ -85,24 +86,22 @@ func (rs Repos) Workspaces() []string {
 	return brf.Reduce(wss)
 }
 
-// ByName sorts Repos in Repos A-Z by Name.
-func (rs Repos) ByName() {
+func (rs Repos) byName() {
 	sort.SliceStable(rs, func(i, j int) bool { return rs[i].Name < rs[j].Name })
 }
 
-// ByWorkspacePath sorts Repos in Repos A-Z by WorkspacePath.
-func (rs Repos) ByWorkspacePath() {
+func (rs Repos) byWorkspacePath() {
 	sort.SliceStable(rs, func(i, j int) bool { return rs[i].Name < rs[j].Name })
 	sort.SliceStable(rs, func(i, j int) bool { return rs[i].WorkspacePath < rs[j].WorkspacePath })
 }
 
-// SyncVerifyWorkspaces ...
-func (rs Repos) SyncVerifyWorkspaces(f flags.Flags, ru *run.Run) {
+func (rs Repos) syncVerifyWorkspaces(f flags.Flags, ru *run.Run) {
+
 	// sort Repos A-Z by *r.WorkspacePath
-	rs.ByWorkspacePath()
+	rs.byWorkspacePath()
 
 	// []string of *r.Workspace
-	ru.TotalWorkspaces = rs.Workspaces()
+	ru.TotalWorkspaces = rs.workspaces()
 
 	// "printv : verifying workspaces ..."
 	efc := e.Get("FileCabinet")
@@ -110,13 +109,38 @@ func (rs Repos) SyncVerifyWorkspaces(f flags.Flags, ru *run.Run) {
 	sm := brf.Summary(ru.TotalWorkspaces, 25)
 	brf.Printv(f, "%v  verifying workspaces [%v](%v)", efc, l, sm)
 
+	// verify each workspace (check if present)
 	for _, r := range rs {
 		r.VerifyWorkspace(f, ru)
 	}
 }
 
-// SyncVerifyRepos ...
-func (rs Repos) SyncVerifyRepos(f flags.Flags, ru *run.Run) {
+func (rs Repos) summaryVerifyWorkspaces(f flags.Flags, ru *run.Run, ti *timer.Timer) {
+	vw := len(ru.VerifiedWorkspaces)
+	tw := len(ru.TotalWorkspaces)
+	cw := len(ru.CreatedWorkspaces)
+
+	// summary
+	var b bytes.Buffer
+
+	if vw == tw {
+		b.WriteString(e.Get("Briefcase"))
+	} else {
+		b.WriteString(e.Get("Slash"))
+	}
+
+	b.WriteString(fmt.Sprintf(" [%v/%v] divs verified", vw, tw))
+
+	if len(ru.CreatedWorkspaces) >= 1 {
+		b.WriteString(fmt.Sprintf(", created [%v]", strconv.Itoa(cw)))
+	}
+
+	b.WriteString(fmt.Sprintf(" {%v/%v}", ti.Split().String(), ti.Time().String()))
+
+	brf.Printv(f, b.String())
+}
+
+func (rs Repos) syncVerifyRepos(f flags.Flags, ru *run.Run) {
 	for _, r := range rs {
 		r.VerifyRepo(f, ru)
 	}
@@ -124,8 +148,7 @@ func (rs Repos) SyncVerifyRepos(f flags.Flags, ru *run.Run) {
 
 // Async
 
-// AsyncClone asynchronously clones all absent Repos in Repos.
-func (rs Repos) AsyncClone(f flags.Flags, ru *run.Run, t *timer.Timer) {
+func (rs Repos) asyncClone(f flags.Flags, ru *run.Run, t *timer.Timer) {
 
 	if len(ru.PendingClones) > 1 {
 		// "cloning ..."
@@ -148,8 +171,7 @@ func (rs Repos) AsyncClone(f flags.Flags, ru *run.Run, t *timer.Timer) {
 	}
 }
 
-// AsyncInfo asynchronously gathers info on all Repos in Repos.
-func (rs Repos) AsyncInfo() {
+func (rs Repos) asyncInfo() {
 	var wg sync.WaitGroup
 	for i := range rs {
 		wg.Add(1)
@@ -161,27 +183,27 @@ func (rs Repos) AsyncInfo() {
 	wg.Wait()
 }
 
-// Main functions
-
 // VerifyWorkspaces verifies WorkspacePaths for Repos in Repos.
 func (rs Repos) VerifyWorkspaces(f flags.Flags, ru *run.Run, t *timer.Timer) {
-	rs.SyncVerifyWorkspaces(f, ru)
+
+	// verify each workspace
+	rs.syncVerifyWorkspaces(f, ru)
 
 	// summary
-	ru.VWSummary(f, t)
+	rs.summaryVerifyWorkspaces(f, ru, t)
 }
 
 // VerifyRepos verifies all Repos in Repos.
 func (rs Repos) VerifyRepos(f flags.Flags, ru *run.Run, t *timer.Timer) {
 
-	// verify each repo
-	rs.SyncVerifyRepos(f, ru)
+	// check if present
+	rs.syncVerifyRepos(f, ru)
 
-	// async clone
-	rs.AsyncClone(f, ru, t)
+	// clone missing repos
+	rs.asyncClone(f, ru, t)
 
-	// async info
-	rs.AsyncInfo()
+	// get info for all repos
+	rs.asyncInfo()
 
 	// summary
 	ru.VCSummary(f, t)

@@ -2,7 +2,7 @@ package run
 
 import (
 	"bytes"
-	"fmt"
+	// "fmt"
 	"strconv"
 
 	"github.com/jychri/git-in-sync/pkg/brf"
@@ -36,32 +36,6 @@ func (ru *Run) Reduce() {
 	ru.TotalWorkspaces = brf.Reduce(ru.TotalWorkspaces)
 	ru.PendingClones = brf.Reduce(ru.PendingClones)
 	ru.ClonedRepos = brf.Reduce(ru.ClonedRepos)
-}
-
-// VWSummary returns a summary for repos.VerifyWorkspaces
-func (ru *Run) VWSummary(f flags.Flags, t *timer.Timer) {
-	vw := len(ru.VerifiedWorkspaces)
-	tw := len(ru.TotalWorkspaces)
-	cw := len(ru.CreatedWorkspaces)
-
-	// summary
-	var b bytes.Buffer
-
-	if vw == tw {
-		b.WriteString(e.Get("Briefcase"))
-	} else {
-		b.WriteString(e.Get("Slash"))
-	}
-
-	b.WriteString(fmt.Sprintf(" [%v/%v] divs verified", vw, tw))
-
-	if len(ru.CreatedWorkspaces) >= 1 {
-		b.WriteString(fmt.Sprintf(", created [%v]", strconv.Itoa(cw)))
-	}
-
-	b.WriteString(fmt.Sprintf(" {%v/%v}", t.Split().String(), t.Time().String()))
-
-	brf.Printv(f, b.String())
 }
 
 // VCSummary ...

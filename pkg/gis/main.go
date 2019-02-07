@@ -1,4 +1,3 @@
-// Package gis is the main package of git-in-sync.
 package main
 
 import (
@@ -11,7 +10,7 @@ import (
 	"github.com/jychri/git-in-sync/pkg/timer"
 )
 
-// Init ...
+// Init returns initial
 func Init() (f flags.Flags, rs repos.Repos, ru *run.Run, t *timer.Timer) {
 
 	e.ClearScreen()

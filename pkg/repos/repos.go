@@ -380,6 +380,48 @@ func (rs Repos) AsyncCheck() {
 
 }
 
+// Pulled from master branch
+// func (r *Repo) verify(e Emoji, f Flags, w *Workspace) {
+
+// 	if noDiv(r) {
+// 		targetPrint(f, "%v %v (%v/%v)", e.Slash, r.Name, r.Div.Name, r.Remote)
+// 		return
+// 	}
+
+// 	if canClone(f, r) {
+// 		r.gitClone(e, f, w)
+// 	}
+
+// 	if isMissing(r) {
+// 		targetPrint(f, "%v %v (%v/%v)", e.Slash, r.Name, r.Div.Name, r.Remote)
+// 		return
+// 	}
+
+// 	r.gitConfigOriginURL()
+// 	r.gitRemoteUpdate()
+// 	r.gitStatusPorcelain()
+// 	r.gitLocalSHA()
+// 	r.gitLocalBranch()
+// 	r.gitMergeBaseSHA()
+// 	r.gitUpstreamSHA()
+// 	r.gitRevParseUpstream()
+// 	r.gitDiffsNameOnly()
+// 	r.getDiffSummary()
+// 	r.gitShortstat()
+// 	r.getShortInts()
+// 	r.gitUntracked()
+// 	r.getUntrackedSummary()
+// 	r.getUpstreamStatus()
+// 	r.getPhase()
+
+// 	if isUpToDate(r) {
+// 		w.VerifiedRepos = append(w.VerifiedRepos, r)
+// 		targetPrint(f, "%v %v (%v/%v)", e.Checkmark, r.Name, r.Div.Name, r.Remote)
+// 	} else {
+// 		targetPrint(f, "%v %v (%v/%v)", e.Warning, r.Name, r.Div.Name, r.Remote)
+// 	}
+// }
+
 // VerifyRepos ...
 func (rs Repos) VerifyRepos(f flags.Flags, ru *run.Run, t *timer.Timer) {
 

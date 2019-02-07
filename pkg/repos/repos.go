@@ -2,7 +2,6 @@
 package repos
 
 import (
-	"fmt"
 	"log"
 	"sort"
 	"sync"
@@ -97,28 +96,56 @@ func (rs Repos) ByWorkspacePath() {
 	sort.SliceStable(rs, func(i, j int) bool { return rs[i].WorkspacePath < rs[j].WorkspacePath })
 }
 
+// SyncVerifyWorkspaces ...
+func (rs Repos) SyncVerifyWorkspaces(f flags.Flags, ru *run.Run) {
+	// sort Repos A-Z by *r.WorkspacePath
+	rs.ByWorkspacePath()
+
+	// []string of *r.Workspace
+	ru.TotalWorkspaces = rs.Workspaces()
+
+	// "printv : verifying workspaces ..."
+	efc := e.Get("FileCabinet")
+	l := len(ru.TotalWorkspaces)
+	sm := brf.Summary(ru.TotalWorkspaces, 25)
+	brf.Printv(f, "%v  verifying workspaces [%v](%v)", efc, l, sm)
+
+	for _, r := range rs {
+		r.VerifyWorkspace(f, ru)
+	}
+}
+
+// SyncVerifyRepos ...
+func (rs Repos) SyncVerifyRepos(f flags.Flags, ru *run.Run) {
+	for _, r := range rs {
+		r.VerifyRepo(f, ru)
+	}
+}
+
 // Async
 
 // AsyncClone asynchronously clones all absent Repos in Repos.
 func (rs Repos) AsyncClone(f flags.Flags, ru *run.Run, t *timer.Timer) {
 
-	// "cloning ..."
-	es := e.Get("Sheep")
-	pc := len(ru.PendingClones)
-	brf.Printv(f, "%v cloning [%v]", es, pc)
+	if len(ru.PendingClones) > 1 {
+		// "cloning ..."
+		es := e.Get("Sheep")
+		pc := len(ru.PendingClones)
+		brf.Printv(f, "%v cloning [%v]", es, pc)
 
-	var wg sync.WaitGroup
-	for i := range rs {
-		wg.Add(1)
-		go func(r *repo.Repo) {
-			defer wg.Done()
-			r.GitClone(f, ru)
-		}(rs[i])
+		var wg sync.WaitGroup
+		for i := range rs {
+			wg.Add(1)
+			go func(r *repo.Repo) {
+				defer wg.Done()
+				r.GitClone(f, ru)
+			}(rs[i])
+		}
+		wg.Wait()
+
+		t.Mark("async-clone")
+		ru.VCSummary(f, t)
 	}
-	wg.Wait()
-
-	t.Mark("async-clone")
-	ru.VCSummary(f, t)
 }
 
 // AsyncInfo asynchronously gathers info on all Repos in Repos.
@@ -138,41 +165,24 @@ func (rs Repos) AsyncInfo() {
 
 // VerifyWorkspaces verifies WorkspacePaths for Repos in Repos.
 func (rs Repos) VerifyWorkspaces(f flags.Flags, ru *run.Run, t *timer.Timer) {
+	rs.SyncVerifyWorkspaces(f, ru)
 
-	// sort Repos A-Z by *r.WorkspacePath
-	rs.ByWorkspacePath()
-
-	// []string of *r.Workspace
-	ru.TotalWorkspaces = rs.Workspaces()
-
-	ru.Reduce()
-
-	// "verifying workspaces ..."
-	efc := e.Get("FileCabinet")
-	l := len(ru.TotalWorkspaces)
-	sm := brf.Summary(ru.TotalWorkspaces, 25)
-	brf.Printv(f, "%v  verifying workspaces [%v](%v)", efc, l, sm)
-
-	for _, r := range rs {
-		r.VerifyWorkspace(f, ru)
-	}
-
-	// print summary
+	// summary
 	ru.VWSummary(f, t)
 }
 
 // VerifyRepos verifies all Repos in Repos.
 func (rs Repos) VerifyRepos(f flags.Flags, ru *run.Run, t *timer.Timer) {
 
-	for _, r := range rs {
-		r.VerifyRepo(f, ru)
-	}
+	// verify each repo
+	rs.SyncVerifyRepos(f, ru)
 
 	// async clone
-	if len(ru.PendingClones) > 1 {
-		rs.AsyncClone(f, ru, t)
-	}
+	rs.AsyncClone(f, ru, t)
 
 	// async info
 	rs.AsyncInfo()
+
+	// summary
+	ru.VCSummary(f, t)
 }

@@ -73,8 +73,6 @@ func (ru *Run) VCSummary(f flags.Flags, t *timer.Timer) {
 	ts := t.Split().Truncate(timer.M).String()
 	tt := t.Time().Truncate(timer.M).String()
 
-	// s := fmt.Sprintf("")
-
 	var b bytes.Buffer
 	b.WriteString(et)
 	b.WriteString(" [")

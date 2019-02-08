@@ -11,52 +11,14 @@ import (
 
 	"github.com/jychri/git-in-sync/pkg/brf"
 	"github.com/jychri/git-in-sync/pkg/conf"
-	"github.com/jychri/git-in-sync/pkg/e"
+	e "github.com/jychri/git-in-sync/pkg/e"
 	"github.com/jychri/git-in-sync/pkg/flags"
 	"github.com/jychri/git-in-sync/pkg/repo"
 	"github.com/jychri/git-in-sync/pkg/run"
 	"github.com/jychri/git-in-sync/pkg/timer"
 )
 
-// Repos collects pointers to Repo structs.
-type Repos []*repo.Repo
-
-// Init returns a slice of Repo structs.
-func Init(c conf.Config, f flags.Flags, t *timer.Timer) (rs Repos) {
-
-	ep := e.Get("Pager")
-	brf.Printv(f, "%v parsing workspaces|repos", ep)
-
-	// initialize Repos from Config
-	for _, bl := range c.Bundles {
-		for _, z := range bl.Zones {
-			for _, rn := range z.Repos {
-				r := repo.Init(z.Workspace, z.User, z.Remote, bl.Path, rn)
-				rs = append(rs, r)
-			}
-		}
-	}
-
-	if l := len(rs); l == 0 {
-		log.Fatalf("No repos. Exiting")
-	}
-
-	// timer
-	t.Mark("init-repos")
-
-	// sort
-	ws := rs.workspaces()
-
-	// "workspaces|repos..."
-	efm := e.Get("FaxMachine")
-	lw := len(ws)
-	lr := len(rs)
-	ts := t.Split()
-	tt := t.Time()
-	brf.Printv(f, "%v [%v|%v] workspaces|repos {%v / %v}", efm, lw, lr, ts, tt)
-
-	return rs
-}
+// private
 
 func (rs Repos) names() []string {
 	var rss []string
@@ -181,6 +143,48 @@ func (rs Repos) asyncInfo() {
 		}(rs[i])
 	}
 	wg.Wait()
+}
+
+// Public
+
+// Repos collects pointers to Repo structs.
+type Repos []*repo.Repo
+
+// Init returns a slice of Repo structs.
+func Init(c conf.Config, f flags.Flags, t *timer.Timer) (rs Repos) {
+
+	ep := e.Get("Pager")
+	brf.Printv(f, "%v parsing workspaces|repos", ep)
+
+	// initialize Repos from Config
+	for _, bl := range c.Bundles {
+		for _, z := range bl.Zones {
+			for _, rn := range z.Repos {
+				r := repo.Init(z.Workspace, z.User, z.Remote, bl.Path, rn)
+				rs = append(rs, r)
+			}
+		}
+	}
+
+	if l := len(rs); l == 0 {
+		log.Fatalf("No repos. Exiting")
+	}
+
+	// timer
+	t.Mark("init-repos")
+
+	// sort
+	ws := rs.workspaces()
+
+	// "workspaces|repos..."
+	efm := e.Get("FaxMachine")
+	lw := len(ws)
+	lr := len(rs)
+	ts := t.Split()
+	tt := t.Time()
+	brf.Printv(f, "%v [%v|%v] workspaces|repos {%v / %v}", efm, lw, lr, ts, tt)
+
+	return rs
 }
 
 // VerifyWorkspaces verifies WorkspacePaths for Repos in Repos.

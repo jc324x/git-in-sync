@@ -1,5 +1,7 @@
 package run
 
+// rename to stat
+
 import (
 	"bytes"
 	// "fmt"

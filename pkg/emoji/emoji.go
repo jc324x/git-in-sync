@@ -1,5 +1,5 @@
-// Package e adds emoji to git-in-sync.
-package e
+// Package emoji adds emoji to git-in-sync.
+package emoji
 
 import (
 	"fmt"

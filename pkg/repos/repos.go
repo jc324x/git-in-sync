@@ -11,7 +11,7 @@ import (
 
 	"github.com/jychri/git-in-sync/pkg/brf"
 	"github.com/jychri/git-in-sync/pkg/conf"
-	e "github.com/jychri/git-in-sync/pkg/e"
+	e "github.com/jychri/git-in-sync/pkg/emoji"
 	"github.com/jychri/git-in-sync/pkg/flags"
 	"github.com/jychri/git-in-sync/pkg/repo"
 	"github.com/jychri/git-in-sync/pkg/run"

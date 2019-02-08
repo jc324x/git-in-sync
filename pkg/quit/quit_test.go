@@ -5,12 +5,12 @@ import (
 	"testing"
 )
 
-// check is an example of how to implement Eval
+// check is an example of how to implement Bool
 func check(a int, b int) (bool, string) {
-	return Eval(a == b, []string{"%v != %v", "%v == %v"}, a, b)
+	return Bool(a == b, []string{"%v != %v", "%v == %v"}, a, b)
 }
 
-func TestCheck(t *testing.T) {
+func TestBool(t *testing.T) {
 
 	os.Setenv("MODE", "TESTING")
 

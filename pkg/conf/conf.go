@@ -4,11 +4,38 @@ package conf
 import (
 	"encoding/json"
 	"io/ioutil"
-	"log"
 
 	"github.com/jychri/git-in-sync/pkg/flags"
-	// "github.com/jychri/git-in-sync/pkg/tilde"
+	q "github.com/jychri/git-in-sync/pkg/quit"
 )
+
+// private
+
+func read(f flags.Flags) ([]byte, q.Quit) {
+	var bs []byte
+	var err error
+
+	bs, err = ioutil.ReadFile(f.Config)
+
+	fmats := []string{"Cant' read file at (%v)\n", "Read file at (%v)\n"}
+	q := q.Err(err, fmats, f.Config)
+
+	return bs, q
+}
+
+func unmarshal(bs []byte, f flags.Flags) (Config, q.Quit) {
+	var c Config
+	var err error
+
+	err = json.Unmarshal(bs, &c)
+
+	fmats := []string{"Can't unmarshal JSON from (%v)\n", f.Config}
+	q := q.Err(err, fmats, f.Config)
+
+	return c, q
+}
+
+// public
 
 // Config holds unmrashalled data from gisrc.json.
 type Config struct {
@@ -24,21 +51,12 @@ type Config struct {
 }
 
 // Init returns unmarshalled data from gisrc.json.
+// f.Config is validated before reaching Init.
+// flags.Init() verifies input with tilde.AbsUser()
 func Init(f flags.Flags) (c Config) {
-	var bs []byte
-	var err error
 
-	// if f.Config == "~/.gisrc.json" {
-	// 	f.Config = brf.AbsUser("~/.gisrc.json")
-	// }
-
-	if bs, err = ioutil.ReadFile(f.Config); err != nil {
-		log.Fatalf("Can't read file at (%v)\n", f.Config)
-	}
-
-	if err = json.Unmarshal(bs, &c); err != nil {
-		log.Fatalf("Can't unmarshal JSON from (%v)\n", f.Config)
-	}
+	bs, _ := read(f)
+	c, _ = unmarshal(bs, f)
 
 	return c
 }

@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func TestSingle(t *testing.T) {
+func TestReduce(t *testing.T) {
 
 	for _, c := range []struct {
 		in, want []string

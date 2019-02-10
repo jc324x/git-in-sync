@@ -125,6 +125,8 @@ var rmap = map[string]Results{
 		}}},
 }
 
+// Public
+
 // Setup creates a test environment at ~/tmpgis/$pkg/.
 // ~/tmpgis/$pkg/ and ~/tmpgis/$pkg/gisrc.json are created,
 // key k is matched to Jmap, returning j ([]byte) if valid,
@@ -173,26 +175,26 @@ func Setup(pkg string, k string) (string, func()) {
 
 // Dir returns the absolute path of the testing environment.
 // ~/tmpgis/$pkg
-func Dir(pkg string) string {
+// func Dir(pkg string) string {
 
-	if pkg == "" {
-		log.Fatalf("pkg is empty")
-	}
+// 	if pkg == "" {
+// 		log.Fatalf("pkg is empty")
+// 	}
 
-	var u *user.User
+// 	var u *user.User
 
-	u, err := user.Current()
+// 	u, err := user.Current()
 
-	if err != nil {
-		log.Fatalf("Unable to identify current user (%v)", err.Error())
-	}
+// 	if err != nil {
+// 		log.Fatalf("Unable to identify current user (%v)", err.Error())
+// 	}
 
-	tb := path.Join(u.HomeDir, "tmpgis") // test base
+// 	tb := path.Join(u.HomeDir, "tmpgis") // test base
 
-	td := path.Join(tb, pkg) // test dir
+// 	td := path.Join(tb, pkg) // test dir
 
-	return td
-}
+// 	return td
+// }
 
 // Result holds the expected values for a zone.
 type Result struct {

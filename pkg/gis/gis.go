@@ -1,3 +1,4 @@
+// Gis is the nexus...
 package main
 
 import (
@@ -11,22 +12,22 @@ import (
 )
 
 // Init returns initial
-func Init() (f flags.Flags, rs repos.Repos, ru *run.Run, t *timer.Timer) {
+func Init() (f flags.Flags, rs repos.Repos, ru *run.Run, ti *timer.Timer) {
 
 	e.ClearScreen()
 
 	// initialize Timer and Flags
-	t = timer.Init()
+	ti = timer.Init()
 	f = flags.Init()
 	ru = run.Init()
 
-	t.Mark("init-flags")
+	ti.Mark("init-flags")
 
 	// "start"
 	brf.Printv(f, "%v start", e.Get("Clapper"))
 
 	// "flag(s) set..."
-	if ft, err := t.Get("init-flags"); err == nil {
+	if ft, err := ti.Get("init-flags"); err == nil {
 		brf.Printv(f, "%v parsing flags", e.Get("FlagInHole"))
 		brf.Printv(f, "%v running in '%v' mode {%v / %v}", e.Get("Flag"), f.Mode, ft.Split, ft.Start)
 	}
@@ -36,15 +37,15 @@ func Init() (f flags.Flags, rs repos.Repos, ru *run.Run, t *timer.Timer) {
 
 	// initialize Config from conf.Path(f)
 	c := conf.Init(f)
-	t.Mark("init-config")
+	ti.Mark("init-config")
 
 	// "read conf.Path(f)"
-	brf.Printv(f, "%v read %v {%v / %v}", e.Get("Book"), (f.Config), t.Split(), t.Time())
+	brf.Printv(f, "%v read %v {%v / %v}", e.Get("Book"), (f.Config), ti.Split(), ti.Time())
 
 	// initialize Repos
-	rs = repos.Init(c, f, t)
+	rs = repos.Init(c, f, ti)
 
-	return f, rs, ru, t
+	return f, rs, ru, ti
 }
 
 func main() {

@@ -173,6 +173,9 @@ func Setup(pkg string, k string) (string, func()) {
 	return tg, func() { os.RemoveAll(tb) }
 }
 
+// Creates .gisrc.json with template info if it doesn't already exist?
+// func Direct(pkg string, k string) (string, func()) {}
+
 // Result holds the expected values for a zone.
 type Result struct {
 	User, Remote, Workspace string

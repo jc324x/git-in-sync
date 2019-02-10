@@ -5,9 +5,13 @@ import (
 	"testing"
 )
 
-// check is an example of how to implement Bool
-func check(a int, b int) (bool, string) {
+func checkB(a int, b int) Out {
 	return Bool(a == b, []string{"%v != %v", "%v == %v"}, a, b)
+}
+
+func checkE(p string) Out {
+	_, te := os.Stat(p)
+	return Err(te, []string{"!= %v", "%v"}, p)
 }
 
 func TestBool(t *testing.T) {
@@ -23,14 +27,39 @@ func TestBool(t *testing.T) {
 		{100, 100, true, "100 == 100"},
 	} {
 
-		gotb, gots := check(c.a, c.b)
+		got := checkB(c.a, c.b)
 
-		if gotb != c.wantb {
-			t.Errorf("Check: %v != %v", gotb, c.wantb)
+		if got.Status != c.wantb {
+			t.Errorf("Check: %v != %v", got.Status, c.wantb)
 		}
 
-		if gots != c.wants {
-			t.Errorf("Check: %v != %v", gots, c.wants)
+		if got.Summary != c.wants {
+			t.Errorf("Check: %v != %v", got.Summary, c.wants)
 		}
 	}
+}
+
+func TestErr(t *testing.T) {
+
+	os.Setenv("MODE", "TESTING")
+
+	for _, c := range []struct {
+		in    string
+		wantb bool
+		wants string
+	}{
+		{"/a/fake/path", false, "!= /a/fake/path"},
+	} {
+
+		got := checkE(c.in)
+
+		if got.Status != c.wantb {
+			t.Errorf("Check: %v != %v", got.Status, c.wantb)
+		}
+
+		if got.Summary != c.wants {
+			t.Errorf("Check: %v != %v", got.Summary, c.wants)
+		}
+	}
+
 }

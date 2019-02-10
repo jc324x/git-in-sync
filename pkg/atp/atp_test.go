@@ -5,13 +5,6 @@ import (
 	"testing"
 )
 
-func TestSetup(t *testing.T) {
-	_, cleanup := Setup("atp", "recipes")
-	defer cleanup()
-
-	// also get 'p', test my make sure that 'p' is gone
-}
-
 func TestResulter(t *testing.T) {
 	want := Results{
 		{"hendricius", "github", "recipes", []string{"pizza-dough", "the-bread-code"}},

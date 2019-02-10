@@ -10,44 +10,9 @@ import (
 	"path"
 )
 
-// Pulled from gisrc.json at repo base. Roll into *map and test files
+// private
 
-// {
-// 	"bundles": [{
-// 		"path": "~/git-in-sync-example",
-// 		"zones": [{
-// 				"user": "jychri",
-// 				"remote": "github",
-// 				"workspace": "google-apps-script",
-// 				"repositories": [
-// 					"crunchy-calendar",
-// 					"daily-sign-up",
-// 					"data-flipper",
-// 					"easy-csv",
-// 					"frequency-responder",
-// 					"google-apps-script-cheat-sheet",
-// 					"mega-merge",
-// 					"missing-homework"
-// 				]
-// 			}, {
-// 				"user": "jychri",
-// 				"remote": "github",
-// 				"workspace": "main",
-// 				"repositories": [
-//           "empty-ex",
-// 					"tmp1",
-// 					"tmp2",
-// 					"tmp3",
-// 					"tmp4",
-// 					"tmp5"
-//         ]
-//       }
-// 		]
-// 	}]
-// }
-
-// Jmap maps strings to sample gisrc.json JSON.
-var Jmap = map[string][]byte{
+var jmap = map[string][]byte{
 	"recipes": []byte(`
 		{
 			"bundles": [{
@@ -88,7 +53,76 @@ var Jmap = map[string][]byte{
 				]
 			}]
 		}
-`),
+`), "google-apps-script": []byte(`
+		{
+			"bundles": [{
+				"path": "SETPATH",
+				"zones": [{
+						"user": "jychri",
+						"remote": "github",
+						"workspace": "google-apps-script",
+						"repositories": [
+							"crunchy-calendar",
+							"daily-sign-up",
+							"data-flipper",
+							"easy-csv",
+							"frequency-responder",
+							"google-apps-script-cheat-sheet",
+							"mega-merge",
+							"missing-homework"
+						]
+					}
+				]
+			}]
+		}`),
+	"tmp": []byte(`
+	{
+		"bundles": [{
+			"path": "SETPATH",
+			"zones": [{
+					"user": "jychri",
+					"remote": "github",
+					"workspace": "tmp",
+					"repositories": [
+						"tmp1",
+						"tmp2",
+						"tmp3",
+						"tmp4",
+						"tmp5"
+					]
+				}
+			]
+		}]
+	}
+	`),
+}
+
+var rmap = map[string]Results{
+	"recipes": {
+		{"hendricius", "github", "recipes", []string{"pizza-dough", "the-bread-code"}},
+		{"cocktails-for-programmers", "github", "recipes", []string{"cocktails-for-programmers"}},
+		{"rochacbruno", "github", "recipes", []string{"vegan_recipes"}},
+		{"niw", "github", "recipes", []string{"ramen"}},
+	},
+	"google-apps-script": {
+		{"jychri", "github", "google-apps-script", []string{
+			"crunchy-calendar",
+			"daily-sign-up",
+			"data-flipper",
+			"easy-csv",
+			"frequency-responder",
+			"google-apps-script-cheat-sheet",
+			"mega-merge",
+			"missing-homework",
+		}}},
+	"tmp": {
+		{"jychri", "github", "google-apps-script", []string{
+			"tmp1",
+			"tmp2",
+			"tmp3",
+			"tmp4",
+			"tmp5",
+		}}},
 }
 
 // Setup creates a test environment at ~/tmpgis/$pkg/.
@@ -98,6 +132,7 @@ var Jmap = map[string][]byte{
 // Setup returns the absolute path of ~/tmpgis/$pkg/gisrc.json
 // and a cleanup function that removes ~/tmpgis/$pkg/.
 func Setup(pkg string, k string) (string, func()) {
+
 	var j []byte
 	var ok bool
 
@@ -105,8 +140,8 @@ func Setup(pkg string, k string) (string, func()) {
 		log.Fatalf("pkg is empty")
 	}
 
-	if j, ok = Jmap[k]; ok != true {
-		log.Fatalf("%v not found in Jmap", k)
+	if j, ok = jmap[k]; ok != true {
+		log.Fatalf("%v not found in jmap", k)
 	}
 
 	var u *user.User
@@ -139,6 +174,7 @@ func Setup(pkg string, k string) (string, func()) {
 // Dir returns the absolute path of the testing environment.
 // ~/tmpgis/$pkg
 func Dir(pkg string) string {
+
 	if pkg == "" {
 		log.Fatalf("pkg is empty")
 	}
@@ -167,21 +203,12 @@ type Result struct {
 // Results is a collection of Result structs.
 type Results []Result
 
-// Rmap maps strings to expected results.
-var Rmap = map[string]Results{
-	"recipes": {
-		{"hendricius", "github", "recipes", []string{"pizza-dough", "the-bread-code"}},
-		{"cocktails-for-programmers", "github", "recipes", []string{"cocktails-for-programmers"}},
-		{"rochacbruno", "github", "recipes", []string{"vegan_recipes"}},
-		{"niw", "github", "recipes", []string{"ramen"}},
-	},
-}
-
 // Resulter returns expected results for testing.
 func Resulter(k string) Results {
-	if _, ok := Rmap[k]; ok != true {
-		log.Fatalf("%v not found in Rmap", k)
+
+	if _, ok := rmap[k]; ok != true {
+		log.Fatalf("%v not found in rmap", k)
 	}
 
-	return Rmap[k]
+	return rmap[k]
 }

@@ -11,15 +11,12 @@ import (
 
 // Printv calls prints to standard output if not running in 'oneline' or 'testing' mode.
 func Printv(f flags.Flags, s string, z ...interface{}) {
-
 	switch f.Mode {
 	case "oneline":
 	case "testing":
 	default:
 		fmt.Println(fmt.Sprintf(s, z...))
 	}
-
-	// return errors.New("N/A")
 }
 
 // Reduce returns a string slice with no duplicate entries.
@@ -40,6 +37,7 @@ func Reduce(ssl []string) (sl []string) {
 
 // Summary returns a set length string summarizing the contents of a string slice.
 func Summary(sl []string, l int) string {
+
 	if len(sl) == 0 {
 		return ""
 	}
@@ -68,6 +66,7 @@ func Summary(sl []string, l int) string {
 
 // First returns the first line from a multi line string.
 func First(s string) string {
+
 	lines := strings.Split(strings.TrimSuffix(s, "\n"), "\n")
 
 	if len(lines) >= 1 {

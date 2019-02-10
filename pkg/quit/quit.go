@@ -6,62 +6,51 @@ import (
 	"os"
 )
 
-// Quit ...
-type Quit struct {
-	B bool
-	S string
-}
+// private
 
-// Active returns true if MODE != TESTING
-func Active() bool {
-	if ac := os.Getenv("MODE"); ac == "TESTING" {
-		return false
-	}
-	return true
-}
-
-// Err ...
-func Err(err error, fmats []string, v ...interface{}) Quit {
-	var ac bool
-
+func checkMode() bool {
 	if env := os.Getenv("MODE"); env != "TESTING" {
-		ac = true
+		return true
 	}
-
-	switch {
-	case ac && err == nil:
-		return Quit{true, fmt.Sprintf(fmats[1], v...)}
-	case ac && err != nil:
-		log.Fatalf(fmats[0], v...)
-	case !ac && err == nil:
-		return Quit{true, fmt.Sprintf(fmats[1], v...)}
-	case !ac && err != nil:
-		return Quit{false, fmt.Sprintf(fmats[1], v...)}
-	}
-
-	return Quit{false, ""}
-	// return false, ""
+	return false
 }
 
-// Bool evaluates a boolean condition. It MODE != TESTING, it returns a bool and a string
-// values. If the condition is false and MODE != TESTING, the program will exit
-// with a call to log.Fatalf(). A true condition with MODE != TESTING will return
-// a bool and a string which will likely be ignored.
-func Bool(b bool, fmats []string, v ...interface{}) (bool, string) {
-	var ac bool
+// Public
 
-	ac = Active()
+// Out ...
+type Out struct {
+	Status  bool
+	Summary string
+}
+
+// Err evaluates an error, returning an Out struct
+// if possible. If err != nil and mode != "TESTING",
+// Err will call log.Fatalf.
+func Err(err error, fm []string, v ...interface{}) Out {
+	var m = checkMode()
 
 	switch {
-	case ac && b:
-		return true, fmt.Sprintf(fmats[1], v...)
-	case ac && !b:
-		log.Fatalf(fmats[0], v...)
-	case !ac && b:
-		return true, fmt.Sprintf(fmats[1], v...)
-	case !ac && !b:
-		return false, fmt.Sprintf(fmats[0], v...)
+	case m && err != nil:
+		log.Fatalf(fm[0], v...)
+	case !m && err != nil:
+		return Out{false, fmt.Sprintf(fm[0], v...)}
 	}
 
-	return false, ""
+	return Out{true, fmt.Sprintf(fm[1], v...)}
+}
+
+// Bool evaluates an bool, returning an Out struct
+// if possible. If bool == false and mode != "TESTING",
+// Err will call log.Fatalf.
+func Bool(b bool, fm []string, v ...interface{}) Out {
+	var m = checkMode()
+
+	switch {
+	case m && !b:
+		log.Fatalf(fm[0], v...)
+	case !m && !b:
+		return Out{false, fmt.Sprintf(fm[0], v...)}
+	}
+
+	return Out{true, fmt.Sprintf(fm[1], v...)}
 }

@@ -11,26 +11,26 @@ import (
 
 // private
 
-func read(f flags.Flags) ([]byte, q.Quit) {
+func read(f flags.Flags) ([]byte, q.Out) {
 	var bs []byte
 	var err error
 
 	bs, err = ioutil.ReadFile(f.Config)
 
-	fmats := []string{"Cant' read file at (%v)\n", "Read file at (%v)\n"}
-	q := q.Err(err, fmats, f.Config)
+	fm := []string{"Cant' read file at (%v)\n", "Read file at (%v)\n"}
+	q := q.Err(err, fm, f.Config)
 
 	return bs, q
 }
 
-func unmarshal(bs []byte, f flags.Flags) (Config, q.Quit) {
+func unmarshal(bs []byte, f flags.Flags) (Config, q.Out) {
 	var c Config
 	var err error
 
 	err = json.Unmarshal(bs, &c)
 
-	fmats := []string{"Can't unmarshal JSON from (%v)\n", f.Config}
-	q := q.Err(err, fmats, f.Config)
+	fm := []string{"Can't unmarshal JSON from (%v)\n", "Unmarshalled (%v)\n"}
+	q := q.Err(err, fm, f.Config)
 
 	return c, q
 }

@@ -18,7 +18,7 @@ func TestBool(t *testing.T) {
 
 	os.Setenv("MODE", "TESTING")
 
-	for _, c := range []struct {
+	for _, tr := range []struct {
 		a, b  int
 		wantb bool
 		wants string
@@ -27,14 +27,14 @@ func TestBool(t *testing.T) {
 		{100, 100, true, "100 == 100"},
 	} {
 
-		got := checkB(c.a, c.b)
+		got := checkB(tr.a, tr.b)
 
-		if got.Status != c.wantb {
-			t.Errorf("Check: %v != %v", got.Status, c.wantb)
+		if got.Status != tr.wantb {
+			t.Errorf("Check: %v != %v", got.Status, tr.wantb)
 		}
 
-		if got.Summary != c.wants {
-			t.Errorf("Check: %v != %v", got.Summary, c.wants)
+		if got.Summary != tr.wants {
+			t.Errorf("Check: %v != %v", got.Summary, tr.wants)
 		}
 	}
 }
@@ -43,7 +43,7 @@ func TestErr(t *testing.T) {
 
 	os.Setenv("MODE", "TESTING")
 
-	for _, c := range []struct {
+	for _, tr := range []struct {
 		in    string
 		wantb bool
 		wants string
@@ -51,14 +51,14 @@ func TestErr(t *testing.T) {
 		{"/a/fake/path", false, "!= /a/fake/path"},
 	} {
 
-		got := checkE(c.in)
+		got := checkE(tr.in)
 
-		if got.Status != c.wantb {
-			t.Errorf("Check: %v != %v", got.Status, c.wantb)
+		if got.Status != tr.wantb {
+			t.Errorf("Check: %v != %v", got.Status, tr.wantb)
 		}
 
-		if got.Summary != c.wants {
-			t.Errorf("Check: %v != %v", got.Summary, c.wants)
+		if got.Summary != tr.wants {
+			t.Errorf("Check: %v != %v", got.Summary, tr.wants)
 		}
 	}
 

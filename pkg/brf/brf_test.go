@@ -7,16 +7,16 @@ import (
 
 func TestReduce(t *testing.T) {
 
-	for _, c := range []struct {
+	for _, tr := range []struct {
 		in, want []string
 	}{
 		{[]string{"a", "b", "b", "c", "c", "c", "c"}, []string{"a", "b", "c"}},
 		{[]string{"x", "y", "z", "z", "z", "z"}, []string{"x", "y", "z"}},
 	} {
-		got := Reduce(c.in)
+		got := Reduce(tr.in)
 
-		if !reflect.DeepEqual(got, c.want) {
-			t.Errorf("Single: != DeepEqual (%v -> %v != %v)", c.in, got, c.want)
+		if !reflect.DeepEqual(got, tr.want) {
+			t.Errorf("Single: != DeepEqual (%v -> %v != %v)", tr.in, got, tr.want)
 		}
 	}
 }
@@ -27,7 +27,7 @@ func TestSummary(t *testing.T) {
 	sl2 := []string{"Lorem", "ipsum", "dolor", "sit", "amet", "consectetur", "adipiscing", "elit", ".", "Maecenas"}
 	sl3 := []string{"a", "b", "c", "d", "e", "f", "g"}
 
-	for _, c := range []struct {
+	for _, tr := range []struct {
 		sl   []string
 		l    int
 		want string
@@ -37,14 +37,14 @@ func TestSummary(t *testing.T) {
 		{sl3, 20, "a, b, c, d, e, f, g"},
 	} {
 
-		got := Summary(c.sl, c.l)
+		got := Summary(tr.sl, tr.l)
 
 		if len(got) >= (len(got) + 12) {
 			t.Errorf("Summary: != len(got) (%v >= %v)", len(got), (len(got) + 12))
 		}
 
-		if got != c.want {
-			t.Errorf("Summary: (%v != %v)", got, c.want)
+		if got != tr.want {
+			t.Errorf("Summary: (%v != %v)", got, tr.want)
 		}
 
 	}
@@ -56,17 +56,17 @@ func TestFirst(t *testing.T) {
 	s2 := "Only one line."
 	s3 := ""
 
-	for _, c := range []struct {
+	for _, tr := range []struct {
 		in, want string
 	}{
 		{s1, "First line."},
 		{s2, "Only one line."},
 		{s3, ""},
 	} {
-		got := First(c.in)
+		got := First(tr.in)
 
-		if got != c.want {
-			t.Errorf("First: (%v != %v)", got, c.want)
+		if got != tr.want {
+			t.Errorf("First: (%v != %v)", got, tr.want)
 		}
 	}
 }

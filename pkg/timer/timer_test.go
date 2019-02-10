@@ -19,14 +19,14 @@ func TestTimer(t *testing.T) {
 		t.Errorf("TestTimer: Start Time error")
 	}
 
-	for _, c := range []struct {
+	for _, tr := range []struct {
 		name string
 	}{
 		{"TestMoment1"},
 		{"TestMoment2"},
 		{"TestMoment3"},
 	} {
-		ti.Mark(c.name)
+		ti.Mark(tr.name)
 	}
 
 	// Timer.Moments should have 4 Moments: Start, TestMoment1, ...
@@ -35,21 +35,21 @@ func TestTimer(t *testing.T) {
 		t.Errorf("TestTimer: Moments length error")
 	}
 
-	for _, c := range []struct {
+	for _, tr := range []struct {
 		name string
 	}{
 		{"TestMoment1"},
 		{"TestMoment2"},
 		{"TestMoment3"},
 	} {
-		if m, err := ti.Get(c.name); err != nil {
-			t.Errorf("TestTimer: GetMoment error (%v)", c.name)
+		if m, err := ti.Get(tr.name); err != nil {
+			t.Errorf("TestTimer: GetMoment error (%v)", tr.name)
 		} else {
 			switch {
 			case m.Start < 0:
-				t.Errorf("TestTimer: Start error (%v)", c.name)
+				t.Errorf("TestTimer: Start error (%v)", tr.name)
 			case m.Split < 0:
-				t.Errorf("TestTimer: Split error (%v)", c.name)
+				t.Errorf("TestTimer: Split error (%v)", tr.name)
 			}
 		}
 	}

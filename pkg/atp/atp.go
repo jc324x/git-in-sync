@@ -116,7 +116,7 @@ var rmap = map[string]Results{
 			"missing-homework",
 		}}},
 	"tmp": {
-		{"jychri", "github", "google-apps-script", []string{
+		{"jychri", "github", "tmp", []string{
 			"tmp1",
 			"tmp2",
 			"tmp3",

@@ -90,7 +90,7 @@ var tf = makeTmpF()   // .../fchk/tmp/active/file (file)
 
 func TestNoPermission(t *testing.T) {
 
-	for _, c := range []struct {
+	for _, tr := range []struct {
 		in   string
 		want bool
 	}{
@@ -100,10 +100,10 @@ func TestNoPermission(t *testing.T) {
 		{tf, false},
 	} {
 
-		got := NoPermission(c.in)
+		got := NoPermission(tr.in)
 
-		if got != c.want {
-			t.Errorf("NoPermission: (got: %v,  want: %v)", got, c.want)
+		if got != tr.want {
+			t.Errorf("NoPermission: (got: %v,  want: %v)", got, tr.want)
 		}
 	}
 }

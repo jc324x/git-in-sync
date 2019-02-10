@@ -9,37 +9,47 @@ import (
 )
 
 func TestInit(t *testing.T) {
-	p, clean := atp.Setup("conf", "recipes")
 
-	defer clean()
+	for _, tr := range []struct {
+		pkg, recipe string
+	}{
+		{"conf", "recipes"},
+		{"conf", "google-apps-script"},
+		{"conf", "tmp"},
+	} {
 
-	f := flags.Flags{Mode: "verify", Config: p}
+		p, clean := atp.Setup(tr.pkg, tr.recipe)
 
-	c := Init(f)
+		defer clean()
 
-	bs := c.Bundles[0]
+		f := flags.Flags{Mode: "verify", Config: p}
 
-	zs := bs.Zones
+		c := Init(f)
 
-	rs := atp.Resulter("recipes")
+		bs := c.Bundles[0]
 
-	for i := range rs {
+		zs := bs.Zones
 
-		if rs[i].User != zs[i].User {
-			t.Errorf("Init: (%v != %v)", rs[i].User, zs[i].User)
+		rs := atp.Resulter(tr.recipe)
+
+		for i := range rs {
+
+			if rs[i].User != zs[i].User {
+				t.Errorf("Init: (%v != %v)", rs[i].User, zs[i].User)
+			}
+
+			if rs[i].Remote != zs[i].Remote {
+				t.Errorf("Init: (%v != %v)", rs[i].Remote, zs[i].Remote)
+			}
+
+			if rs[i].Workspace != zs[i].Workspace {
+				t.Errorf("Init: (%v != %v)", rs[i].Workspace, zs[i].Workspace)
+			}
+
+			if !reflect.DeepEqual(rs[i].Repos, zs[i].Repos) {
+				t.Errorf("Init: (%v != %v)", rs[i].Repos, zs[i].Repos)
+			}
+
 		}
-
-		if rs[i].Remote != zs[i].Remote {
-			t.Errorf("Init: (%v != %v)", rs[i].Remote, zs[i].Remote)
-		}
-
-		if rs[i].Workspace != zs[i].Workspace {
-			t.Errorf("Init: (%v != %v)", rs[i].Workspace, zs[i].Workspace)
-		}
-
-		if !reflect.DeepEqual(rs[i].Repos, zs[i].Repos) {
-			t.Errorf("Init: (%v != %v)", rs[i].Repos, zs[i].Repos)
-		}
-
 	}
 }

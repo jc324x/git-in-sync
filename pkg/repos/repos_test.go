@@ -1,7 +1,6 @@
 package repos
 
 import (
-	// "log"
 	"os"
 	"testing"
 
@@ -33,7 +32,7 @@ func TestVerifyWorkspaces(t *testing.T) {
 
 		for _, r := range rs {
 			if _, err := os.Stat(r.WorkspacePath); os.IsNotExist(err) {
-				t.Errorf("VerifyWorkspaces: %v does not exist", r.WorkspacePath)
+				t.Errorf("VerifyWorkspaces: %v is missing", r.WorkspacePath)
 			}
 		}
 	}
@@ -61,8 +60,7 @@ func TestVerifyRepos(t *testing.T) {
 
 		for _, r := range rs {
 			if _, err := os.Stat(r.GitPath); os.IsNotExist(err) {
-				t.Errorf("VerifyRepos: %v does not exist", r.GitPath)
-				// log.Printf("VerifyRepos: %v does not exist", r.GitPath)
+				t.Errorf("VerifyRepos: %v is missing", r.GitPath)
 			}
 		}
 	}

@@ -18,20 +18,18 @@ import (
 	"github.com/jychri/git-in-sync/pkg/tilde"
 )
 
-// replace refs to dev with tmpgis
-
 // Repo details the status of Git repository.
 type Repo struct {
-	BundlePath       string   // "~/dev"
+	BundlePath       string   // "~/tmpgis"
 	Workspace        string   // "main" or "go-lang"
 	User             string   // "jychri"
 	Remote           string   // "github" or "gitlab"
 	Name             string   // "git-in-sync"
-	WorkspacePath    string   // "/Users/jychri/dev/go-lang/"
-	RepoPath         string   // "/Users/jychri/dev/go-lang/git-in-sync"
-	GitPath          string   // "/Users/jychri/dev/go-lang/git-in-sync/.git"
-	GitDir           string   // "--git-dir=/Users/jychri/dev/go-lang/git-in-sync/.git"
-	WorkTree         string   // "--work-tree=/Users/jychri/dev/go-lang/git-in-sync"
+	WorkspacePath    string   // "/Users/jychri/tmpgis/go-lang/"
+	RepoPath         string   // "/Users/jychri/tmpgis/go-lang/git-in-sync"
+	GitPath          string   // "/Users/jychri/tmpgis/go-lang/git-in-sync/.git"
+	GitDir           string   // "--git-dir=/Users/jychri/tmpgis/go-lang/git-in-sync/.git"
+	WorkTree         string   // "--work-tree=/Users/jychri/tmpgis/go-lang/git-in-sync"
 	URL              string   // "https://github.com/jychri/git-in-sync"
 	PendingClone     bool     // true if RepoPath or GitPath are empty
 	Verified         bool     // true if Repo continues to pass verification
@@ -69,7 +67,7 @@ func Init(zw string, zu string, zr string, bp string, rn string) *Repo {
 
 	r := new(Repo)
 
-	// "~/dev"
+	// "~/tmpgis"
 	r.BundlePath = bp // bundle path
 
 	// "main", "go", "bash"
@@ -86,7 +84,7 @@ func Init(zw string, zu string, zr string, bp string, rn string) *Repo {
 
 	var b bytes.Buffer
 
-	// "/Users/jychri/dev/go-lang/src/github.com/jychri"
+	// "/Users/jychri/tmpgis/go-lang/src/github.com/jychri"
 	b.WriteString(tilde.AbsUser(r.BundlePath))
 
 	if r.Workspace != "main" {
@@ -95,26 +93,26 @@ func Init(zw string, zu string, zr string, bp string, rn string) *Repo {
 	}
 	r.WorkspacePath = b.String() // workspace path
 
-	// "/Users/jychri/dev/go-lang/src/github.com/jychri/git-in-sync"
+	// "/Users/jychri/tmpgis/go-lang/src/github.com/jychri/git-in-sync"
 	b.Reset()
 	b.WriteString(r.WorkspacePath)
 	b.WriteString("/")
 	b.WriteString(r.Name)
 	r.RepoPath = b.String()
 
-	// "/Users/jychri/dev/go-lang/src/github.com/jychri/git-in-sync/.git"
+	// "/Users/jychri/tmpgis/go-lang/src/github.com/jychri/git-in-sync/.git"
 	b.Reset()
 	b.WriteString(r.RepoPath)
 	b.WriteString("/.git")
 	r.GitPath = b.String()
 
-	// "--git-dir=/Users/jychri/dev/go-lang/src/github.com/jychri/git-in-sync/.git"
+	// "--git-dir=/Users/jychri/tmpgis/go-lang/src/github.com/jychri/git-in-sync/.git"
 	b.Reset()
 	b.WriteString("--git-dir=")
 	b.WriteString(r.GitPath)
 	r.GitDir = b.String()
 
-	// "--work-tree=/Users/jychri/dev/go-lang/src/github.com/jychri/git-in-sync"
+	// "--work-tree=/Users/jychri/tmpgis/go-lang/src/github.com/jychri/git-in-sync"
 	b.Reset()
 	b.WriteString("--work-tree=")
 	b.WriteString(r.RepoPath)

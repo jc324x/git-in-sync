@@ -1,4 +1,4 @@
-// Gis is the nexus...
+// Package gis is the main package of git-in-sync.
 package main
 
 import (

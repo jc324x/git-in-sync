@@ -22,7 +22,7 @@ func TestInit(t *testing.T) {
 
 		defer clean()
 
-		f := flags.Flags{Mode: "verify", Config: p}
+		f := flags.Testing(p)
 
 		c := Init(f)
 

@@ -134,7 +134,7 @@ func Init(zw string, zu string, zr string, bp string, rn string) *Repo {
 	return r
 }
 
-// Mark ...
+// Mark records the last error.
 func (r *Repo) Mark(dsc string, em string) {
 	r.ErrorMessage = em
 	r.ErrorName = dsc

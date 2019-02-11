@@ -1,4 +1,4 @@
-// Package flags adds Mode and Config flags to git-in-sync.
+// Package flags supports Mode and Config flags in git-in-sync.
 package flags
 
 import (
@@ -23,7 +23,7 @@ func Init() (f Flags) {
 	flag.Parse()
 
 	switch m {
-	case "login", "logout", "verify", "oneline":
+	case "login", "logout", "verify", "oneline", "testing":
 	default:
 		m = "verify"
 	}
@@ -35,7 +35,7 @@ func Init() (f Flags) {
 
 // Testing returns a Flags instance:
 // Mode: testing
-// Config: c
+// Config: c (path to test gisrc.json as a string)
 func Testing(c string) Flags {
 	return Flags{Mode: "testing", Config: c}
 }

@@ -11,13 +11,9 @@ import (
 	"github.com/jychri/git-in-sync/pkg/tilde"
 )
 
-// filename := "a-nonexistent-file"
-// 	if _, err := os.Stat(filename); os.IsNotExist(err) {
-// 		fmt.Printf("file does not exist")
-// 	}
-
 // private
 
+// JSON map
 var jmap = map[string][]byte{
 	"recipes": []byte(`
 		{
@@ -94,6 +90,7 @@ var jmap = map[string][]byte{
 	`),
 }
 
+// Result map
 var rmap = map[string]Results{
 	"recipes": {
 		{"hendricius", "github", "recipes", []string{"pizza-dough"}},
@@ -174,8 +171,12 @@ func Directory(pkg string) string {
 	return path.Join(tb, pkg)
 }
 
-// Direct creates a temporary gisrc.json at ~/.gisrc.json
-// only if no gisrc.json is present. ...
+// Direct verifies the existence of a gisrc.json at ~/.gisrc.json;
+// the files contents are not validated. If the path is empty,
+// Direct creates a ~/.gisrc.json and returns its absolute path
+// with a clean up function that removes it. If ~/.gisrc.json
+// is present, the absolute path of ~/.gisrc.json
+// is returned with an empty cleanup function.
 func Direct(pkg string, k string) (string, func()) {
 
 	var j []byte
@@ -221,7 +222,9 @@ type Result struct {
 // Results is a collection of Result structs.
 type Results []Result
 
-// Resulter returns expected results for testing.
+// Resulter returns expected results as a Result
+// from private map rmap. Given an unrecognized key,
+// execution is stopped with log.Fatalf().
 func Resulter(k string) Results {
 
 	if _, ok := rmap[k]; ok != true {

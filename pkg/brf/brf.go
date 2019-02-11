@@ -1,4 +1,4 @@
-// Package brf implements functions with brief output.
+// Package brf collects functions with brief output.
 package brf
 
 import (

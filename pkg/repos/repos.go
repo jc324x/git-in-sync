@@ -20,8 +20,7 @@ import (
 
 // private
 
-func (rs Repos) names() []string {
-	var rss []string
+func (rs Repos) names() (rss []string) {
 
 	for _, r := range rs {
 		rss = append(rss, r.Name)
@@ -34,8 +33,7 @@ func (rs Repos) names() []string {
 	return brf.Reduce(rss)
 }
 
-func (rs Repos) workspaces() []string {
-	var wss []string
+func (rs Repos) workspaces() (wss []string) {
 
 	for _, r := range rs {
 		wss = append(wss, r.Workspace)

@@ -9,6 +9,8 @@ import (
 	q "github.com/jychri/git-in-sync/pkg/quit"
 )
 
+// overhaul with named returns
+
 // private
 
 func read(f flags.Flags) ([]byte, q.Out) {

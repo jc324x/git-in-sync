@@ -6,9 +6,15 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
-	"os/user"
 	"path"
+
+	"github.com/jychri/git-in-sync/pkg/tilde"
 )
+
+// filename := "a-nonexistent-file"
+// 	if _, err := os.Stat(filename); os.IsNotExist(err) {
+// 		fmt.Printf("file does not exist")
+// 	}
 
 // private
 
@@ -146,19 +152,11 @@ func Setup(pkg string, k string) (string, func()) {
 		log.Fatalf("%v not found in jmap", k)
 	}
 
-	var u *user.User
-
-	u, err := user.Current()
-
-	if err != nil {
-		log.Fatalf("Unable to identify current user (%v)", err.Error())
-	}
-
-	tb := path.Join(u.HomeDir, "tmpgis") // test base
+	tb := tilde.AbsUser("~/tmpgis")
 
 	td := path.Join(tb, pkg) // test dir
 
-	if err = os.MkdirAll(td, 0777); err != nil {
+	if err := os.MkdirAll(td, 0777); err != nil {
 		log.Fatalf("Unable to create %v", td)
 	}
 
@@ -166,15 +164,50 @@ func Setup(pkg string, k string) (string, func()) {
 
 	j = bytes.Replace(j, []byte("SETPATH"), []byte(td), -1)
 
-	if err = ioutil.WriteFile(tg, j, 0777); err != nil {
+	if err := ioutil.WriteFile(tg, j, 0777); err != nil {
 		log.Fatalf("Unable to write to %v (%v)", tg, err.Error())
 	}
 
 	return tg, func() { os.RemoveAll(tb) }
 }
 
-// Creates .gisrc.json with template info if it doesn't already exist?
-// func Direct(pkg string, k string) (string, func()) {}
+// Direct creates a temporary gisrc.json at ~/.gisrc.json
+// only if no gisrc.json is present. ...
+func Direct(pkg string, k string) (string, func()) {
+
+	var j []byte
+	var ok bool
+
+	if pkg == "" {
+		log.Fatalf("pkg is empty")
+	}
+
+	if j, ok = jmap[k]; ok != true {
+		log.Fatalf("%v not found in jmap", k)
+	}
+
+	tg := tilde.AbsUser("~/.gisrc.json")
+
+	if _, err := os.Stat(tg); err == nil {
+		return "", func() {} // .gisrc.json exists; get out
+	}
+
+	tb := tilde.AbsUser("~/tmpgis")
+
+	td := path.Join(tb, pkg)
+
+	j = bytes.Replace(j, []byte("SETPATH"), []byte(td), -1)
+
+	if err := ioutil.WriteFile(tg, j, 0777); err != nil {
+		log.Fatalf("Unable to write to %v (%v)", tg, err.Error())
+	}
+
+	if err := os.MkdirAll(td, 0777); err != nil {
+		log.Fatalf("Unable to create %v", td)
+	}
+
+	return tg, func() { log.Printf("removing %v\n", tg); os.Remove(tg) }
+}
 
 // Result holds the expected values for a zone.
 type Result struct {

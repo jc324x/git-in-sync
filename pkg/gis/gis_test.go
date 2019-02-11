@@ -2,11 +2,15 @@ package main
 
 import (
 	"testing"
+
+	"github.com/jychri/git-in-sync/pkg/atp"
 )
 
 func TestInit(t *testing.T) {
 
-	// do a thing here that creates a tmp ~/.gisrc.json or verifies it
+	_, cleanup := atp.Direct("gis", "recipes")
+
+	defer cleanup()
 
 	f, rs, _, ti := Init()
 

@@ -18,6 +18,8 @@ import (
 	"github.com/jychri/git-in-sync/pkg/tilde"
 )
 
+// replace refs to dev with tmpgis
+
 // Repo details the status of Git repository.
 type Repo struct {
 	BundlePath       string   // "~/dev"

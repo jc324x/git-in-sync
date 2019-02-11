@@ -134,8 +134,8 @@ func Init(zw string, zu string, zr string, bp string, rn string) *Repo {
 	return r
 }
 
-// Mark records the last error.
-func (r *Repo) Mark(dsc string, em string) {
+// Error records the last error.
+func (r *Repo) Error(dsc string, em string) {
 	r.ErrorMessage = em
 	r.ErrorName = dsc
 	r.ErrorFirst = brf.First(em)
@@ -149,7 +149,7 @@ func (r *Repo) Mark(dsc string, em string) {
 	}
 }
 
-// Git runs a Git command. Errors are handled with Mark.
+// Git runs a Git command. Errors are handled with Error.
 func (r *Repo) Git(dsc string, args []string) (out string, em string) {
 	var outb, errb bytes.Buffer
 
@@ -186,10 +186,10 @@ func (r *Repo) VerifyWorkspace(f flags.Flags, st *stat.Stat) {
 		r.Verified = true
 		st.VerifiedWorkspaces = append(st.VerifiedWorkspaces, r.Workspace)
 	case np == true:
-		r.Mark(dsc, "fatal: No permsission")
+		r.Error(dsc, "fatal: No permsission")
 		st.InaccessibleWorkspaces = append(st.InaccessibleWorkspaces, r.Workspace)
 	case id == false:
-		r.Mark(dsc, "fatal: No directory")
+		r.Error(dsc, "fatal: No directory")
 		st.InaccessibleWorkspaces = append(st.InaccessibleWorkspaces, r.Workspace)
 	}
 
@@ -206,9 +206,9 @@ func (r *Repo) VerifyRepo(f flags.Flags, st *stat.Stat) {
 
 	switch {
 	case fchk.IsFile(r.RepoPath):
-		r.Mark(dsc, "fatal: file occupying path")
+		r.Error(dsc, "fatal: file occupying path")
 	case fchk.IsDirectory(r.RepoPath) && fchk.NotEmpty(r.RepoPath) && os.IsNotExist(gerr):
-		r.Mark(dsc, "fatal: directory occupying path")
+		r.Error(dsc, "fatal: directory occupying path")
 	case fchk.IsDirectory(r.RepoPath) && fchk.IsEmpty(r.RepoPath):
 		r.PendingClone = true
 		st.PendingClones = append(st.PendingClones, r.Name)
@@ -237,7 +237,7 @@ func (r *Repo) GitClone(f flags.Flags, st *stat.Stat) {
 	// `git clone ...`
 	args := []string{"clone", r.URL, r.RepoPath}
 	if em, _ := r.Git(dsc, args); em != "" {
-		r.Mark(dsc, em)
+		r.Error(dsc, em)
 	} else {
 		r.Cloned = true
 		st.ClonedRepos = append(st.ClonedRepos, r.Name)
@@ -261,9 +261,9 @@ func (r *Repo) GitConfigOriginURL() {
 
 	switch {
 	case out == "":
-		r.Mark(dsc, "fatal: 'origin' does not appear to be a git repository")
+		r.Error(dsc, "fatal: 'origin' does not appear to be a git repository")
 	case out != r.URL:
-		r.Mark(dsc, "fatal: URL != OriginURL")
+		r.Error(dsc, "fatal: URL != OriginURL")
 	default:
 		r.OriginURL = out
 	}

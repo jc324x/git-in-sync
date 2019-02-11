@@ -127,7 +127,7 @@ func (rs Repos) asyncClone(f flags.Flags, st *stat.Stat, t *timer.Timer) {
 		wg.Wait()
 
 		t.Mark("async-clone")
-		st.VCSummary(f, t)
+		// st.VCSummary(f, t)
 	}
 }
 
@@ -208,5 +208,5 @@ func (rs Repos) VerifyRepos(f flags.Flags, st *stat.Stat, t *timer.Timer) {
 	rs.asyncInfo()
 
 	// summary
-	st.VCSummary(f, t)
+	// st.VCSummary(f, t)
 }

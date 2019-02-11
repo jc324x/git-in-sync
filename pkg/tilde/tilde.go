@@ -1,3 +1,4 @@
+// Package tilde supports "~/" as a shortcut for the current home directory.
 package tilde
 
 import (

@@ -1,3 +1,4 @@
+// Package quit wraps log.Fatalf and adds additional testing options.
 package quit
 
 import (

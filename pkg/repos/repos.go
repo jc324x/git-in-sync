@@ -60,16 +60,16 @@ func (rs Repos) syncVerifyWorkspaces(f flags.Flags, st *stat.Stat) {
 	// sort Repos A-Z by *r.WorkspacePath
 	rs.byWorkspacePath()
 
-	// []string of *r.Workspace
+	// string slice collecting *r.Workspace(s)
 	st.TotalWorkspaces = rs.workspaces()
 
-	// "printv : verifying workspaces ..."
+	// "verifying workspaces ..."
 	efc := e.Get("FileCabinet")
 	l := len(st.TotalWorkspaces)
 	sm := brf.Summary(st.TotalWorkspaces, 25)
 	brf.Printv(f, "%v  verifying workspaces [%v](%v)", efc, l, sm)
 
-	// verify each workspace (check if present)
+	// verify each workspace, create if missing
 	for _, r := range rs {
 		r.VerifyWorkspace(f, st)
 	}
@@ -207,6 +207,8 @@ func (rs Repos) VerifyRepos(f flags.Flags, st *stat.Stat, t *timer.Timer) {
 	// get info for all repos
 	rs.asyncInfo()
 
+	fmt.Println("yah repos")
+
 	// summary
-	// st.VCSummary(f, t)
+	// rs.summaryVerifyRepos(f, st, t) -> create
 }

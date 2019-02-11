@@ -11,7 +11,7 @@ import (
 	"github.com/jychri/git-in-sync/pkg/timer"
 )
 
-// Init returns initial
+// Init ...
 func Init() (f flags.Flags, rs repos.Repos, st *stat.Stat, ti *timer.Timer) {
 
 	e.ClearScreen()

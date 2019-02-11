@@ -14,7 +14,7 @@ import (
 	e "github.com/jychri/git-in-sync/pkg/emoji"
 	"github.com/jychri/git-in-sync/pkg/flags"
 	"github.com/jychri/git-in-sync/pkg/repo"
-	"github.com/jychri/git-in-sync/pkg/run"
+	"github.com/jychri/git-in-sync/pkg/stat"
 	"github.com/jychri/git-in-sync/pkg/timer"
 )
 
@@ -57,30 +57,30 @@ func (rs Repos) byWorkspacePath() {
 	sort.SliceStable(rs, func(i, j int) bool { return rs[i].WorkspacePath < rs[j].WorkspacePath })
 }
 
-func (rs Repos) syncVerifyWorkspaces(f flags.Flags, ru *run.Run) {
+func (rs Repos) syncVerifyWorkspaces(f flags.Flags, st *stat.Stat) {
 
 	// sort Repos A-Z by *r.WorkspacePath
 	rs.byWorkspacePath()
 
 	// []string of *r.Workspace
-	ru.TotalWorkspaces = rs.workspaces()
+	st.TotalWorkspaces = rs.workspaces()
 
 	// "printv : verifying workspaces ..."
 	efc := e.Get("FileCabinet")
-	l := len(ru.TotalWorkspaces)
-	sm := brf.Summary(ru.TotalWorkspaces, 25)
+	l := len(st.TotalWorkspaces)
+	sm := brf.Summary(st.TotalWorkspaces, 25)
 	brf.Printv(f, "%v  verifying workspaces [%v](%v)", efc, l, sm)
 
 	// verify each workspace (check if present)
 	for _, r := range rs {
-		r.VerifyWorkspace(f, ru)
+		r.VerifyWorkspace(f, st)
 	}
 }
 
-func (rs Repos) summaryVerifyWorkspaces(f flags.Flags, ru *run.Run, ti *timer.Timer) {
-	vw := len(ru.VerifiedWorkspaces)
-	tw := len(ru.TotalWorkspaces)
-	cw := len(ru.CreatedWorkspaces)
+func (rs Repos) summaryVerifyWorkspaces(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
+	vw := len(st.VerifiedWorkspaces)
+	tw := len(st.TotalWorkspaces)
+	cw := len(st.CreatedWorkspaces)
 
 	// summary
 	var b bytes.Buffer
@@ -93,7 +93,7 @@ func (rs Repos) summaryVerifyWorkspaces(f flags.Flags, ru *run.Run, ti *timer.Ti
 
 	b.WriteString(fmt.Sprintf(" [%v/%v] divs verified", vw, tw))
 
-	if len(ru.CreatedWorkspaces) >= 1 {
+	if len(st.CreatedWorkspaces) >= 1 {
 		b.WriteString(fmt.Sprintf(", created [%v]", strconv.Itoa(cw)))
 	}
 
@@ -102,20 +102,20 @@ func (rs Repos) summaryVerifyWorkspaces(f flags.Flags, ru *run.Run, ti *timer.Ti
 	brf.Printv(f, b.String())
 }
 
-func (rs Repos) syncVerifyRepos(f flags.Flags, ru *run.Run) {
+func (rs Repos) syncVerifyRepos(f flags.Flags, st *stat.Stat) {
 	for _, r := range rs {
-		r.VerifyRepo(f, ru)
+		r.VerifyRepo(f, st)
 	}
 }
 
 // Async
 
-func (rs Repos) asyncClone(f flags.Flags, ru *run.Run, t *timer.Timer) {
+func (rs Repos) asyncClone(f flags.Flags, st *stat.Stat, t *timer.Timer) {
 
-	if len(ru.PendingClones) > 1 {
+	if len(st.PendingClones) > 1 {
 		// "cloning ..."
 		es := e.Get("Sheep")
-		pc := len(ru.PendingClones)
+		pc := len(st.PendingClones)
 		brf.Printv(f, "%v cloning [%v]", es, pc)
 
 		var wg sync.WaitGroup
@@ -123,13 +123,13 @@ func (rs Repos) asyncClone(f flags.Flags, ru *run.Run, t *timer.Timer) {
 			wg.Add(1)
 			go func(r *repo.Repo) {
 				defer wg.Done()
-				r.GitClone(f, ru)
+				r.GitClone(f, st)
 			}(rs[i])
 		}
 		wg.Wait()
 
 		t.Mark("async-clone")
-		ru.VCSummary(f, t)
+		st.VCSummary(f, t)
 	}
 }
 
@@ -188,27 +188,27 @@ func Init(c conf.Config, f flags.Flags, t *timer.Timer) (rs Repos) {
 }
 
 // VerifyWorkspaces verifies WorkspacePaths for Repos in Repos.
-func (rs Repos) VerifyWorkspaces(f flags.Flags, ru *run.Run, t *timer.Timer) {
+func (rs Repos) VerifyWorkspaces(f flags.Flags, st *stat.Stat, t *timer.Timer) {
 
 	// verify each workspace
-	rs.syncVerifyWorkspaces(f, ru)
+	rs.syncVerifyWorkspaces(f, st)
 
 	// summary
-	rs.summaryVerifyWorkspaces(f, ru, t)
+	rs.summaryVerifyWorkspaces(f, st, t)
 }
 
 // VerifyRepos verifies all Repos in Repos.
-func (rs Repos) VerifyRepos(f flags.Flags, ru *run.Run, t *timer.Timer) {
+func (rs Repos) VerifyRepos(f flags.Flags, st *stat.Stat, t *timer.Timer) {
 
 	// check if present
-	rs.syncVerifyRepos(f, ru)
+	rs.syncVerifyRepos(f, st)
 
 	// clone missing repos
-	rs.asyncClone(f, ru, t)
+	rs.asyncClone(f, st, t)
 
 	// get info for all repos
 	rs.asyncInfo()
 
 	// summary
-	ru.VCSummary(f, t)
+	st.VCSummary(f, t)
 }

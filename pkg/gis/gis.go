@@ -7,19 +7,19 @@ import (
 	e "github.com/jychri/git-in-sync/pkg/emoji"
 	"github.com/jychri/git-in-sync/pkg/flags"
 	"github.com/jychri/git-in-sync/pkg/repos"
-	"github.com/jychri/git-in-sync/pkg/run"
+	"github.com/jychri/git-in-sync/pkg/stat"
 	"github.com/jychri/git-in-sync/pkg/timer"
 )
 
 // Init returns initial
-func Init() (f flags.Flags, rs repos.Repos, ru *run.Run, ti *timer.Timer) {
+func Init() (f flags.Flags, rs repos.Repos, st *stat.Stat, ti *timer.Timer) {
 
 	e.ClearScreen()
 
 	// initialize Timer and Flags
 	ti = timer.Init()
 	f = flags.Init()
-	ru = run.Init()
+	st = stat.Init()
 
 	ti.Mark("init-flags")
 
@@ -45,7 +45,7 @@ func Init() (f flags.Flags, rs repos.Repos, ru *run.Run, ti *timer.Timer) {
 	// initialize Repos
 	rs = repos.Init(c, f, ti)
 
-	return f, rs, ru, ti
+	return f, rs, st, ti
 }
 
 func main() {

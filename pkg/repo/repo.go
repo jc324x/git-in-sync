@@ -14,7 +14,7 @@ import (
 	e "github.com/jychri/git-in-sync/pkg/emoji"
 	"github.com/jychri/git-in-sync/pkg/fchk"
 	"github.com/jychri/git-in-sync/pkg/flags"
-	"github.com/jychri/git-in-sync/pkg/run"
+	"github.com/jychri/git-in-sync/pkg/stat"
 	"github.com/jychri/git-in-sync/pkg/tilde"
 )
 
@@ -168,14 +168,14 @@ func (r *Repo) Git(dsc string, args []string) (out string, em string) {
 }
 
 // VerifyWorkspace verifies that the r.WorkspacePath is present and accessible.
-func (r *Repo) VerifyWorkspace(f flags.Flags, ru *run.Run) {
+func (r *Repo) VerifyWorkspace(f flags.Flags, st *stat.Stat) {
 
 	const dsc = "verify-workspace"
 
 	if _, err := os.Stat(r.WorkspacePath); os.IsNotExist(err) {
 		brf.Printv(f, "%v creating %v", e.Get("Folder"), r.WorkspacePath)
 		os.MkdirAll(r.WorkspacePath, 0777)
-		ru.CreatedWorkspaces = append(ru.CreatedWorkspaces, r.Workspace)
+		st.CreatedWorkspaces = append(st.CreatedWorkspaces, r.Workspace)
 	}
 
 	np := fchk.NoPermission(r.WorkspacePath)
@@ -184,20 +184,20 @@ func (r *Repo) VerifyWorkspace(f flags.Flags, ru *run.Run) {
 	switch {
 	case id == true && np == false:
 		r.Verified = true
-		ru.VerifiedWorkspaces = append(ru.VerifiedWorkspaces, r.Workspace)
+		st.VerifiedWorkspaces = append(st.VerifiedWorkspaces, r.Workspace)
 	case np == true:
 		r.Mark(dsc, "fatal: No permsission")
-		ru.InaccessibleWorkspaces = append(ru.InaccessibleWorkspaces, r.Workspace)
+		st.InaccessibleWorkspaces = append(st.InaccessibleWorkspaces, r.Workspace)
 	case id == false:
 		r.Mark(dsc, "fatal: No directory")
-		ru.InaccessibleWorkspaces = append(ru.InaccessibleWorkspaces, r.Workspace)
+		st.InaccessibleWorkspaces = append(st.InaccessibleWorkspaces, r.Workspace)
 	}
 
-	ru.Reduce()
+	st.Reduce()
 }
 
 // VerifyRepo verifies that the Repo is present and accessible.
-func (r *Repo) VerifyRepo(f flags.Flags, ru *run.Run) {
+func (r *Repo) VerifyRepo(f flags.Flags, st *stat.Stat) {
 
 	const dsc = "verify-repo"
 
@@ -211,10 +211,10 @@ func (r *Repo) VerifyRepo(f flags.Flags, ru *run.Run) {
 		r.Mark(dsc, "fatal: directory occupying path")
 	case fchk.IsDirectory(r.RepoPath) && fchk.IsEmpty(r.RepoPath):
 		r.PendingClone = true
-		ru.PendingClones = append(ru.PendingClones, r.Name)
+		st.PendingClones = append(st.PendingClones, r.Name)
 	case os.IsNotExist(rerr) && os.IsNotExist(gerr):
 		r.PendingClone = true
-		ru.PendingClones = append(ru.PendingClones, r.Name)
+		st.PendingClones = append(st.PendingClones, r.Name)
 	case fchk.IsDirectory(r.RepoPath) && fchk.IsDirectory(r.GitPath):
 		r.Verified = true
 		r.PendingClone = false
@@ -222,7 +222,7 @@ func (r *Repo) VerifyRepo(f flags.Flags, ru *run.Run) {
 }
 
 // GitClone ...
-func (r *Repo) GitClone(f flags.Flags, ru *run.Run) {
+func (r *Repo) GitClone(f flags.Flags, st *stat.Stat) {
 
 	const dsc = "git-clone"
 
@@ -240,7 +240,7 @@ func (r *Repo) GitClone(f flags.Flags, ru *run.Run) {
 		r.Mark(dsc, em)
 	} else {
 		r.Cloned = true
-		ru.ClonedRepos = append(ru.ClonedRepos, r.Name)
+		st.ClonedRepos = append(st.ClonedRepos, r.Name)
 	}
 }
 

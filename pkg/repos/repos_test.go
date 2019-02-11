@@ -1,69 +1,70 @@
 package repos
 
 import (
-// "os"
-// "path"
-// "testing"
+	"os"
+	"testing"
 
-// "github.com/jychri/git-in-sync/pkg/atp"
-// "github.com/jychri/git-in-sync/pkg/conf"
-// "github.com/jychri/git-in-sync/pkg/flags"
-// "github.com/jychri/git-in-sync/pkg/timer"
+	"github.com/jychri/git-in-sync/pkg/atp"
+	"github.com/jychri/git-in-sync/pkg/conf"
+	"github.com/jychri/git-in-sync/pkg/flags"
+	"github.com/jychri/git-in-sync/pkg/stat"
+	"github.com/jychri/git-in-sync/pkg/timer"
 )
 
-// func TestVerifyWorkspaces(t *testing.T) {
+func TestVerifyWorkspaces(t *testing.T) {
 
-// 	for _, tr := range []struct {
-// 		pkg, k string
-// 	}{
-// 		{"repos", "recipes"},
-// 	} {
+	for _, tr := range []struct {
+		pkg, k string
+	}{
+		{"repos", "recipes"},
+		{"repos", "google-apps-script"},
+		{"repos", "tmp"},
+	} {
 
-// 		p, cleanup := atp.Setup(tr.pkg, tr.k)
-// 		ti := timer.Init()
-// 		f := flags.Testing(p)
-// 		c := conf.Init(f)
-// 		rs := Init(c, f, ti)
+		p, cleanup := atp.Setup(tr.pkg, tr.k)
+		ti := timer.Init()
+		f := flags.Testing(p)
+		c := conf.Init(f)
+		rs := Init(c, f, ti)
+		st := stat.Init()
 
-// 		defer cleanup()
+		defer cleanup()
 
-// 		rs.VerifyWorkspaces(f, ti)
+		rs.VerifyWorkspaces(f, st, ti)
 
-// 		td := atp.Dir(tr.pkg)
-// 		tp := path.Join(td, tr.k)
+		for _, r := range rs {
+			if _, err := os.Stat(r.WorkspacePath); os.IsNotExist(err) {
+				t.Errorf("VerifyWorkspaces: %v does not exist", r.WorkspacePath)
+			}
+		}
+	}
+}
 
-// 		if _, err := os.Stat(tp); os.IsNotExist(err) {
-// 			t.Errorf("VerifyWorkspaces: %v does not exist", td)
-// 		}
+func TestVerifyRepos(t *testing.T) {
 
-// 	}
-// }
+	for _, tr := range []struct {
+		pkg, k string
+	}{
+		{"repos", "recipes"},
+		{"repos", "google-apps-script"},
+		{"repos", "tmp"},
+	} {
 
-// func TestVerifyCloned(t *testing.T) {
+		p, cleanup := atp.Setup(tr.pkg, tr.k)
+		ti := timer.Init()
+		f := flags.Testing(p)
+		c := conf.Init(f)
+		rs := Init(c, f, ti)
+		st := stat.Init()
 
-// 	for _, tr := range []struct {
-// 		pkg, k string
-// 	}{
-// 		{"repos", "recipes"},
-// 	} {
+		defer cleanup()
 
-// 		p, cleanup := atp.Setup(tr.pkg, tr.k)
-// 		ti := timer.Init()
-// 		f := flags.Testing(p)
-// 		c := conf.Init(f)
-// 		rs := Init(c, f, ti)
+		rs.VerifyWorkspaces(f, st, ti)
+		rs.VerifyRepos(f, st, ti)
 
-// 		defer cleanup()
+		// if _, err := os.Stat(tp); os.IsNotExist(err) {
+		// 	t.Errorf("VerifyWorkspaces: %v does not exist", td)
+		// }
 
-// 		rs.VerifyWorkspaces(f, ti)
-// 		rs.VerifyCloned(f, ti)
-
-// 		// td := atp.Dir(tr.pkg)
-// 		// tp := path.Join(td, tr.k)
-
-// 		// if _, err := os.Stat(tp); os.IsNotExist(err) {
-// 		// 	t.Errorf("VerifyWorkspaces: %v does not exist", td)
-// 		// }
-
-// 	}
-// }
+	}
+}

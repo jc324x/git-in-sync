@@ -171,6 +171,19 @@ func Setup(pkg string, k string) (string, func()) {
 	return tg, func() { os.RemoveAll(tb) }
 }
 
+// Directory returns that path of testing environment ~/tmpgis/$pkg/.
+// Setup and tear down are handled with Setup()....
+func Directory(pkg string) string {
+
+	if pkg == "" {
+		log.Fatalf("pkg is empty")
+	}
+
+	tb := tilde.AbsUser("~/tmpgis")
+
+	return path.Join(tb, pkg)
+}
+
 // Direct creates a temporary gisrc.json at ~/.gisrc.json
 // only if no gisrc.json is present. ...
 func Direct(pkg string, k string) (string, func()) {

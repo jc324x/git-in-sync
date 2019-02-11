@@ -28,16 +28,7 @@ var jmap = map[string][]byte{
 						"remote": "github",
 						"workspace": "recipes",
 						"repositories": [
-							"pizza-dough",
-							"the-bread-code"
-						]
-					},
-					{
-						"user": "cocktails-for-programmers",
-						"remote": "github",
-						"workspace": "recipes",
-						"repositories": [
-							"cocktails-for-programmers"
+							"pizza-dough"
 						]
 					},
 					{
@@ -105,8 +96,7 @@ var jmap = map[string][]byte{
 
 var rmap = map[string]Results{
 	"recipes": {
-		{"hendricius", "github", "recipes", []string{"pizza-dough", "the-bread-code"}},
-		{"cocktails-for-programmers", "github", "recipes", []string{"cocktails-for-programmers"}},
+		{"hendricius", "github", "recipes", []string{"pizza-dough"}},
 		{"rochacbruno", "github", "recipes", []string{"vegan_recipes"}},
 		{"niw", "github", "recipes", []string{"ramen"}},
 	},

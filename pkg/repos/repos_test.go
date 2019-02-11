@@ -1,6 +1,7 @@
 package repos
 
 import (
+	// "log"
 	"os"
 	"testing"
 
@@ -17,8 +18,6 @@ func TestVerifyWorkspaces(t *testing.T) {
 		pkg, k string
 	}{
 		{"repos", "recipes"},
-		{"repos", "google-apps-script"},
-		{"repos", "tmp"},
 	} {
 
 		p, cleanup := atp.Setup(tr.pkg, tr.k)
@@ -46,8 +45,6 @@ func TestVerifyRepos(t *testing.T) {
 		pkg, k string
 	}{
 		{"repos", "recipes"},
-		{"repos", "google-apps-script"},
-		{"repos", "tmp"},
 	} {
 
 		p, cleanup := atp.Setup(tr.pkg, tr.k)
@@ -62,9 +59,11 @@ func TestVerifyRepos(t *testing.T) {
 		rs.VerifyWorkspaces(f, st, ti)
 		rs.VerifyRepos(f, st, ti)
 
-		// if _, err := os.Stat(tp); os.IsNotExist(err) {
-		// 	t.Errorf("VerifyWorkspaces: %v does not exist", td)
-		// }
-
+		for _, r := range rs {
+			if _, err := os.Stat(r.GitPath); os.IsNotExist(err) {
+				t.Errorf("VerifyRepos: %v does not exist", r.GitPath)
+				// log.Printf("VerifyRepos: %v does not exist", r.GitPath)
+			}
+		}
 	}
 }

@@ -7,8 +7,7 @@ import (
 
 func TestResulter(t *testing.T) {
 	want := Results{
-		{"hendricius", "github", "recipes", []string{"pizza-dough", "the-bread-code"}},
-		{"cocktails-for-programmers", "github", "recipes", []string{"cocktails-for-programmers"}},
+		{"hendricius", "github", "recipes", []string{"pizza-dough"}},
 		{"rochacbruno", "github", "recipes", []string{"vegan_recipes"}},
 		{"niw", "github", "recipes", []string{"ramen"}},
 	}

@@ -164,9 +164,8 @@ func (rs Repos) infoAsync() {
 		go func(r *repo.Repo) {
 			defer wg.Done()
 			r.GitConfigOriginURL()
-			r.GitConfigOriginURL()
 			r.GitRemoteUpdate()
-			r.GitAbbrevRef()
+			// r.GitAbbrevRef()
 		}(rs[i])
 	}
 	wg.Wait()

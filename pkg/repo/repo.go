@@ -4,6 +4,7 @@ package repo
 import (
 	"bufio"
 	"bytes"
+	"fmt"
 	"os"
 	"os/exec"
 	"regexp"
@@ -275,22 +276,15 @@ func (r *Repo) GitRemoteUpdate() {
 
 	// `git ... ... fetch origin`
 	args := []string{r.GitDir, r.WorkTree, "fetch", "origin"}
-	r.git(dsc, args)
+	_, err := r.git(dsc, args)
 
-	cmd := exec.Command("git", args...)
-	var err bytes.Buffer
-	cmd.Stderr = &err
-	cmd.Run()
-
-	// Warnings for redirects to "*./git" can be ignored.
-	eval := err.String()
-	wgit := strings.Join([]string{r.URL}, "/.git") // (w)ith (git)
+	// Note: Warnings for redirects to "*./git" can be ignored.
+	wgit := strings.Join([]string{r.URL}, "/.git")
 
 	switch {
-	case strings.Contains(eval, "warning: redirecting") && strings.Contains(eval, wgit):
-		// fmt.Printf("%v - redirect to .git\n", r.Name)
-	case eval != "":
-		// r.Error(e, f, eval, "gitRemoteUpdate")
+	case strings.Contains(err, "warning: redirecting") && strings.Contains(err, wgit):
+	case err != "":
+		r.Error(dsc, err)
 	}
 }
 

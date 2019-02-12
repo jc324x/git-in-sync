@@ -20,7 +20,7 @@ import (
 
 // private
 
-// Git runs a Git command. Errors are handled with Error.
+// git runs a Git command.
 func (r *Repo) git(dsc string, args []string) (out string, em string) {
 	var outb, errb bytes.Buffer
 
@@ -40,7 +40,7 @@ func (r *Repo) git(dsc string, args []string) (out string, em string) {
 
 // Public
 
-// Repo details the status of Git repository.
+// Repo models a Git repository.
 type Repo struct {
 	BundlePath       string   // "~/tmpgis"
 	Workspace        string   // "main" or "go-lang"
@@ -89,58 +89,47 @@ func Init(zw string, zu string, zr string, bp string, rn string) *Repo {
 
 	r := new(Repo)
 
-	// "~/tmpgis"
-	r.BundlePath = tilde.Abs(bp) // bundle path
-
-	// "main", "go", "bash"
-	r.Workspace = zw // zone workspace
-
-	// "jychri"
-	r.User = zu // zone user
-
-	// "github" or "gitlab"
-	r.Remote = zr // zone remote
-
-	// "git-in-sync"
-	r.Name = rn // repo name
+	r.BundlePath = tilde.Abs(bp) // "~/tmpgis" (bundle path)
+	r.Workspace = zw             // "'main', 'go', 'bash' etc." (zone workspace)
+	r.User = zu                  // "jychri" (zone user)
+	r.Remote = zr                // "'github', 'gitlab'" (zone remote)
+	r.Name = rn                  // "git-in-sync" (repo name)
 
 	var b bytes.Buffer
 
-	// "/Users/jychri/tmpgis/go-lang/src/github.com/jychri"
 	b.WriteString(r.BundlePath)
-
 	if r.Workspace != "main" {
 		b.WriteString("/")
 		b.WriteString(r.Workspace)
 	}
 	r.WorkspacePath = b.String()
+	// "/Users/jychri/tmpgis/go-lang/src/github.com/jychri"
 
-	// "/Users/jychri/tmpgis/go-lang/src/github.com/jychri/git-in-sync"
 	b.Reset()
 	b.WriteString(r.WorkspacePath)
 	b.WriteString("/")
 	b.WriteString(r.Name)
 	r.RepoPath = b.String()
+	// "/Users/jychri/tmpgis/go-lang/src/github.com/jychri/git-in-sync"
 
-	// "/Users/jychri/tmpgis/go-lang/src/github.com/jychri/git-in-sync/.git"
 	b.Reset()
 	b.WriteString(r.RepoPath)
 	b.WriteString("/.git")
 	r.GitPath = b.String()
+	// "/Users/jychri/tmpgis/go-lang/src/github.com/jychri/git-in-sync/.git"
 
-	// "--git-dir=/Users/jychri/tmpgis/go-lang/src/github.com/jychri/git-in-sync/.git"
 	b.Reset()
 	b.WriteString("--git-dir=")
 	b.WriteString(r.GitPath)
 	r.GitDir = b.String()
+	// "--git-dir=/Users/jychri/tmpgis/go-lang/src/github.com/jychri/git-in-sync/.git"
 
-	// "--work-tree=/Users/jychri/tmpgis/go-lang/src/github.com/jychri/git-in-sync"
 	b.Reset()
 	b.WriteString("--work-tree=")
 	b.WriteString(r.RepoPath)
 	r.WorkTree = b.String()
+	// "--work-tree=/Users/jychri/tmpgis/go-lang/src/github.com/jychri/git-in-sync"
 
-	// "https://github.com/jychri/git-in-sync"
 	b.Reset()
 	switch r.Remote {
 	case "github":
@@ -152,6 +141,7 @@ func Init(zw string, zu string, zr string, bp string, rn string) *Repo {
 	b.WriteString("/")
 	b.WriteString(r.Name)
 	r.URL = b.String()
+	// "https://github.com/jychri/git-in-sync"
 
 	return r
 }
@@ -225,7 +215,8 @@ func (r *Repo) VerifyRepo(f flags.Flags, st *stat.Stat) {
 	}
 }
 
-// GitClone ...
+// GitClone clones a Git repository from r.URL if
+// r.PendingClone is true.
 func (r *Repo) GitClone(f flags.Flags, st *stat.Stat) {
 
 	const dsc = "git-clone"
@@ -238,7 +229,7 @@ func (r *Repo) GitClone(f flags.Flags, st *stat.Stat) {
 	// "cloning..."
 	brf.Printv(f, "%v cloning %v {%v}", e.Get("Box"), r.Name, r.Workspace)
 
-	// `git clone ...`
+	// `git clone ... ...`
 	args := []string{"clone", r.URL, r.RepoPath}
 	if em, _ := r.git(dsc, args); em != "" {
 		r.Error(dsc, em)
@@ -248,7 +239,7 @@ func (r *Repo) GitClone(f flags.Flags, st *stat.Stat) {
 	}
 }
 
-// GitConfigOriginURL ...
+// GitConfigOriginURL gets the remote origin URL for a Repo.
 func (r *Repo) GitConfigOriginURL() {
 
 	const dsc = "git-config-orgin-url"

@@ -1,4 +1,4 @@
-// Package tilde supports "~/" as a shortcut for the current home directory.
+// Package tilde  "~/" as a shortcut for the current home directory.
 package tilde
 
 import (
@@ -8,9 +8,8 @@ import (
 	"strings"
 )
 
-// AbsUser expands "~/" to "User/$user/" and returns a clean path.
-// Given an absolute path, it returns a clean path.
-func AbsUser(p string) string {
+// Abs replaces "~/" with "/User/$user/" and returns a clean path.
+func Abs(p string) string {
 
 	var u *user.User
 

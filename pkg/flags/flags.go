@@ -28,7 +28,7 @@ func Init() (f Flags) {
 		m = "verify"
 	}
 
-	c = tilde.AbsUser(c)
+	c = tilde.Abs(c)
 
 	return Flags{Mode: m, Config: c}
 }

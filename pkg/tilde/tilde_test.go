@@ -21,7 +21,7 @@ func TestAbsUser(t *testing.T) {
 		{"~/testing/", strings.Join([]string{u.HomeDir, "/testing"}, "")},
 		{"/testing/", "/testing"},
 	} {
-		if got := AbsUser(tr.in); err != nil || got != tr.want {
+		if got := Abs(tr.in); err != nil || got != tr.want {
 			t.Errorf("AbsUser: (%v != %v)", got, tr.want)
 		}
 	}

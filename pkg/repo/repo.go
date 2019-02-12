@@ -85,7 +85,7 @@ func Init(zw string, zu string, zr string, bp string, rn string) *Repo {
 	var b bytes.Buffer
 
 	// "/Users/jychri/tmpgis/go-lang/src/github.com/jychri"
-	b.WriteString(tilde.AbsUser(r.BundlePath))
+	b.WriteString(tilde.Abs(r.BundlePath))
 
 	if r.Workspace != "main" {
 		b.WriteString("/")

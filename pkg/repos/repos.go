@@ -111,7 +111,6 @@ func (rs Repos) syncVerifyRepos(f flags.Flags, st *stat.Stat) {
 func (rs Repos) asyncClone(f flags.Flags, st *stat.Stat, t *timer.Timer) {
 
 	if len(st.PendingClones) > 1 {
-		// "cloning ..."
 		es := e.Get("Sheep")
 		pc := len(st.PendingClones)
 		brf.Printv(f, "%v cloning [%v]", es, pc)
@@ -127,7 +126,6 @@ func (rs Repos) asyncClone(f flags.Flags, st *stat.Stat, t *timer.Timer) {
 		wg.Wait()
 
 		t.Mark("async-clone")
-		// st.VCSummary(f, t)
 	}
 }
 
@@ -189,26 +187,24 @@ func Init(c conf.Config, f flags.Flags, t *timer.Timer) (rs Repos) {
 func (rs Repos) VerifyWorkspaces(f flags.Flags, st *stat.Stat, t *timer.Timer) {
 
 	// verify each workspace
-	rs.syncVerifyWorkspaces(f, st)
+	rs.syncVerifyWorkspaces(f, st) // workspaceVerify
 
 	// summary
-	rs.summaryVerifyWorkspaces(f, st, t)
+	rs.summaryVerifyWorkspaces(f, st, t) // workspaceSummary
 }
 
 // VerifyRepos verifies all Repos in Repos.
 func (rs Repos) VerifyRepos(f flags.Flags, st *stat.Stat, t *timer.Timer) {
 
 	// check if present
-	rs.syncVerifyRepos(f, st)
+	rs.syncVerifyRepos(f, st) // repoCheck
 
 	// clone missing repos
-	rs.asyncClone(f, st, t)
+	rs.asyncClone(f, st, t) // repoClone
 
 	// get info for all repos
-	rs.asyncInfo()
-
-	fmt.Println("yah repos")
+	rs.asyncInfo() // repoInfo
 
 	// summary
-	// rs.summaryVerifyRepos(f, st, t) -> create
+	// rs.summaryVerifyRepos(f, st, t) -> create // repoSummary
 }

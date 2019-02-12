@@ -52,7 +52,7 @@ type Config struct {
 
 // Init returns unmarshalled data from gisrc.json.
 // f.Config is validated before reaching Init.
-// flags.Init() verifies input with tilde.AbsUser()
+// flags.Init() verifies input with tilde.Abs()
 func Init(f flags.Flags) (c Config) {
 
 	bs, _ := read(f)

@@ -139,7 +139,7 @@ func Setup(pkg string, k string) (string, func()) {
 		log.Fatalf("%v not found in jmap", k)
 	}
 
-	tb := tilde.AbsUser("~/tmpgis")
+	tb := tilde.Abs("~/tmpgis")
 
 	td := path.Join(tb, pkg) // test dir
 
@@ -166,7 +166,7 @@ func Directory(pkg string) string {
 		log.Fatalf("pkg is empty")
 	}
 
-	tb := tilde.AbsUser("~/tmpgis")
+	tb := tilde.Abs("~/tmpgis")
 
 	return path.Join(tb, pkg)
 }
@@ -190,13 +190,13 @@ func Direct(pkg string, k string) (string, func()) {
 		log.Fatalf("%v not found in jmap", k)
 	}
 
-	tg := tilde.AbsUser("~/.gisrc.json")
+	tg := tilde.Abs("~/.gisrc.json")
 
 	if _, err := os.Stat(tg); err == nil {
 		return "", func() {} // .gisrc.json exists; get out
 	}
 
-	tb := tilde.AbsUser("~/tmpgis")
+	tb := tilde.Abs("~/tmpgis")
 
 	td := path.Join(tb, pkg)
 

@@ -5,7 +5,7 @@ import (
 	"github.com/jychri/git-in-sync/pkg/brf"
 )
 
-// Stat holds values for the current run.
+// Stat tracks stats for the current run.
 type Stat struct {
 	CreatedWorkspaces      []string
 	VerifiedWorkspaces     []string
@@ -22,7 +22,7 @@ func Init() *Stat {
 	return st
 }
 
-// Reduce reduces slices in *Run to their unique elements - no duplicates.
+// Reduce reduces slices in *Stat to their unique elements.
 func (st *Stat) Reduce() {
 	st.CreatedWorkspaces = brf.Reduce(st.CreatedWorkspaces)
 	st.VerifiedWorkspaces = brf.Reduce(st.VerifiedWorkspaces)

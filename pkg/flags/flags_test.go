@@ -10,7 +10,7 @@ import (
 func TestInit(t *testing.T) {
 
 	f := Init()
-	gj := tilde.AbsUser("~/.gisrc.json")
+	gj := tilde.Abs("~/.gisrc.json")
 
 	switch {
 	case f.Config != gj:

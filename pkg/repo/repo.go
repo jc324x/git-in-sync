@@ -150,7 +150,7 @@ func (r *Repo) Error(dsc string, em string) {
 }
 
 // Git runs a Git command. Errors are handled with Error.
-func (r *Repo) Git(dsc string, args []string) (out string, em string) {
+func (r *Repo) git(dsc string, args []string) (out string, em string) {
 	var outb, errb bytes.Buffer
 
 	cmd := exec.Command("git", args...)
@@ -236,7 +236,7 @@ func (r *Repo) GitClone(f flags.Flags, st *stat.Stat) {
 
 	// `git clone ...`
 	args := []string{"clone", r.URL, r.RepoPath}
-	if em, _ := r.Git(dsc, args); em != "" {
+	if em, _ := r.git(dsc, args); em != "" {
 		r.Error(dsc, em)
 	} else {
 		r.Cloned = true
@@ -257,7 +257,7 @@ func (r *Repo) GitConfigOriginURL() {
 
 	// `git ... config --get remote.origin.url"
 	args := []string{r.GitDir, "config", "--get", "remote.origin.url"}
-	out, _ := r.Git(dsc, args)
+	out, _ := r.git(dsc, args)
 
 	switch {
 	case out == "":
@@ -281,7 +281,7 @@ func (r *Repo) gitRemoteUpdate() {
 
 	// `git ... ... fetch origin`
 	args := []string{r.GitDir, r.WorkTree, "fetch", "origin"}
-	r.Git(dsc, args)
+	r.git(dsc, args)
 
 	cmd := exec.Command("git", args...)
 	var err bytes.Buffer

@@ -23,8 +23,8 @@ func TestVerifyWorkspaces(t *testing.T) {
 		ti := timer.Init()
 		f := flags.Testing(p)
 		c := conf.Init(f)
-		rs := Init(c, f, ti)
 		st := stat.Init()
+		rs := Init(c, f, st, ti)
 
 		defer cleanup()
 
@@ -50,8 +50,8 @@ func TestVerifyRepos(t *testing.T) {
 		ti := timer.Init()
 		f := flags.Testing(p)
 		c := conf.Init(f)
-		rs := Init(c, f, ti)
 		st := stat.Init()
+		rs := Init(c, f, st, ti)
 
 		defer cleanup()
 

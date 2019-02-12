@@ -43,7 +43,7 @@ func Init() (f flags.Flags, rs repos.Repos, st *stat.Stat, ti *timer.Timer) {
 	brf.Printv(f, "%v read %v {%v / %v}", e.Get("Book"), (f.Config), ti.Split(), ti.Time())
 
 	// initialize Repos
-	rs = repos.Init(c, f, ti)
+	rs = repos.Init(c, f, st, ti)
 
 	return f, rs, st, ti
 }

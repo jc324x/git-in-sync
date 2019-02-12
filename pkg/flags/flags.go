@@ -33,9 +33,24 @@ func Init() (f Flags) {
 	return Flags{Mode: m, Config: c}
 }
 
-// Testing returns a Flags instance:
-// Mode: testing
-// Config: c (path to test gisrc.json as a string)
+// Testing returns a Flags instance for testing.
 func Testing(c string) Flags {
 	return Flags{Mode: "testing", Config: c}
+}
+
+// Login ...
+func (f Flags) Login() bool {
+	if f.Mode == "login" {
+		return true
+	}
+	return false
+}
+
+// Logout ...
+func (f Flags) Logout() bool {
+	if f.Mode == "logout" {
+		return true
+	}
+	return false
+
 }

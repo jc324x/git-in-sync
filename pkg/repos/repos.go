@@ -157,7 +157,7 @@ func (rs Repos) cloneAsync(f flags.Flags, st *stat.Stat, t *timer.Timer) {
 	}
 }
 
-func (rs Repos) infoAsync() {
+func (rs Repos) infoAsync(f flags.Flags) {
 	var wg sync.WaitGroup
 	for i := range rs {
 		wg.Add(1)
@@ -173,6 +173,7 @@ func (rs Repos) infoAsync() {
 			r.GitDiffsNameOnly()
 			r.GitShortstat()
 			r.GitUntracked()
+			r.SetStatus(f)
 		}(rs[i])
 	}
 	wg.Wait()
@@ -207,6 +208,6 @@ func (rs Repos) VerifyWorkspaces(f flags.Flags, st *stat.Stat, ti *timer.Timer) 
 func (rs Repos) VerifyRepos(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
 	rs.cloneSchedule(f, st)   // mark pending clones
 	rs.cloneAsync(f, st, ti)  // clone missing repos (async)
-	rs.infoAsync()            // get info for all repos (async)
+	rs.infoAsync(f)           // get info for all repos (async)
 	rs.repoSummary(f, st, ti) // print summary
 }

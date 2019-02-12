@@ -199,7 +199,7 @@ func (r *Repo) VerifyWorkspace(f flags.Flags, st *stat.Stat) {
 // GitSchedule ...
 func (r *Repo) GitSchedule(f flags.Flags, st *stat.Stat) {
 
-	const dsc = "verify-repo"
+	const dsc = "GitSchedule"
 
 	_, rerr := os.Stat(r.RepoPath)
 	_, gerr := os.Stat(r.GitPath)
@@ -466,7 +466,7 @@ func (r *Repo) GitUntracked() {
 }
 
 // SetStatus ...
-func (r *Repo) SetStatus() {
+func (r *Repo) SetStatus(f flags.Flags) {
 
 	const dsc = "SetStatus"
 
@@ -524,8 +524,8 @@ func (r *Repo) SetStatus() {
 		r.GitAction = "stash-pull-pop-commit-push"
 	default:
 		r.Category = "Skipped"
-		// r.Status = "Unknown"
-		// r.markError(e, f, "fatal: no matches found in setStatus switch", "setStatus")
+		r.Status = "Unknown"
+		r.Error(dsc, "No matches found in SetStatus?")
 	}
 
 	if r.ErrorMessage != "" {
@@ -543,12 +543,12 @@ func (r *Repo) SetStatus() {
 	}
 
 	// auto move to scheduled for matching login/logout
-	// switch {
-	// case loginMode(f) && r.Category == "Pending" && r.Status == "Behind":
-	// 	r.Category = "Scheduled"
-	// case logoutMode(f) && r.Category == "Pending" && r.Status == "Ahead":
-	// 	r.Category = "Scheduled"
-	// }
+	switch {
+	case f.Login() && r.Category == "Pending" && r.Status == "Behind":
+		r.Category = "Scheduled"
+	case f.Logout() && r.Category == "Pending" && r.Status == "Ahead":
+		r.Category = "Scheduled"
+	}
 }
 
 func (r *Repo) checkConfirmed() {

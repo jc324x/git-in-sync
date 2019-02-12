@@ -21,7 +21,7 @@ import (
 // private
 
 // git runs a Git command.
-func (r *Repo) git(dsc string, args []string) (out string, em string) {
+func (r *Repo) git(args []string) (out string, em string) {
 
 	if r.Verified == false {
 		return
@@ -223,8 +223,7 @@ func (r *Repo) GitSchedule(f flags.Flags, st *stat.Stat) {
 // GitClone clones a Git repository from r.URL if
 // r.PendingClone is true.
 func (r *Repo) GitClone(f flags.Flags, st *stat.Stat) {
-
-	const dsc = "git-clone"
+	const dsc = "GitClone"
 
 	// return if !PendingClone
 	if !r.PendingClone {
@@ -234,10 +233,9 @@ func (r *Repo) GitClone(f flags.Flags, st *stat.Stat) {
 	// "cloning..."
 	brf.Printv(f, "%v cloning %v {%v}", e.Get("Box"), r.Name, r.Workspace)
 
-	// `git clone ... ...`
 	args := []string{"clone", r.URL, r.RepoPath}
-	if em, _ := r.git(dsc, args); em != "" {
-		r.Error(dsc, em)
+	if out, _ := r.git(args); out != "" {
+		r.Error(dsc, out)
 	} else {
 		r.Cloned = true
 		st.ClonedRepos = append(st.ClonedRepos, r.Name)
@@ -246,12 +244,10 @@ func (r *Repo) GitClone(f flags.Flags, st *stat.Stat) {
 
 // GitConfigOriginURL gets the remote origin URL for a Repo.
 func (r *Repo) GitConfigOriginURL() {
+	const dsc = "GitConfigOriginURL"
 
-	const dsc = "git-config-orgin-url"
-
-	// `git ... config --get remote.origin.url"
 	args := []string{r.GitDir, "config", "--get", "remote.origin.url"}
-	out, _ := r.git(dsc, args)
+	out, _ := r.git(args)
 
 	switch {
 	case out == "":
@@ -265,19 +261,12 @@ func (r *Repo) GitConfigOriginURL() {
 
 // GitRemoteUpdate ...
 func (r *Repo) GitRemoteUpdate() {
+	const dsc = "GitRemoteUpdate"
 
-	const dsc = "git-remote-update"
-
-	// return if !Verified
-	if !r.Verified {
-		return
-	}
-
-	// `git ... ... fetch origin`
 	args := []string{r.GitDir, r.WorkTree, "fetch", "origin"}
-	_, em := r.git(dsc, args)
+	_, em := r.git(args)
 
-	// Note: Warnings for redirects to "*./git" can be ignored.
+	// Warnings for redirects to "*./git" are ignored.
 	wgit := strings.Join([]string{r.URL}, "/.git")
 
 	switch {
@@ -289,11 +278,10 @@ func (r *Repo) GitRemoteUpdate() {
 
 // GitAbbrevRef ...
 func (r *Repo) GitAbbrevRef() {
-
-	const dsc = "git-abbrev-ref"
+	const dsc = "GitAbbrevRef"
 
 	args := []string{r.GitDir, r.WorkTree, "rev-parse", "--abbrev-ref", "HEAD"}
-	if out, em := r.git(dsc, args); em != "" {
+	if out, em := r.git(args); em != "" {
 		r.Error(dsc, em)
 	} else {
 		r.LocalBranch = out
@@ -302,11 +290,10 @@ func (r *Repo) GitAbbrevRef() {
 
 // GitLocalSHA ...
 func (r *Repo) GitLocalSHA() {
-
-	const dsc = "git-local-sha"
+	const dsc = "GitLocalSHA"
 
 	args := []string{r.GitDir, r.WorkTree, "rev-parse", "@"}
-	if out, em := r.git(dsc, args); em != "" {
+	if out, em := r.git(args); em != "" {
 		r.Error(dsc, em)
 	} else {
 		r.LocalSHA = out
@@ -315,11 +302,10 @@ func (r *Repo) GitLocalSHA() {
 
 // GitUpstreamSHA ...
 func (r *Repo) GitUpstreamSHA() {
-
-	const dsc = "git-upstream-sha"
+	const dsc = "GitUpstreamSHA"
 
 	args := []string{r.GitDir, r.WorkTree, "rev-parse", "@{u}"}
-	if out, em := r.git(dsc, args); em != "" {
+	if out, em := r.git(args); em != "" {
 		r.Error(dsc, em)
 	} else {
 		r.UpstreamSHA = out
@@ -328,11 +314,10 @@ func (r *Repo) GitUpstreamSHA() {
 
 // GitMergeBaseSHA ...
 func (r *Repo) GitMergeBaseSHA() {
-
-	const dsc = ""
+	const dsc = "GitMergeBaseSHA"
 
 	args := []string{r.GitDir, r.WorkTree, "merge-base", "@", "@{u}"}
-	if out, em := r.git(dsc, args); em != "" {
+	if out, em := r.git(args); em != "" {
 		r.Error(dsc, em)
 	} else {
 		r.MergeSHA = out
@@ -341,12 +326,10 @@ func (r *Repo) GitMergeBaseSHA() {
 
 // GitRevParseUpstream ...
 func (r *Repo) GitRevParseUpstream() {
+	const dsc = "GitRevParseUpstream"
 
-	const dsc = ""
-
-	// command
 	args := []string{r.GitDir, r.WorkTree, "rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{u}"}
-	if out, em := r.git(dsc, args); em != "" {
+	if out, em := r.git(args); em != "" {
 		r.Error(dsc, em)
 	} else {
 		r.UpstreamSHA = out
@@ -354,59 +337,38 @@ func (r *Repo) GitRevParseUpstream() {
 }
 
 // GitDiffsNameOnly ...
-// different...
 func (r *Repo) GitDiffsNameOnly() {
+	var out, em string
+	const dsc = "GitDiffsNameOnly"
 
-	const dsc = ""
-
-	// command
 	args := []string{r.GitDir, r.WorkTree, "diff", "--name-only", "@{u}"}
-	if out, em := r.git(dsc, args); em != "" {
+	if out, em = r.git(args); em != "" {
 		r.Error(dsc, em)
-	} else {
-		r.UpstreamSHA = out
 	}
 
-	// check error, set value(s)
-	// if err := err.String(); err != "" {
-	// 	r.markError(e, f, err, "gitDiffsNameOnly")
-	// }
-
-	// if str := out.String(); str != "" {
-	// 	r.DiffsNameOnly = strings.Fields(str)
-	// 	r.DiffsSummary = sliceSummary(r.DiffsNameOnly, 12)
-	// } else {
-	// 	r.DiffsNameOnly = make([]string, 0)
-	// 	r.DiffsSummary = ""
-	// }
+	if out == "" {
+		r.DiffsNameOnly = make([]string, 0)
+		r.DiffsSummary = ""
+	} else {
+		r.DiffsNameOnly = strings.Fields(out)
+		r.DiffsSummary = brf.Summary(r.DiffsNameOnly, 12)
+	}
 }
 
+// GitShortstat ...
 func (r *Repo) GitShortstat() {
-
-	const dsc = ""
-
-	// return if !Verified
-	if !r.Verified {
-		return
-	}
+	const dsc = "GitShortstat"
 
 	// command
 	args := []string{r.GitDir, r.WorkTree, "diff", "--shortstat"}
-	cmd := exec.Command("git", args...)
-	var out bytes.Buffer
-	var err bytes.Buffer
-	cmd.Stdout = &out
-	cmd.Stderr = &err
-	cmd.Run()
-
-	// check error, set value(s)
-	if err := err.String(); err != "" {
-		// r.markError(e, f, err, "gitShortstat")
+	if out, em := r.git(args); em != "" {
+		r.Error(dsc, em)
 	} else {
-		// r.ShortStat = captureOut(out)
+		r.ShortStat = out
 	}
 
 	// scrape with regular expressions
+	// Set Insertions, Deletions
 	rxc := regexp.MustCompile(`(.*)? file`)
 	rxs := rxc.FindStringSubmatch(r.ShortStat)
 	if len(rxs) == 2 {
@@ -446,7 +408,7 @@ func (r *Repo) GitShortstat() {
 
 	}
 
-	// set Clean and ShortStatSummary
+	// set Clean, ShortStatSummary
 	switch {
 	case r.Changed == 0 && r.Insertions == 0 && r.Deletions == 0:
 		r.Clean = true
@@ -470,20 +432,19 @@ func (r *Repo) GitShortstat() {
 	} else {
 		r.Clean = false
 	}
-
 }
 
+// GitUntracked ...
 func (r *Repo) GitUntracked() {
+	const dsc = "GitUntracked"
 
-	const dsc = ""
-
-	// return if !Verified
-	if !r.Verified {
-		return
-	}
-
-	// command
 	args := []string{r.GitDir, r.WorkTree, "ls-files", "--others", "--exclude-standard"}
+	// if out, em := r.git(args); em != "" {
+	// 	r.Error(dsc, em)
+	// } else {
+
+	// }
+
 	cmd := exec.Command("git", args...)
 	var out bytes.Buffer
 	var err bytes.Buffer
@@ -513,6 +474,7 @@ func (r *Repo) GitUntracked() {
 
 }
 
+// SetStatus ...
 func (r *Repo) SetStatus() {
 
 	const dsc = ""

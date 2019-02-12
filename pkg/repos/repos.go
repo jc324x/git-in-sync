@@ -170,7 +170,9 @@ func (rs Repos) infoAsync() {
 			r.GitUpstreamSHA()
 			r.GitMergeBaseSHA()
 			r.GitRevParseUpstream()
-			// r.GitDiffsNameOnly()
+			r.GitDiffsNameOnly()
+			r.GitShortstat()
+			// r.GitUntracked()
 		}(rs[i])
 	}
 	wg.Wait()

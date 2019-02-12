@@ -18,6 +18,28 @@ import (
 	"github.com/jychri/git-in-sync/pkg/tilde"
 )
 
+// private
+
+// Git runs a Git command. Errors are handled with Error.
+func (r *Repo) git(dsc string, args []string) (out string, em string) {
+	var outb, errb bytes.Buffer
+
+	cmd := exec.Command("git", args...)
+	cmd.Stderr = &errb
+	cmd.Stdout = &outb
+	cmd.Run()
+
+	out = outb.String()
+	em = errb.String()
+
+	out = strings.TrimSuffix(out, "\n")
+	em = strings.TrimSuffix(em, "\n")
+
+	return out, em
+}
+
+// Public
+
 // Repo details the status of Git repository.
 type Repo struct {
 	BundlePath       string   // "~/tmpgis"
@@ -85,13 +107,13 @@ func Init(zw string, zu string, zr string, bp string, rn string) *Repo {
 	var b bytes.Buffer
 
 	// "/Users/jychri/tmpgis/go-lang/src/github.com/jychri"
-	b.WriteString(tilde.Abs(r.BundlePath))
+	b.WriteString(r.BundlePath)
 
 	if r.Workspace != "main" {
 		b.WriteString("/")
 		b.WriteString(r.Workspace)
 	}
-	r.WorkspacePath = b.String() // workspace path
+	r.WorkspacePath = b.String()
 
 	// "/Users/jychri/tmpgis/go-lang/src/github.com/jychri/git-in-sync"
 	b.Reset()
@@ -147,24 +169,6 @@ func (r *Repo) Error(dsc string, em string) {
 	if strings.Contains(r.ErrorFirst, "fatal") {
 		r.Verified = false
 	}
-}
-
-// Git runs a Git command. Errors are handled with Error.
-func (r *Repo) git(dsc string, args []string) (out string, em string) {
-	var outb, errb bytes.Buffer
-
-	cmd := exec.Command("git", args...)
-	cmd.Stderr = &errb
-	cmd.Stdout = &outb
-	cmd.Run()
-
-	out = outb.String()
-	em = errb.String()
-
-	out = strings.TrimSuffix(out, "\n")
-	em = strings.TrimSuffix(em, "\n")
-
-	return out, em
 }
 
 // VerifyWorkspace verifies that the r.WorkspacePath is present and accessible.

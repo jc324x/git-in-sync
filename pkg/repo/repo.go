@@ -4,7 +4,6 @@ package repo
 import (
 	"bufio"
 	"bytes"
-	"fmt"
 	"os"
 	"os/exec"
 	"regexp"
@@ -291,6 +290,8 @@ func (r *Repo) GitRemoteUpdate() {
 // GitAbbrevRef ...
 func (r *Repo) GitAbbrevRef() {
 
+	const dsc = "git-abbrev-ref"
+
 	// return if !Verified
 	if !r.Verified {
 		return
@@ -316,6 +317,8 @@ func (r *Repo) GitAbbrevRef() {
 // GitLocalSHA ...
 func (r *Repo) GitLocalSHA() {
 
+	const dsc = ""
+
 	// return if !Verified
 	if !r.Verified {
 		return
@@ -339,6 +342,8 @@ func (r *Repo) GitLocalSHA() {
 }
 
 func (r *Repo) gitUpstreamSHA() {
+
+	const dsc = ""
 
 	// return if !Verified
 	if !r.Verified {
@@ -364,6 +369,8 @@ func (r *Repo) gitUpstreamSHA() {
 
 func (r *Repo) gitMergeBaseSHA() {
 
+	const dsc = ""
+
 	// return if !Verified
 	if !r.Verified {
 		return
@@ -388,6 +395,8 @@ func (r *Repo) gitMergeBaseSHA() {
 
 func (r *Repo) gitRevParseUpstream() {
 
+	const dsc = ""
+
 	// return if !Verified
 	if !r.Verified {
 		return
@@ -411,6 +420,8 @@ func (r *Repo) gitRevParseUpstream() {
 }
 
 func (r *Repo) gitDiffsNameOnly() {
+
+	const dsc = ""
 
 	// return if !Verified
 	if !r.Verified {
@@ -441,6 +452,8 @@ func (r *Repo) gitDiffsNameOnly() {
 }
 
 func (r *Repo) gitShortstat() {
+
+	const dsc = ""
 
 	// return if !Verified
 	if !r.Verified {
@@ -532,6 +545,8 @@ func (r *Repo) gitShortstat() {
 
 func (r *Repo) gitUntracked() {
 
+	const dsc = ""
+
 	// return if !Verified
 	if !r.Verified {
 		return
@@ -569,6 +584,8 @@ func (r *Repo) gitUntracked() {
 }
 
 func (r *Repo) setStatus() {
+
+	const dsc = ""
 
 	switch {
 	case r.LocalSHA == r.UpstreamSHA:

@@ -165,7 +165,7 @@ func (rs Repos) infoAsync() {
 			defer wg.Done()
 			r.GitConfigOriginURL()
 			r.GitRemoteUpdate()
-			// r.GitAbbrevRef()
+			r.GitAbbrevRef()
 		}(rs[i])
 	}
 	wg.Wait()

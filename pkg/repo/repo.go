@@ -190,10 +190,8 @@ func (r *Repo) VerifyWorkspace(f flags.Flags, st *stat.Stat) {
 	st.Reduce()
 }
 
-// VerifyRepo verifies that the Repo is present and accessible.
-// ...yeah but really it checks if it needs to be cloned. change name
-// and change dsc
-func (r *Repo) VerifyRepo(f flags.Flags, st *stat.Stat) {
+// GitSchedule ...
+func (r *Repo) GitSchedule(f flags.Flags, st *stat.Stat) {
 
 	const dsc = "verify-repo"
 
@@ -321,7 +319,8 @@ func (r *Repo) GitAbbrevRef() {
 	}
 }
 
-func (r *Repo) gitLocalSHA() {
+// GitLocalSHA ...
+func (r *Repo) GitLocalSHA() {
 
 	// return if !Verified
 	if !r.Verified {

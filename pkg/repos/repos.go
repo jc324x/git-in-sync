@@ -172,7 +172,7 @@ func (rs Repos) infoAsync() {
 			r.GitRevParseUpstream()
 			r.GitDiffsNameOnly()
 			r.GitShortstat()
-			// r.GitUntracked()
+			r.GitUntracked()
 		}(rs[i])
 	}
 	wg.Wait()

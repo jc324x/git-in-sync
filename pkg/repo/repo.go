@@ -436,29 +436,16 @@ func (r *Repo) GitShortstat() {
 
 // GitUntracked ...
 func (r *Repo) GitUntracked() {
+	var out, em string
 	const dsc = "GitUntracked"
 
 	args := []string{r.GitDir, r.WorkTree, "ls-files", "--others", "--exclude-standard"}
-	// if out, em := r.git(args); em != "" {
-	// 	r.Error(dsc, em)
-	// } else {
-
-	// }
-
-	cmd := exec.Command("git", args...)
-	var out bytes.Buffer
-	var err bytes.Buffer
-	cmd.Stdout = &out
-	cmd.Stderr = &err
-	cmd.Run()
-
-	// check error, set value(s)
-	if err := err.String(); err != "" {
-		// r.markError(e, f, err, "gitUntracked")
+	if out, em = r.git(args); em != "" {
+		r.Error(dsc, em)
 	}
 
-	if str := out.String(); str != "" {
-		ufr := strings.Fields(str) // untracked files raw
+	if out != "" {
+		ufr := strings.Fields(out) // untracked files raw
 		for _, f := range ufr {
 			// f = lastPathSelection(f)
 			r.UntrackedFiles = append(r.UntrackedFiles, f)

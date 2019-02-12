@@ -44,9 +44,11 @@ func TestVerifyRepos(t *testing.T) {
 		pkg, k string
 	}{
 		{"repos", "recipes"},
+		{"repos", "google-apps-script"},
 	} {
 
 		p, cleanup := atp.Setup(tr.pkg, tr.k)
+		// p, _ := atp.Setup(tr.pkg, tr.k)
 		ti := timer.Init()
 		f := flags.Testing(p)
 		c := conf.Init(f)

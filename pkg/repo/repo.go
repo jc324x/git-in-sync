@@ -68,7 +68,7 @@ func Init(zw string, zu string, zr string, bp string, rn string) *Repo {
 	r := new(Repo)
 
 	// "~/tmpgis"
-	r.BundlePath = bp // bundle path
+	r.BundlePath = tilde.Abs(bp) // bundle path
 
 	// "main", "go", "bash"
 	r.Workspace = zw // zone workspace
@@ -251,7 +251,6 @@ func (r *Repo) GitConfigOriginURL() {
 
 	// return if !Verified
 	if !r.Verified {
-		// fmt.Printf("%v is unverified", r.Name)
 		return
 	}
 
@@ -269,8 +268,8 @@ func (r *Repo) GitConfigOriginURL() {
 	}
 }
 
-// GitRemoteUpdate
-func (r *Repo) gitRemoteUpdate() {
+// GitRemoteUpdate ...
+func (r *Repo) GitRemoteUpdate() {
 
 	const dsc = "git-remote-update"
 
@@ -290,17 +289,18 @@ func (r *Repo) gitRemoteUpdate() {
 
 	// Warnings for redirects to "*./git" can be ignored.
 	eval := err.String()
-	wgit := strings.Join([]string{r.URL}, "/.git") // (w)ith .(git)
+	wgit := strings.Join([]string{r.URL}, "/.git") // (w)ith (git)
 
 	switch {
 	case strings.Contains(eval, "warning: redirecting") && strings.Contains(eval, wgit):
 		// fmt.Printf("%v - redirect to .git\n", r.Name)
 	case eval != "":
-		// r.markError(e, f, eval, "gitRemoteUpdate")
+		// r.Error(e, f, eval, "gitRemoteUpdate")
 	}
 }
 
-func (r *Repo) gitAbbrevRef() {
+// GitAbbrevRef ...
+func (r *Repo) GitAbbrevRef() {
 
 	// return if !Verified
 	if !r.Verified {

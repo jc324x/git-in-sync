@@ -166,6 +166,11 @@ func (rs Repos) infoAsync() {
 			r.GitConfigOriginURL()
 			r.GitRemoteUpdate()
 			r.GitAbbrevRef()
+			r.GitLocalSHA()
+			r.GitUpstreamSHA()
+			r.GitMergeBaseSHA()
+			r.GitRevParseUpstream()
+			// r.GitDiffsNameOnly()
 		}(rs[i])
 	}
 	wg.Wait()

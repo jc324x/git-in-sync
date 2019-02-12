@@ -292,7 +292,6 @@ func (r *Repo) GitAbbrevRef() {
 
 	const dsc = "git-abbrev-ref"
 
-	// command
 	args := []string{r.GitDir, r.WorkTree, "rev-parse", "--abbrev-ref", "HEAD"}
 	if out, em := r.git(dsc, args); em != "" {
 		r.Error(dsc, em)
@@ -306,7 +305,6 @@ func (r *Repo) GitLocalSHA() {
 
 	const dsc = "git-local-sha"
 
-	// command
 	args := []string{r.GitDir, r.WorkTree, "rev-parse", "@"}
 	if out, em := r.git(dsc, args); em != "" {
 		r.Error(dsc, em)
@@ -315,117 +313,75 @@ func (r *Repo) GitLocalSHA() {
 	}
 }
 
-func (r *Repo) gitUpstreamSHA() {
+// GitUpstreamSHA ...
+func (r *Repo) GitUpstreamSHA() {
 
-	const dsc = ""
+	const dsc = "git-upstream-sha"
 
-	// return if !Verified
-	if !r.Verified {
-		return
-	}
-
-	// command
 	args := []string{r.GitDir, r.WorkTree, "rev-parse", "@{u}"}
-	cmd := exec.Command("git", args...)
-	var out bytes.Buffer
-	var err bytes.Buffer
-	cmd.Stdout = &out
-	cmd.Stderr = &err
-	cmd.Run()
-
-	// check error, set value(s)
-	if err := err.String(); err != "" {
-		// r.markError(e, f, err, "gitUpstreamSHA")
+	if out, em := r.git(dsc, args); em != "" {
+		r.Error(dsc, em)
 	} else {
-		// r.UpstreamSHA = captureOut(out)
+		r.UpstreamSHA = out
 	}
 }
 
-func (r *Repo) gitMergeBaseSHA() {
+// GitMergeBaseSHA ...
+func (r *Repo) GitMergeBaseSHA() {
 
 	const dsc = ""
 
-	// return if !Verified
-	if !r.Verified {
-		return
-	}
-
-	// command
 	args := []string{r.GitDir, r.WorkTree, "merge-base", "@", "@{u}"}
-	cmd := exec.Command("git", args...)
-	var out bytes.Buffer
-	var err bytes.Buffer
-	cmd.Stdout = &out
-	cmd.Stderr = &err
-	cmd.Run()
-
-	// check error, set value(s)
-	if err := err.String(); err != "" {
-		// r.markError(e, f, err, "gitUpstreamSHA")
+	if out, em := r.git(dsc, args); em != "" {
+		r.Error(dsc, em)
 	} else {
-		// r.MergeSHA = captureOut(out)
+		r.MergeSHA = out
 	}
 }
 
-func (r *Repo) gitRevParseUpstream() {
+// GitRevParseUpstream ...
+func (r *Repo) GitRevParseUpstream() {
 
 	const dsc = ""
-
-	// return if !Verified
-	if !r.Verified {
-		return
-	}
 
 	// command
 	args := []string{r.GitDir, r.WorkTree, "rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{u}"}
-	cmd := exec.Command("git", args...)
-	var out bytes.Buffer
-	var err bytes.Buffer
-	cmd.Stdout = &out
-	cmd.Stderr = &err
-	cmd.Run()
-
-	// check error, set value(s)
-	if err := err.String(); err != "" {
-		// r.markError(e, f, err, "gitRevParseUpstream")
+	if out, em := r.git(dsc, args); em != "" {
+		r.Error(dsc, em)
 	} else {
-		// r.UpstreamBranch = captureOut(out)
+		r.UpstreamSHA = out
 	}
 }
 
-func (r *Repo) gitDiffsNameOnly() {
+// GitDiffsNameOnly ...
+// different...
+func (r *Repo) GitDiffsNameOnly() {
 
 	const dsc = ""
 
-	// return if !Verified
-	if !r.Verified {
-		return
-	}
-
 	// command
 	args := []string{r.GitDir, r.WorkTree, "diff", "--name-only", "@{u}"}
-	cmd := exec.Command("git", args...)
-	var out bytes.Buffer
-	var err bytes.Buffer
-	cmd.Stdout = &out
-	cmd.Stderr = &err
-	cmd.Run()
+	if out, em := r.git(dsc, args); em != "" {
+		r.Error(dsc, em)
+	} else {
+		r.UpstreamSHA = out
+	}
 
 	// check error, set value(s)
-	if err := err.String(); err != "" {
-		// r.markError(e, f, err, "gitDiffsNameOnly")
-	}
+	// if err := err.String(); err != "" {
+	// 	r.markError(e, f, err, "gitDiffsNameOnly")
+	// }
 
-	if str := out.String(); str != "" {
-		r.DiffsNameOnly = strings.Fields(str)
-		// r.DiffsSummary = sliceSummary(r.DiffsNameOnly, 12)
-	} else {
-		r.DiffsNameOnly = make([]string, 0)
-		r.DiffsSummary = ""
-	}
+	// if str := out.String(); str != "" {
+	// 	r.DiffsNameOnly = strings.Fields(str)
+	// 	r.DiffsSummary = sliceSummary(r.DiffsNameOnly, 12)
+	// } else {
+	// 	r.DiffsNameOnly = make([]string, 0)
+	// 	r.DiffsSummary = ""
+	// }
 }
 
-func (r *Repo) gitShortstat() {
+func (r *Repo) GitShortstat() {
 
 	const dsc = ""
 
@@ -517,7 +473,7 @@ func (r *Repo) gitShortstat() {
 
 }
 
-func (r *Repo) gitUntracked() {
+func (r *Repo) GitUntracked() {
 
 	const dsc = ""
 
@@ -557,7 +513,7 @@ func (r *Repo) gitUntracked() {
 
 }
 
-func (r *Repo) setStatus() {
+func (r *Repo) SetStatus() {
 
 	const dsc = ""
 

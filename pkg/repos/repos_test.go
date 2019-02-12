@@ -62,6 +62,10 @@ func TestVerifyRepos(t *testing.T) {
 			if _, err := os.Stat(r.GitPath); os.IsNotExist(err) {
 				t.Errorf("VerifyRepos: %v is missing", r.GitPath)
 			}
+
+			if r.ErrorName != "" || r.ErrorMessage != "" {
+				t.Errorf("VerifyRepos: %v %v error %v", r.Name, r.ErrorName, r.ErrorMessage)
+			}
 		}
 	}
 }

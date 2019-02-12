@@ -191,6 +191,8 @@ func (r *Repo) VerifyWorkspace(f flags.Flags, st *stat.Stat) {
 }
 
 // VerifyRepo verifies that the Repo is present and accessible.
+// ...yeah but really it checks if it needs to be cloned. change name
+// and change dsc
 func (r *Repo) VerifyRepo(f flags.Flags, st *stat.Stat) {
 
 	const dsc = "verify-repo"

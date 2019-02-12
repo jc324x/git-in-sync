@@ -183,7 +183,7 @@ func Init(c conf.Config, f flags.Flags, st *stat.Stat, ti *timer.Timer) Repos {
 	initPrint(f)                    // print startup
 	rs := initConvert(c)            // convert Config into Repos
 	ti.Mark("init-repos")           // mark timer
-	st.Workspaces = rs.workspaces() // mark stats
+	st.Workspaces = rs.workspaces() // record stats
 	initSummary(f, st, ti, rs)      // print summary
 	return rs
 }

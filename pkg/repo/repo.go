@@ -22,6 +22,11 @@ import (
 
 // git runs a Git command.
 func (r *Repo) git(dsc string, args []string) (out string, em string) {
+
+	if r.Verified == false {
+		return
+	}
+
 	var outb, errb bytes.Buffer
 
 	cmd := exec.Command("git", args...)
@@ -221,8 +226,8 @@ func (r *Repo) GitClone(f flags.Flags, st *stat.Stat) {
 
 	const dsc = "git-clone"
 
-	// return if !Verified or !PendingClone
-	if !r.Verified || !r.PendingClone {
+	// return if !PendingClone
+	if !r.PendingClone {
 		return
 	}
 
@@ -243,11 +248,6 @@ func (r *Repo) GitClone(f flags.Flags, st *stat.Stat) {
 func (r *Repo) GitConfigOriginURL() {
 
 	const dsc = "git-config-orgin-url"
-
-	// return if !Verified
-	if !r.Verified {
-		return
-	}
 
 	// `git ... config --get remote.origin.url"
 	args := []string{r.GitDir, "config", "--get", "remote.origin.url"}
@@ -275,15 +275,15 @@ func (r *Repo) GitRemoteUpdate() {
 
 	// `git ... ... fetch origin`
 	args := []string{r.GitDir, r.WorkTree, "fetch", "origin"}
-	_, err := r.git(dsc, args)
+	_, em := r.git(dsc, args)
 
 	// Note: Warnings for redirects to "*./git" can be ignored.
 	wgit := strings.Join([]string{r.URL}, "/.git")
 
 	switch {
-	case strings.Contains(err, "warning: redirecting") && strings.Contains(err, wgit):
-	case err != "":
-		r.Error(dsc, err)
+	case strings.Contains(em, "warning: redirecting") && strings.Contains(em, wgit):
+	case em != "":
+		r.Error(dsc, em)
 	}
 }
 
@@ -292,52 +292,26 @@ func (r *Repo) GitAbbrevRef() {
 
 	const dsc = "git-abbrev-ref"
 
-	// return if !Verified
-	if !r.Verified {
-		return
-	}
-
 	// command
 	args := []string{r.GitDir, r.WorkTree, "rev-parse", "--abbrev-ref", "HEAD"}
-	cmd := exec.Command("git", args...)
-	var out bytes.Buffer
-	var err bytes.Buffer
-	cmd.Stdout = &out
-	cmd.Stderr = &err
-	cmd.Run()
-
-	// check error, set value(s)
-	if err := err.String(); err != "" {
-		// r.markError(e, f, err, "gitAbbrevRef")
+	if out, em := r.git(dsc, args); em != "" {
+		r.Error(dsc, em)
 	} else {
-		// r.LocalBranch = captureOut(out)
+		r.LocalBranch = out
 	}
 }
 
 // GitLocalSHA ...
 func (r *Repo) GitLocalSHA() {
 
-	const dsc = ""
-
-	// return if !Verified
-	if !r.Verified {
-		return
-	}
+	const dsc = "git-local-sha"
 
 	// command
 	args := []string{r.GitDir, r.WorkTree, "rev-parse", "@"}
-	cmd := exec.Command("git", args...)
-	var out bytes.Buffer
-	var err bytes.Buffer
-	cmd.Stdout = &out
-	cmd.Stderr = &err
-	cmd.Run()
-
-	// check error, set value(s)
-	if err := err.String(); err != "" {
-		// r.markError(e, f, err, "gitLocalSHA")
+	if out, em := r.git(dsc, args); em != "" {
+		r.Error(dsc, em)
 	} else {
-		// r.LocalSHA = captureOut(out)
+		r.LocalSHA = out
 	}
 }
 

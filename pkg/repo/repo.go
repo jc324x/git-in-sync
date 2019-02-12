@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"os"
 	"os/exec"
+	"path"
 	"regexp"
 	"strconv"
 	"strings"
@@ -79,9 +80,9 @@ type Repo struct {
 	Deletions        int      // z
 	ShortStatSummary string   // "+y|-z" or "D" for Deleted if (x >= 1 && y == 0 && z == 0)
 	Clean            bool     // true if Changed, Insertions and Deletions are all 0
+	Untracked        bool     // true if if len(r.UntrackedFiles) >= 1
 	UntrackedFiles   []string // `git ls-files --others --exclude-standard`, [a, b, c, d, e]
 	UntrackedSummary string   // "a, b, c..."
-	Untracked        bool     // true if if len(r.UntrackedFiles) >= 1
 	Category         string   // Complete, Pending, Skipped, Scheduled
 	Status           string   // better term?
 	GitAction        string   // "..."
@@ -436,35 +437,38 @@ func (r *Repo) GitShortstat() {
 
 // GitUntracked ...
 func (r *Repo) GitUntracked() {
+	var uf []string
 	var out, em string
 	const dsc = "GitUntracked"
 
 	args := []string{r.GitDir, r.WorkTree, "ls-files", "--others", "--exclude-standard"}
-	if out, em = r.git(args); em != "" {
+
+	out, em = r.git(args)
+
+	if em != "" {
 		r.Error(dsc, em)
+		return
 	}
 
-	if out != "" {
-		ufr := strings.Fields(out) // untracked files raw
-		for _, f := range ufr {
-			// f = lastPathSelection(f)
-			r.UntrackedFiles = append(r.UntrackedFiles, f)
-			// r.UntrackedSummary = sliceSummary(r.UntrackedFiles, 12)
-		}
-	} else {
+	if out == "" {
 		r.UntrackedFiles = make([]string, 0)
+		return
 	}
 
-	if len(r.UntrackedFiles) >= 1 {
-		r.Untracked = true
+	for _, f := range uf {
+		f = path.Base(f)
+		r.UntrackedFiles = append(r.UntrackedFiles, f)
 	}
+
+	r.UntrackedSummary = brf.Summary(r.UntrackedFiles, 12)
+	r.Untracked = true
 
 }
 
 // SetStatus ...
 func (r *Repo) SetStatus() {
 
-	const dsc = ""
+	const dsc = "SetStatus"
 
 	switch {
 	case r.LocalSHA == r.UpstreamSHA:

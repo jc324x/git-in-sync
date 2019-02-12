@@ -219,11 +219,11 @@ type Result struct {
 	Repos                   []string
 }
 
-// Results is a collection of Result structs.
+// Results collects Result structs.
 type Results []Result
 
-// Resulter returns expected results as a Result
-// from private map rmap. Given an unrecognized key,
+// Resulter returns expected results as Results
+// from map rmap. Given an unrecognized key,
 // execution is stopped with log.Fatalf().
 func Resulter(k string) Results {
 

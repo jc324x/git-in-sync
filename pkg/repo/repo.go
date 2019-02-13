@@ -90,8 +90,8 @@ type Repo struct {
 	UntrackedSummary string   // "a, b, c..."
 	Category         string   // Complete, Pending, Skipped, Scheduled
 	Status           string   // better term?
-	GitAction        string   // "..."
-	GitMessage       string   // "..."
+	Action           string   // "..."
+	Message          string   // "..."
 	Porcelain        bool     // true if `git status --porcelain` returns ""
 }
 
@@ -543,35 +543,35 @@ func (r *Repo) SetStatus(f flags.Flags) {
 	case (r.Clean == true && r.Untracked == false && r.Status == "Ahead"):
 		r.Category = "Pending"
 		r.Status = "Ahead"
-		r.GitAction = "push"
+		r.Action = "push"
 	case (r.Clean == true && r.Untracked == false && r.Status == "Behind"):
 		r.Category = "Pending"
 		r.Status = "Behind"
-		r.GitAction = "pull"
+		r.Action = "pull"
 	case (r.Clean == false && r.Untracked == false && r.Status == "Up-To-Date"):
 		r.Category = "Pending"
 		r.Status = "Dirty"
-		r.GitAction = "add-commit-push"
+		r.Action = "add-commit-push"
 	case (r.Clean == false && r.Untracked == true && r.Status == "Up-To-Date"):
 		r.Category = "Pending"
 		r.Status = "DirtyUntracked"
-		r.GitAction = "add-commit-push"
+		r.Action = "add-commit-push"
 	case (r.Clean == false && r.Untracked == false && r.Status == "Ahead"):
 		r.Category = "Pending"
 		r.Status = "DirtyAhead"
-		r.GitAction = "add-commit-push"
+		r.Action = "add-commit-push"
 	case (r.Clean == false && r.Untracked == false && r.Status == "Behind"):
 		r.Category = "Pending"
 		r.Status = "DirtyBehind"
-		r.GitAction = "stash-pull-pop-commit-push"
+		r.Action = "stash-pull-pop-commit-push"
 	case (r.Clean == true && r.Untracked == true && r.Status == "Up-To-Date"):
 		r.Category = "Pending"
 		r.Status = "Untracked"
-		r.GitAction = "add-commit-push"
+		r.Action = "add-commit-push"
 	case (r.Clean == true && r.Untracked == true && r.Status == "Ahead"):
 		r.Category = "Pending"
 		r.Status = "UntrackedAhead"
-		r.GitAction = "add-commit-push"
+		r.Action = "add-commit-push"
 	case (r.Clean == false && r.Untracked == true && r.Status == "Behind"):
 		r.Category = "Pending"
 		r.Status = "UntrackedBehind"
@@ -652,10 +652,10 @@ func (r *Repo) checkCommitMessage() {
 	switch in {
 	case "n", "no", "nah", "0", "stop", "skip", "abort", "halt", "quit", "exit", "":
 		r.Category = "Skipped"
-		r.GitMessage = ""
+		r.Message = ""
 	default:
 		r.Category = "Scheduled"
-		r.GitMessage = in
+		r.Message = in
 	}
 }
 
@@ -692,7 +692,7 @@ func (r *Repo) gitCommit() {
 	}
 
 	// command
-	args := []string{"-C", r.RepoPath, "commit", "-m", r.GitMessage}
+	args := []string{"-C", r.RepoPath, "commit", "-m", r.Message}
 	cmd := exec.Command("git", args...)
 	var out bytes.Buffer
 	var err bytes.Buffer

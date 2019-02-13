@@ -11,6 +11,8 @@ import (
 
 var em = map[string]int{
 	"AlarmClock":           9200,
+	"Airplane":             128745,
+	"Arrival":              128748,
 	"Boat":                 128676,
 	"Book":                 128214,
 	"Books":                128218,
@@ -24,6 +26,7 @@ var em = map[string]int{
 	"CrystalBall":          128302,
 	"DirectHit":            127919,
 	"Desert":               127964,
+	"Departure":            128747,
 	"FaxMachine":           128224,
 	"Finger":               128073,
 	"FileCabinet":          128452,

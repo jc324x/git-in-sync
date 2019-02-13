@@ -7,12 +7,12 @@ import (
 	"log"
 	"sort"
 	"strconv"
-	"strings"
+	// "strings"
 	"sync"
 
 	"github.com/jychri/git-in-sync/pkg/brf"
 	"github.com/jychri/git-in-sync/pkg/conf"
-	e "github.com/jychri/git-in-sync/pkg/emoji"
+	"github.com/jychri/git-in-sync/pkg/emoji"
 	"github.com/jychri/git-in-sync/pkg/flags"
 	"github.com/jychri/git-in-sync/pkg/repo"
 	"github.com/jychri/git-in-sync/pkg/stat"
@@ -61,7 +61,7 @@ func (rs Repos) repos() (rss []string) {
 }
 
 func initPrint(f flags.Flags) {
-	ep := e.Get("Pager")
+	ep := emoji.Get("Pager")
 	brf.Printv(f, "%v parsing workspaces|repos", ep)
 }
 
@@ -83,7 +83,7 @@ func initConvert(c conf.Config) (rs Repos) {
 }
 
 func initSummary(f flags.Flags, st *stat.Stat, ti *timer.Timer, rs Repos) {
-	efm := e.Get("FaxMachine")
+	efm := emoji.Get("FaxMachine")
 	lw := len(st.Workspaces)
 	lr := len(rs)
 	ts := ti.Split()
@@ -106,7 +106,7 @@ func (rs Repos) workspaceSync(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
 	rs.byWorkspacePath()
 
 	// "verifying workspaces ..."
-	efc := e.Get("FileCabinet")
+	efc := emoji.Get("FileCabinet")
 	l := len(st.Workspaces)
 	sm := brf.Summary(st.Workspaces, 25)
 	brf.Printv(f, "%v  verifying workspaces [%v](%v)", efc, l, sm)
@@ -128,9 +128,9 @@ func (rs Repos) workspaceSummary(f flags.Flags, st *stat.Stat, ti *timer.Timer) 
 	var b bytes.Buffer
 
 	if vw == tw {
-		b.WriteString(e.Get("Briefcase"))
+		b.WriteString(emoji.Get("Briefcase"))
 	} else {
-		b.WriteString(e.Get("Slash"))
+		b.WriteString(emoji.Get("Slash"))
 	}
 
 	b.WriteString(fmt.Sprintf(" [%v/%v] workspaces verified", vw, tw))
@@ -155,7 +155,7 @@ func (rs Repos) cloneSchedule(f flags.Flags, st *stat.Stat) {
 func (rs Repos) cloneAsync(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
 
 	if len(st.PendingClones) > 1 {
-		es := e.Get("Sheep")
+		es := emoji.Get("Sheep")
 		pc := len(st.PendingClones)
 		ps := brf.Summary(st.PendingClones, 25)
 		brf.Printv(f, "%v cloning [%v](%v)", es, pc, ps)
@@ -186,7 +186,7 @@ func (rs Repos) cloneSummary(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
 		return
 	}
 
-	et := e.Get("Truck")
+	et := emoji.Get("Truck")
 	lc := len(st.ClonedRepos)
 	lp := len(st.PendingClones)
 	ts := ti.Split()
@@ -197,7 +197,7 @@ func (rs Repos) cloneSummary(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
 func (rs Repos) infoPrint(f flags.Flags, st *stat.Stat) {
 	st.Repos = rs.repos()
 
-	ep := e.Get("Satellite")
+	ep := emoji.Get("Satellite")
 	lr := len(st.Repos)
 	sr := brf.Summary(st.Repos, 25)
 	brf.Printv(f, "%v  checking repos [%v](%v)", ep, lr, sr)
@@ -228,16 +228,21 @@ func (rs Repos) infoAsync(f flags.Flags) {
 func (rs Repos) infoSummary(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
 
 	for _, r := range rs {
-		switch r.Category {
-		case "Pending":
+		switch {
+		case r.Category == "Pending":
 			st.PendingRepos = append(st.PendingRepos, r.Name)
-		case "Skipped":
+		case r.Category == "Skipped":
 			st.SkippedRepos = append(st.SkippedRepos, r.Name)
-		case "Scheduled":
-			st.ScheduledRepos = append(st.ScheduledRepos, r.Name)
-		case "Complete":
+		case r.Category == "Scheduled" && r.Action == "Push":
+			// st.ScheduledRepos = append(st.ScheduledRepos, r.Name)
+			st.ScheduledPush = append(st.ScheduledRepos, r.Name)
+		case r.Category == "Scheduled" && r.Action == "Pull":
+			// st.ScheduledRepos = append(st.ScheduledRepos, r.Name)
+			st.ScheduledPull = append(st.ScheduledRepos, r.Name)
+		case r.Category == "Complete":
 			st.CompleteRepos = append(st.CompleteRepos, r.Name)
 		}
+
 	}
 
 	tr := len(st.Repos)
@@ -245,7 +250,7 @@ func (rs Repos) infoSummary(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
 
 	if tr == cr {
 		st.Complete = true
-		ec := e.Get("Checkmark")
+		ec := emoji.Get("Checkmark")
 		ti.Mark("repo-summary")
 		ts := ti.Split()
 		tt := ti.Time()
@@ -255,34 +260,59 @@ func (rs Repos) infoSummary(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
 
 	st.Complete = false
 
-	ew := e.Get("Warning")
-	pr := len(st.PendingRepos)
-	skr := len(st.SkippedRepos)
-	scr := len(st.ScheduledRepos)
+	ew := emoji.Get("Warning")
+	ts := ti.Split()
+	tt := ti.Time()
 
-	var ssl []string
+	brf.Printv(f, "%v [%v/%v] repos complete {%v / %v}", ew, cr, tr, ts, tt)
 
-	if scr >= 1 {
-		sm := brf.Summary(st.ScheduledRepos, 12)
-		s := fmt.Sprintf("scheduled: [%v](%v) ", pr, sm)
-		ssl = append(ssl, s)
+	if scr := len(st.ScheduledPull); scr != 0 {
+		etr := emoji.Get("Arrival")
+		srs := brf.Summary(st.ScheduledRepos, 12)
+		brf.Printv(f, "%v [%v](%v) pull scheduled", etr, scr, srs)
 	}
 
-	if pr >= 1 {
-		sm := brf.Summary(st.PendingRepos, 12)
-		s := fmt.Sprintf("pending [%v](%v) ", pr, sm)
-		ssl = append(ssl, s)
+	if scr := len(st.ScheduledPush); scr != 0 {
+		etr := emoji.Get("Departure")
+		srs := brf.Summary(st.ScheduledRepos, 12)
+		brf.Printv(f, "%v [%v](%v) push scheduled", etr, scr, srs)
 	}
 
-	if skr >= 1 {
-		sm := brf.Summary(st.SkippedRepos, 12)
-		s := fmt.Sprintf("skipped [%v](%v) ", pr, sm)
-		ssl = append(ssl, s)
+	if pr := len(st.PendingRepos); pr != 0 {
+
 	}
 
-	sm := strings.Join(ssl, ",")
+	if skr := len(st.SkippedRepos); skr != 0 {
 
-	brf.Printv(f, "%v [%v/%v] repos complete, %v", ew, cr, tr, sm)
+	}
+
+	// pr := len(st.PendingRepos)
+
+	// skr := len(st.SkippedRepos)
+	// scr := len(st.ScheduledRepos)
+
+	// var ssl []string
+
+	// if scr >= 1 {
+	// 	sm := brf.Summary(st.ScheduledRepos, 12)
+	// 	s := fmt.Sprintf("scheduled: [%v](%v)", pr, sm)
+	// 	ssl = append(ssl, s)
+	// }
+
+	// if pr >= 1 {
+	// 	sm := brf.Summary(st.PendingRepos, 12)
+	// 	s := fmt.Sprintf("pending: [%v](%v)", pr, sm)
+	// 	ssl = append(ssl, s)
+	// }
+
+	// if skr >= 1 {
+	// 	sm := brf.Summary(st.SkippedRepos, 12)
+	// 	s := fmt.Sprintf("skipped: [%v](%v)", pr, sm)
+	// 	ssl = append(ssl, s)
+	// }
+
+	// sm := strings.Join(ssl, ", ")
+
 }
 
 // Public
@@ -314,4 +344,14 @@ func (rs Repos) VerifyRepos(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
 	rs.infoPrint(f, st)        // print startup
 	rs.infoAsync(f)            // get info for all repos (async)
 	rs.infoSummary(f, st, ti)  // print summary
+}
+
+// VerifyChanges ...
+func (rs Repos) VerifyChanges(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
+
+}
+
+// SubmitChanges ...
+func (rs Repos) SubmitChanges(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
+
 }

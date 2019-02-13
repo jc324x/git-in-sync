@@ -18,6 +18,8 @@ type Stat struct {
 	ScheduledRepos         []string
 	SkippedRepos           []string
 	CompleteRepos          []string
+	ScheduledPull          []string
+	ScheduledPush          []string
 	Complete               bool
 }
 

@@ -233,7 +233,7 @@ func (r *Repo) GitSchedule(f flags.Flags, st *stat.Stat) {
 
 // GitClone clones a Git repository from r.URL if
 // r.PendingClone is true.
-func (r *Repo) GitClone(f flags.Flags, st *stat.Stat) {
+func (r *Repo) GitClone(f flags.Flags) {
 	const dsc = "GitClone"
 
 	// return if !PendingClone
@@ -249,7 +249,7 @@ func (r *Repo) GitClone(f flags.Flags, st *stat.Stat) {
 		r.Error(dsc, out)
 	} else {
 		r.Cloned = true
-		st.ClonedRepos = append(st.ClonedRepos, r.Name)
+		// st.ClonedRepos = append(st.ClonedRepos, r.Name)
 	}
 }
 
@@ -515,7 +515,7 @@ func (r *Repo) GitUntracked() {
 
 }
 
-// SetStatus ... GetStatus...?
+// SetStatus ...
 func (r *Repo) SetStatus(f flags.Flags) {
 
 	const dsc = "SetStatus"
@@ -582,7 +582,7 @@ func (r *Repo) SetStatus(f flags.Flags) {
 	default:
 		r.Category = "Skipped"
 		r.Status = "Unknown"
-		r.Error(dsc, "No matching conditions in SetStatus")
+		r.Error(dsc, "No matching conditions")
 	}
 
 	if r.ErrorMessage != "" {

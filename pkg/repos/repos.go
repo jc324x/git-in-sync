@@ -148,13 +148,17 @@ func (rs Repos) cloneAsync(f flags.Flags, st *stat.Stat, t *timer.Timer) {
 			wg.Add(1)
 			go func(r *repo.Repo) {
 				defer wg.Done()
-				r.GitClone(f, st)
+				r.GitClone(f)
 			}(rs[i])
 		}
 		wg.Wait()
 
 		t.Mark("async-clone")
 	}
+}
+
+func (rs Repos) cloneSummary() {
+
 }
 
 func (rs Repos) infoAsync(f flags.Flags) {
@@ -206,8 +210,9 @@ func (rs Repos) VerifyWorkspaces(f flags.Flags, st *stat.Stat, ti *timer.Timer) 
 
 // VerifyRepos verifies all Repos in Repos.
 func (rs Repos) VerifyRepos(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
-	rs.cloneSchedule(f, st)   // mark pending clones
-	rs.cloneAsync(f, st, ti)  // clone missing repos (async)
+	rs.cloneSchedule(f, st)  // mark pending clones
+	rs.cloneAsync(f, st, ti) // clone missing repos (async)
+	// rs.cloneSummary()
 	rs.infoAsync(f)           // get info for all repos (async)
 	rs.repoSummary(f, st, ti) // print summary
 }

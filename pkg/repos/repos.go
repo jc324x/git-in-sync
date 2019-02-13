@@ -203,7 +203,7 @@ func (rs Repos) infoPrint(f flags.Flags, st *stat.Stat) {
 	brf.Printv(f, "%v  checking repos [%v](%v)", ep, lr, sr)
 }
 
-func (rs Repos) infoAsync(f flags.Flags) {
+func (rs Repos) infoAsync(f flags.Flags, ti *timer.Timer) {
 	var wg sync.WaitGroup
 	for i := range rs {
 		wg.Add(1)
@@ -223,6 +223,8 @@ func (rs Repos) infoAsync(f flags.Flags) {
 		}(rs[i])
 	}
 	wg.Wait()
+
+	ti.Mark("info-async")
 }
 
 func (rs Repos) infoSummary(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
@@ -234,10 +236,8 @@ func (rs Repos) infoSummary(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
 		case r.Category == "Skipped":
 			st.SkippedRepos = append(st.SkippedRepos, r.Name)
 		case r.Category == "Scheduled" && r.Action == "Push":
-			// st.ScheduledRepos = append(st.ScheduledRepos, r.Name)
 			st.ScheduledPush = append(st.ScheduledRepos, r.Name)
 		case r.Category == "Scheduled" && r.Action == "Pull":
-			// st.ScheduledRepos = append(st.ScheduledRepos, r.Name)
 			st.ScheduledPull = append(st.ScheduledRepos, r.Name)
 		case r.Category == "Complete":
 			st.CompleteRepos = append(st.CompleteRepos, r.Name)
@@ -268,51 +268,27 @@ func (rs Repos) infoSummary(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
 
 	if scr := len(st.ScheduledPull); scr != 0 {
 		etr := emoji.Get("Arrival")
-		srs := brf.Summary(st.ScheduledRepos, 12)
+		srs := brf.Summary(st.ScheduledPull, 12)
 		brf.Printv(f, "%v [%v](%v) pull scheduled", etr, scr, srs)
 	}
 
 	if scr := len(st.ScheduledPush); scr != 0 {
 		etr := emoji.Get("Departure")
-		srs := brf.Summary(st.ScheduledRepos, 12)
+		srs := brf.Summary(st.ScheduledPush, 12)
 		brf.Printv(f, "%v [%v](%v) push scheduled", etr, scr, srs)
 	}
 
 	if pr := len(st.PendingRepos); pr != 0 {
-
+		etr := emoji.Get("Traffic")
+		srs := brf.Summary(st.PendingRepos, 12)
+		brf.Printv(f, "%v [%v](%v) pending", etr, pr, srs)
 	}
 
 	if skr := len(st.SkippedRepos); skr != 0 {
-
+		etr := emoji.Get("Stop")
+		srs := brf.Summary(st.SkippedRepos, 12)
+		brf.Printv(f, "%v [%v](%v) pending", etr, skr, srs)
 	}
-
-	// pr := len(st.PendingRepos)
-
-	// skr := len(st.SkippedRepos)
-	// scr := len(st.ScheduledRepos)
-
-	// var ssl []string
-
-	// if scr >= 1 {
-	// 	sm := brf.Summary(st.ScheduledRepos, 12)
-	// 	s := fmt.Sprintf("scheduled: [%v](%v)", pr, sm)
-	// 	ssl = append(ssl, s)
-	// }
-
-	// if pr >= 1 {
-	// 	sm := brf.Summary(st.PendingRepos, 12)
-	// 	s := fmt.Sprintf("pending: [%v](%v)", pr, sm)
-	// 	ssl = append(ssl, s)
-	// }
-
-	// if skr >= 1 {
-	// 	sm := brf.Summary(st.SkippedRepos, 12)
-	// 	s := fmt.Sprintf("skipped: [%v](%v)", pr, sm)
-	// 	ssl = append(ssl, s)
-	// }
-
-	// sm := strings.Join(ssl, ", ")
-
 }
 
 // Public
@@ -342,16 +318,185 @@ func (rs Repos) VerifyRepos(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
 	rs.cloneAsync(f, st, ti)   // clone missing repos (async)
 	rs.cloneSummary(f, st, ti) // print summary
 	rs.infoPrint(f, st)        // print startup
-	rs.infoAsync(f)            // get info for all repos (async)
+	rs.infoAsync(f, ti)        // get info for all repos (async)
 	rs.infoSummary(f, st, ti)  // print summary
 }
 
+// func (rs Repos) verifyChanges(e Emoji, f Flags) {
+
+// 	prs := initPendingRepos(rs)
+
+// 	if len(prs) >= 1 {
+// 		for _, r := range prs {
+
+// 			var b bytes.Buffer
+
+// 			switch r.Status {
+// 			case "Ahead":
+// 				b.WriteString(e.Bunny)
+// 				b.WriteString(" ")
+// 				b.WriteString(r.Name)
+// 				b.WriteString(" is ahead of ")
+// 				b.WriteString(r.UpstreamBranch)
+// 			case "Behind":
+// 				b.WriteString(e.Turtle)
+// 				b.WriteString(" ")
+// 				b.WriteString(r.Name)
+// 				b.WriteString(" is behind ")
+// 				b.WriteString(r.UpstreamBranch)
+// 			case "Dirty", "DirtyUntracked", "DirtyAhead", "DirtyBehind":
+// 				b.WriteString(e.Pig)
+// 				b.WriteString(" ")
+// 				b.WriteString(r.Name)
+// 				b.WriteString(" is dirty [")
+// 				b.WriteString(strconv.Itoa((len(r.DiffsNameOnly))))
+// 				b.WriteString("]{")
+// 				b.WriteString(r.DiffsSummary)
+// 				b.WriteString("}(")
+// 				b.WriteString(r.ShortStatSummary)
+// 				b.WriteString(")")
+// 			case "Untracked", "UntrackedAhead", "UntrackedBehind":
+// 				b.WriteString(e.Pig)
+// 				b.WriteString(" ")
+// 				b.WriteString(r.Name)
+// 				b.WriteString(" is untracked [")
+// 				b.WriteString(strconv.Itoa(len(r.UntrackedFiles)))
+// 				b.WriteString("]{")
+// 				b.WriteString(r.UntrackedSummary)
+// 				b.WriteString("}")
+// 			case "Up-To-Date":
+// 				b.WriteString(e.Checkmark)
+// 				b.WriteString(" ")
+// 				b.WriteString(r.Name)
+// 				b.WriteString(" is up to date with ")
+// 				b.WriteString(r.UpstreamBranch)
+// 			}
+
+// 			switch r.Status {
+// 			case "DirtyUntracked":
+// 				b.WriteString(" and untracked [")
+// 				b.WriteString(strconv.Itoa(len(r.UntrackedFiles)))
+// 				b.WriteString("]{")
+// 				b.WriteString(r.UntrackedSummary)
+// 				b.WriteString("}")
+// 			case "DirtyAhead":
+// 				b.WriteString(" & ahead of ")
+// 				b.WriteString(r.UpstreamBranch)
+// 			case "DirtyBehind":
+// 				b.WriteString(" & behind")
+// 				b.WriteString(r.UpstreamBranch)
+// 			case "UntrackedAhead":
+// 				b.WriteString(" & is ahead of ")
+// 				b.WriteString(r.UpstreamBranch)
+// 			case "UntrackedBehind":
+// 				b.WriteString(" & is behind ")
+// 				b.WriteString(r.UpstreamBranch)
+// 			}
+
+// 			targetPrintln(f, b.String())
+
+// 			switch r.Status {
+// 			case "Ahead":
+// 				fmt.Printf("%v push changes to %v? ", e.Rocket, r.Remote)
+// 			case "Behind":
+// 				fmt.Printf("%v pull changes from %v? ", e.Boat, r.Remote)
+// 			case "Dirty":
+// 				fmt.Printf("%v add all files, commit and push to %v? ", e.Clipboard, r.Remote)
+// 			case "DirtyUntracked":
+// 				fmt.Printf("%v add all files, commit and push to %v? ", e.Clipboard, r.Remote)
+// 			case "DirtyAhead":
+// 				fmt.Printf("%v add all files, commit and push to %v? ", e.Clipboard, r.Remote)
+// 			case "DirtyBehind":
+// 				fmt.Printf("%v stash all files, pull changes, commit and push to %v? ", e.Clipboard, r.Remote)
+// 			case "Untracked":
+// 				fmt.Printf("%v add all files, commit and push to %v? ", e.Clipboard, r.Remote)
+// 			case "UntrackedAhead":
+// 				fmt.Printf("%v add all files, commit and push to %v? ", e.Clipboard, r.Remote)
+// 			case "UntrackedBehind":
+// 				fmt.Printf("%v stash all files, pull changes, commit and push to %v? ", e.Clipboard, r.Remote)
+// 			}
+
+// 			// prompt for approval
+// 			r.checkConfirmed()
+
+// 			// prompt for commit message
+// 			if r.Category != "Skipped" && strings.Contains(r.GitAction, "commit") {
+// 				fmt.Printf("%v commit message: ", e.Memo)
+// 				r.checkCommitMessage()
+// 			}
+// 		}
+
+// 		// t.MarkMoment("verify-changes")
+
+// 		// FLAG:
+// 		// check again see how many pending remain, should be zero...
+// 		// going to push pause for now
+// 		// I need to know count of pending/scheduled prior to the start
+// 		// to see what the difference is since then.
+// 		// things can be autoscheduled, need to account for those
+
+// 		// var sr []string // scheduled repos
+// 		// for _, r := range rs {
+// 		// 	if r.Category == "Scheduled " {
+// 		// 		sr = append(sr, r.Name)
+// 		// 	}
+// 		// }
+
+// 		// var b bytes.Buffer
+// 		// tr := time.Millisecond // truncate
+
+// 		// debug
+// 		// for _, r := range prs {
+// 		// 	fmt.Println(r.Name)
+// 		// }
+
+// 		// switch {
+// 		// case len(prs) >= 1 && len(sr) >= 1:
+// 		// 	b.WriteString(e.Hourglass)
+// 		// 	b.WriteString(" [")
+// 		// 	b.WriteString(strconv.Itoa(len(prs)))
+// 		// case len(prs) >= 1 && len(sr) == 0:
+// 		// 	b.WriteString(e.Warning)
+// 		// 	b.WriteString(" [")
+// 		// 	b.WriteString(strconv.Itoa(len(fcp)))
+// 		// }
+
+// 		// if len(prs) >= 1 && len(sr) >= 1 {
+// 		// 	b.WriteString(e.Hourglass)
+// 		// 	b.WriteString(" [")
+// 		// 	b.WriteString(strconv.Itoa(len(prs)))
+// 		// } else {
+// 		// fmt.Println()
+// 		// b.WriteString(e.Warning)
+// 		// b.WriteString(" [")
+// 		// b.WriteString(strconv.Itoa(len(fcp)))
+// 		// }
+
+// 		// b.WriteString("/")
+// 		// b.WriteString(strconv.Itoa(len(prs)))
+// 		// b.WriteString("] scheduled {")
+// 		// b.WriteString(t.GetSplit().Truncate(tr).String())
+// 		// b.WriteString(" / ")
+// 		// b.WriteString(t.GetTime().Truncate(tr).String())
+// 		// b.WriteString("}")
+
+// 		// targetPrintln(f, b.String())
+// 	}
+
+// }
+
 // VerifyChanges ...
 func (rs Repos) VerifyChanges(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
+	if st.Complete == true {
+		return
+	}
 
 }
 
 // SubmitChanges ...
 func (rs Repos) SubmitChanges(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
+	if st.Complete == true {
+		return
+	}
 
 }

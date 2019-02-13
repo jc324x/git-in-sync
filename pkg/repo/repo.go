@@ -543,35 +543,35 @@ func (r *Repo) SetStatus(f flags.Flags) {
 	case (r.Clean == true && r.Untracked == false && r.Status == "Ahead"):
 		r.Category = "Pending"
 		r.Status = "Ahead"
-		r.Action = "push"
+		r.Action = "Push"
 	case (r.Clean == true && r.Untracked == false && r.Status == "Behind"):
 		r.Category = "Pending"
 		r.Status = "Behind"
-		r.Action = "pull"
+		r.Action = "Pull"
 	case (r.Clean == false && r.Untracked == false && r.Status == "Up-To-Date"):
 		r.Category = "Pending"
 		r.Status = "Dirty"
-		r.Action = "add-commit-push"
+		r.Action = "Add-Commit-Push"
 	case (r.Clean == false && r.Untracked == true && r.Status == "Up-To-Date"):
 		r.Category = "Pending"
 		r.Status = "DirtyUntracked"
-		r.Action = "add-commit-push"
+		r.Action = "Add-Commit-Push"
 	case (r.Clean == false && r.Untracked == false && r.Status == "Ahead"):
 		r.Category = "Pending"
 		r.Status = "DirtyAhead"
-		r.Action = "add-commit-push"
+		r.Action = "Add-Commit-Push"
 	case (r.Clean == false && r.Untracked == false && r.Status == "Behind"):
 		r.Category = "Pending"
 		r.Status = "DirtyBehind"
-		r.Action = "stash-pull-pop-commit-push"
+		r.Action = "Stash-Pull-Pop-Commit-Push"
 	case (r.Clean == true && r.Untracked == true && r.Status == "Up-To-Date"):
 		r.Category = "Pending"
 		r.Status = "Untracked"
-		r.Action = "add-commit-push"
+		r.Action = "Add-Commit-Push"
 	case (r.Clean == true && r.Untracked == true && r.Status == "Ahead"):
 		r.Category = "Pending"
 		r.Status = "UntrackedAhead"
-		r.Action = "add-commit-push"
+		r.Action = "Add-Commit-Push"
 	case (r.Clean == false && r.Untracked == true && r.Status == "Behind"):
 		r.Category = "Pending"
 		r.Status = "UntrackedBehind"
@@ -606,6 +606,8 @@ func (r *Repo) SetStatus(f flags.Flags) {
 		r.Category = "Scheduled"
 	}
 }
+
+// NEXT
 
 func (r *Repo) checkConfirmed() {
 

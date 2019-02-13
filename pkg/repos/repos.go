@@ -86,7 +86,7 @@ func (rs Repos) byWorkspacePath() {
 	sort.SliceStable(rs, func(i, j int) bool { return rs[i].WorkspacePath < rs[j].WorkspacePath })
 }
 
-func (rs Repos) workspaceSync(f flags.Flags, st *stat.Stat) {
+func (rs Repos) workspaceSync(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
 
 	// sort Repos A-Z by *r.WorkspacePath
 	rs.byWorkspacePath()
@@ -101,6 +101,8 @@ func (rs Repos) workspaceSync(f flags.Flags, st *stat.Stat) {
 	for _, r := range rs {
 		r.VerifyWorkspace(f, st)
 	}
+
+	ti.Mark("workspace-sync")
 }
 
 func (rs Repos) workspaceSummary(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
@@ -117,7 +119,7 @@ func (rs Repos) workspaceSummary(f flags.Flags, st *stat.Stat, ti *timer.Timer) 
 		b.WriteString(e.Get("Slash"))
 	}
 
-	b.WriteString(fmt.Sprintf(" [%v/%v] divs verified", vw, tw))
+	b.WriteString(fmt.Sprintf(" [%v/%v] workspaces verified", vw, tw))
 
 	if len(st.CreatedWorkspaces) >= 1 {
 		b.WriteString(fmt.Sprintf(", created [%v]", strconv.Itoa(cw)))
@@ -136,7 +138,7 @@ func (rs Repos) cloneSchedule(f flags.Flags, st *stat.Stat) {
 
 // Async
 
-func (rs Repos) cloneAsync(f flags.Flags, st *stat.Stat, t *timer.Timer) {
+func (rs Repos) cloneAsync(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
 
 	if len(st.PendingClones) > 1 {
 		es := e.Get("Sheep")
@@ -152,13 +154,29 @@ func (rs Repos) cloneAsync(f flags.Flags, st *stat.Stat, t *timer.Timer) {
 			}(rs[i])
 		}
 		wg.Wait()
-
-		t.Mark("async-clone")
 	}
+
+	ti.Mark("async-clone")
 }
 
-func (rs Repos) cloneSummary() {
+func (rs Repos) cloneSummary(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
 
+	for _, r := range rs {
+		if r.Cloned == true {
+			st.ClonedRepos = append(st.ClonedRepos, r.Name)
+		}
+	}
+
+	if len(st.ClonedRepos) == 0 {
+		return
+	}
+
+	et := e.Get("Truck")
+	lc := len(st.ClonedRepos)
+	lp := len(st.PendingClones)
+	ts := ti.Split()
+	tt := ti.Time()
+	brf.Printv(f, "%v [%v/%v] repos cloned {%v / %v}", et, lc, lp, ts, tt)
 }
 
 func (rs Repos) infoAsync(f flags.Flags) {
@@ -184,7 +202,18 @@ func (rs Repos) infoAsync(f flags.Flags) {
 }
 
 func (rs Repos) repoSummary(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
-
+	for _, r := range rs {
+		switch r.Status {
+		case "Pending":
+			st.PendingRepos = append(st.PendingRepos, r.Name)
+		case "Skipped":
+			st.SkippedRepos = append(st.SkippedRepos, r.Name)
+		case "Scheduled":
+			st.ScheduledRepos = append(st.ScheduledRepos, r.Name)
+		case "Complete":
+			st.CompleteRepos = append(st.CompleteRepos, r.Name)
+		}
+	}
 }
 
 // Public
@@ -196,23 +225,23 @@ type Repos []*repo.Repo
 func Init(c conf.Config, f flags.Flags, st *stat.Stat, ti *timer.Timer) Repos {
 	initPrint(f)                    // print startup
 	rs := initConvert(c)            // convert Config into Repos
-	ti.Mark("init-repos")           // mark timer
 	st.Workspaces = rs.workspaces() // record stats
+	ti.Mark("init-repos")           // mark timer
 	initSummary(f, st, ti, rs)      // print summary
 	return rs
 }
 
 // VerifyWorkspaces verifies WorkspacePaths for Repos in Repos.
 func (rs Repos) VerifyWorkspaces(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
-	rs.workspaceSync(f, st)        // create missing workspaces
+	rs.workspaceSync(f, st, ti)    // create missing workspaces
 	rs.workspaceSummary(f, st, ti) // print summary
 }
 
 // VerifyRepos verifies all Repos in Repos.
 func (rs Repos) VerifyRepos(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
-	rs.cloneSchedule(f, st)  // mark pending clones
-	rs.cloneAsync(f, st, ti) // clone missing repos (async)
-	// rs.cloneSummary()
-	rs.infoAsync(f)           // get info for all repos (async)
-	rs.repoSummary(f, st, ti) // print summary
+	rs.cloneSchedule(f, st)    // mark pending clones
+	rs.cloneAsync(f, st, ti)   // clone missing repos (async)
+	rs.cloneSummary(f, st, ti) // print summary
+	rs.infoAsync(f)            // get info for all repos (async)
+	rs.repoSummary(f, st, ti)  // print summary
 }

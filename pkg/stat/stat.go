@@ -11,9 +11,14 @@ type Stat struct {
 	CreatedWorkspaces      []string
 	VerifiedWorkspaces     []string
 	InaccessibleWorkspaces []string
-	Repos                  []string
 	PendingClones          []string
+	Repos                  []string
 	ClonedRepos            []string
+	PendingRepos           []string
+	ScheduledRepos         []string
+	SkippedRepos           []string
+	CompleteRepos          []string
+	Complete               bool
 }
 
 // Init returns a new *Stat.

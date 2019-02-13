@@ -156,7 +156,8 @@ func (rs Repos) cloneAsync(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
 	if len(st.PendingClones) > 1 {
 		es := e.Get("Sheep")
 		pc := len(st.PendingClones)
-		brf.Printv(f, "%v cloning [%v]", es, pc)
+		ps := brf.Summary(st.PendingClones, 25)
+		brf.Printv(f, "%v cloning [%v](%v)", es, pc, ps)
 
 		var wg sync.WaitGroup
 		for i := range rs {
@@ -192,6 +193,15 @@ func (rs Repos) cloneSummary(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
 	brf.Printv(f, "%v [%v/%v] repos cloned {%v / %v}", et, lc, lp, ts, tt)
 }
 
+func (rs Repos) infoPrint(f flags.Flags, st *stat.Stat) {
+	st.Repos = rs.repos()
+
+	ep := e.Get("Satellite")
+	lr := len(st.Repos)
+	sr := brf.Summary(st.Repos, 25)
+	brf.Printv(f, "%v  checking repos [%v](%v)", ep, lr, sr)
+}
+
 func (rs Repos) infoAsync(f flags.Flags) {
 	var wg sync.WaitGroup
 	for i := range rs {
@@ -214,8 +224,7 @@ func (rs Repos) infoAsync(f flags.Flags) {
 	wg.Wait()
 }
 
-func (rs Repos) repoSummary(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
-	st.Repos = rs.repos()
+func (rs Repos) infoSummary(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
 
 	for _, r := range rs {
 		switch r.Category {
@@ -298,6 +307,7 @@ func (rs Repos) VerifyRepos(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
 	rs.cloneSchedule(f, st)    // mark pending clones
 	rs.cloneAsync(f, st, ti)   // clone missing repos (async)
 	rs.cloneSummary(f, st, ti) // print summary
+	rs.infoPrint(f, st)        // print startup
 	rs.infoAsync(f)            // get info for all repos (async)
-	rs.repoSummary(f, st, ti)  // print summary
+	rs.infoSummary(f, st, ti)  // print summary
 }

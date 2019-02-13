@@ -147,8 +147,8 @@ func TestErrors(t *testing.T) {
 		r.Verified = true
 	}
 
-	dsc = "GitUpstreamSHA"
-	r.GitUpstreamSHA()
+	dsc = "GitRevParseUpstream"
+	r.GitRevParseUpstream()
 
 	if en, em = r.erm(); en != dsc && em == "" {
 		t.Errorf("%v em = '%v'", dsc, r.ErrorMessage)

@@ -327,15 +327,9 @@ func (rs Repos) VerifyChanges(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
 	}
 
 	for _, r := range rs {
-		if r.Category != "Pending" {
-			return
+		if r.Category == "Pending" {
+			r.UserConfirm(f)
 		}
-
-		// fmt.Println(r.Prompt)
-		// fmt.Println(r.Confirm)
-		r.PromptConfirm()
-		// r.CheckCommitMessage()
-
 	}
 }
 
@@ -343,5 +337,11 @@ func (rs Repos) VerifyChanges(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
 func (rs Repos) SubmitChanges(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
 	if st.Complete == true {
 		return
+	}
+
+	for _, r := range rs {
+		if r.Category == "Scheduled" {
+			fmt.Printf("%v %v %v", r.Name, r.Action, r.Message)
+		}
 	}
 }

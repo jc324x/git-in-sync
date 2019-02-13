@@ -50,6 +50,18 @@ func (r *Repo) erm() (string, string) {
 	return r.ErrorName, r.ErrorMessage
 }
 
+func (r *Repo) skip() bool {
+
+	ac := strings.Contains(r.Action, "commit")
+
+	switch {
+	case r.Status == "Pending" && ac:
+		return false
+	default:
+		return true
+	}
+}
+
 // Public
 
 // Repo models a Git repository.
@@ -685,16 +697,19 @@ func (r *Repo) SetStatus(f flags.Flags) {
 	r.Confirm = s
 }
 
-// NEXT
+// UserConfirm ...
+func (r *Repo) UserConfirm(f flags.Flags) {
 
-// PromptConfirm ...
-func (r *Repo) PromptConfirm() {
+	if f.Mode == "oneline" {
+		return
+	}
+
+	fmt.Println(r.Prompt)
+	fmt.Printf(r.Confirm)
 
 	// setup reader
 	rdr := bufio.NewReader(os.Stdin)
 	in, err := rdr.ReadString('\n')
-
-	// fmt.Printf(r.Prompt)
 
 	// return if error
 	if err != nil {
@@ -715,23 +730,15 @@ func (r *Repo) PromptConfirm() {
 	default:
 		r.Category = "Skipped"
 	}
-}
 
-// CheckCommitMessage ...
-func (r *Repo) CheckCommitMessage() {
-
-	// setup reader
-	rdr := bufio.NewReader(os.Stdin)
-	in, err := rdr.ReadString('\n')
-
-	// return if error
-	if err != nil {
-		r.Category = "Skipped"
+	if r.skip() {
 		return
 	}
 
-	// trim trailing new line
-	in = strings.TrimSuffix(in, "\n")
+	em := emoji.Get("Memo")
+	fmt.Printf("%v commit message ", em)
+
+	in, err = rdr.ReadString('\n')
 
 	switch in {
 	case "n", "no", "nah", "0", "stop", "skip", "abort", "halt", "quit", "exit", "":

@@ -327,19 +327,19 @@ func (r *Repo) GitLocalSHA() {
 	}
 }
 
-// GitUpstreamSHA ...
-func (r *Repo) GitUpstreamSHA() {
-	const dsc = "GitUpstreamSHA"
+// GitUpstreamBranch ...
+func (r *Repo) GitUpstreamBranch() {
+	const dsc = "GitUpstreamBranch"
 
 	if !r.Verified {
 		return
 	}
 
-	args := []string{r.GitDir, r.WorkTree, "rev-parse", "@{u}"}
+	args := []string{r.GitDir, r.WorkTree, "rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{u}"}
 	if out, em := r.git(args); em != "" {
 		r.Error(dsc, em)
 	} else {
-		r.UpstreamSHA = out
+		r.UpstreamBranch = out
 	}
 }
 
@@ -367,7 +367,7 @@ func (r *Repo) GitRevParseUpstream() {
 		return
 	}
 
-	args := []string{r.GitDir, r.WorkTree, "rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{u}"}
+	args := []string{r.GitDir, r.WorkTree, "rev-parse", "@{u}"}
 	if out, em := r.git(args); em != "" {
 		r.Error(dsc, em)
 	} else {
@@ -578,7 +578,6 @@ func (r *Repo) SetStatus(f flags.Flags) {
 	case (r.Clean == true && r.Untracked == false && r.Status == "Up-To-Date"):
 		r.Category = "Complete"
 		r.Status = "Up-To-Date"
-		r.GitAction = "stash-pull-pop-commit-push"
 	default:
 		r.Category = "Skipped"
 		r.Status = "Unknown"

@@ -46,6 +46,19 @@ func (rs Repos) workspaces() (wss []string) {
 	return brf.Reduce(wss)
 }
 
+func (rs Repos) repos() (rss []string) {
+
+	for _, r := range rs {
+		rss = append(rss, r.Name)
+	}
+
+	if l := len(rss); l == 0 {
+		log.Fatalf("No repos. Exiting")
+	}
+
+	return rss
+}
+
 func initPrint(f flags.Flags) {
 	ep := e.Get("Pager")
 	brf.Printv(f, "%v parsing workspaces|repos", ep)
@@ -189,7 +202,7 @@ func (rs Repos) infoAsync(f flags.Flags) {
 			r.GitRemoteUpdate()
 			r.GitAbbrevRef()
 			r.GitLocalSHA()
-			r.GitUpstreamSHA()
+			r.GitUpstreamBranch()
 			r.GitMergeBaseSHA()
 			r.GitRevParseUpstream()
 			r.GitDiffsNameOnly()
@@ -202,8 +215,10 @@ func (rs Repos) infoAsync(f flags.Flags) {
 }
 
 func (rs Repos) repoSummary(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
+	st.Repos = rs.repos()
+
 	for _, r := range rs {
-		switch r.Status {
+		switch r.Category {
 		case "Pending":
 			st.PendingRepos = append(st.PendingRepos, r.Name)
 		case "Skipped":
@@ -214,6 +229,44 @@ func (rs Repos) repoSummary(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
 			st.CompleteRepos = append(st.CompleteRepos, r.Name)
 		}
 	}
+
+	tr := len(st.Repos)
+	cr := len(st.CompleteRepos)
+
+	if tr == cr {
+		st.Complete = true
+		ec := e.Get("Checkmark")
+		brf.Printv(f, "%v [%v/%v] complete", ec, cr, tr)
+		return
+	}
+
+	st.Complete = false
+
+	var b bytes.Buffer
+	pr := len(st.PendingRepos)
+	skr := len(st.SkippedRepos)
+	scr := len(st.ScheduledRepos)
+	ew := e.Get("Warning")
+
+	b.WriteString(ew)
+	b.WriteString(" [")
+	b.WriteString(strconv.Itoa(cr))
+	b.WriteString(" / ")
+	b.WriteString(strconv.Itoa(tr))
+	b.WriteString("] ")
+
+	if pr >= 1 {
+
+	}
+
+	if skr >= 1 {
+
+	}
+
+	if scr >= 1 {
+
+	}
+
 }
 
 // Public

@@ -7,7 +7,6 @@ import (
 	"log"
 	"sort"
 	"strconv"
-	// "strings"
 	"sync"
 
 	"github.com/jychri/git-in-sync/pkg/brf"
@@ -328,10 +327,15 @@ func (rs Repos) VerifyChanges(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
 	}
 
 	for _, r := range rs {
-		if r.Category == "Pending" {
-			fmt.Println(r.Prompt)
-			fmt.Println(r.Confirm)
+		if r.Category != "Pending" {
+			return
 		}
+
+		// fmt.Println(r.Prompt)
+		// fmt.Println(r.Confirm)
+		r.PromptConfirm()
+		// r.CheckCommitMessage()
+
 	}
 }
 

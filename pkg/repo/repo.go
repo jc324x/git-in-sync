@@ -687,11 +687,14 @@ func (r *Repo) SetStatus(f flags.Flags) {
 
 // NEXT
 
-func (r *Repo) checkConfirmed() {
+// PromptConfirm ...
+func (r *Repo) PromptConfirm() {
 
 	// setup reader
 	rdr := bufio.NewReader(os.Stdin)
 	in, err := rdr.ReadString('\n')
+
+	// fmt.Printf(r.Prompt)
 
 	// return if error
 	if err != nil {
@@ -714,7 +717,8 @@ func (r *Repo) checkConfirmed() {
 	}
 }
 
-func (r *Repo) checkCommitMessage() {
+// CheckCommitMessage ...
+func (r *Repo) CheckCommitMessage() {
 
 	// setup reader
 	rdr := bufio.NewReader(os.Stdin)

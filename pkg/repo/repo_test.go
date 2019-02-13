@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/jychri/git-in-sync/pkg/flags"
 	"github.com/jychri/git-in-sync/pkg/tilde"
 )
 
@@ -77,6 +78,165 @@ func TestInit(t *testing.T) {
 
 	if r.URL != turl {
 		t.Errorf("Init: %v != %v", r.URL, turl)
+	}
+}
+
+// These should all write errors to Repo, repo in example doesn't exist.
+func TestErrors(t *testing.T) {
+	zw := "main"
+	zu := "jychri"
+	zr := "github"
+	bp := "~/fakegis"
+	rn := "git-in-sync"
+
+	r := Init(zw, zu, zr, bp, rn)
+	r.Verified = true
+
+	var en, em string
+
+	dsc := "GitConfigOriginURL"
+	r.GitConfigOriginURL()
+	want := "fatal: 'origin' does not appear to be a git repository"
+
+	if en, em = r.erm(); en != dsc || em != want {
+		t.Errorf("%v %v != %v", dsc, r.ErrorMessage, want)
+	}
+
+	if r.Verified == true {
+		t.Errorf("verified != false (%v) ", dsc)
+	} else {
+		r.Verified = true
+	}
+
+	dsc = "GitRemoteUpdate"
+	r.GitRemoteUpdate()
+
+	if en, em = r.erm(); en != dsc && em == "" {
+		t.Errorf("%v em = '%v'", dsc, r.ErrorMessage)
+	}
+
+	if r.Verified == true {
+		t.Errorf("verified != false (%v) ", dsc)
+	} else {
+		r.Verified = true
+	}
+
+	dsc = "GitAbbrevRef"
+	r.GitAbbrevRef()
+
+	if en, em = r.erm(); en != dsc && em == "" {
+		t.Errorf("%v em = '%v'", dsc, r.ErrorMessage)
+	}
+
+	if r.Verified == true {
+		t.Errorf("verified != false (%v) ", dsc)
+	} else {
+		r.Verified = true
+	}
+
+	dsc = "GitLocalSHA"
+	r.GitLocalSHA()
+
+	if en, em = r.erm(); en != dsc && em == "" {
+		t.Errorf("%v em = '%v'", dsc, r.ErrorMessage)
+	}
+
+	if r.Verified == true {
+		t.Errorf("verified != false (%v) ", dsc)
+	} else {
+		r.Verified = true
+	}
+
+	dsc = "GitUpstreamSHA"
+	r.GitUpstreamSHA()
+
+	if en, em = r.erm(); en != dsc && em == "" {
+		t.Errorf("%v em = '%v'", dsc, r.ErrorMessage)
+	}
+
+	if r.Verified == true {
+		t.Errorf("verified != false (%v) ", dsc)
+	} else {
+		r.Verified = true
+	}
+
+	dsc = "GitMergeBaseSHA"
+	r.GitMergeBaseSHA()
+
+	if en, em = r.erm(); en != dsc && em == "" {
+		t.Errorf("%v em = '%v'", dsc, r.ErrorMessage)
+	}
+
+	if r.Verified == true {
+		t.Errorf("verified != false (%v) ", dsc)
+	} else {
+		r.Verified = true
+	}
+
+	dsc = "GitRevParseUpstream"
+	r.GitMergeBaseSHA()
+
+	if en, em = r.erm(); en != dsc && em == "" {
+		t.Errorf("%v em = '%v'", dsc, r.ErrorMessage)
+	}
+
+	if r.Verified == true {
+		t.Errorf("verified != false (%v) ", dsc)
+	} else {
+		r.Verified = true
+	}
+
+	dsc = "GitDiffsNameOnly"
+	r.GitDiffsNameOnly()
+
+	if en, em = r.erm(); en != dsc && em == "" {
+		t.Errorf("%v em = '%v'", dsc, r.ErrorMessage)
+	}
+
+	if r.Verified == true {
+		t.Errorf("verified != false (%v) ", dsc)
+	} else {
+		r.Verified = true
+	}
+
+	dsc = "GitShortstat"
+	r.GitShortstat()
+
+	if en, em = r.erm(); en != dsc && em == "" {
+		t.Errorf("%v em = '%v'", dsc, r.ErrorMessage)
+	}
+
+	if r.Verified == true {
+		t.Errorf("verified != false (%v) ", dsc)
+	} else {
+		r.Verified = true
+	}
+
+	dsc = "GitUntracked"
+	r.GitUntracked()
+
+	if en, em = r.erm(); en != dsc && em == "" {
+		t.Errorf("%v em = '%v'", dsc, r.ErrorMessage)
+	}
+
+	if r.Verified == true {
+		t.Errorf("verified != false (%v) ", dsc)
+	} else {
+		r.Verified = true
+	}
+
+	dsc = "SetStatus"
+	f := flags.Testing("~/fakegisrc.json")
+	r.SetStatus(f)
+
+	if en, em = r.erm(); en != dsc && em == "" {
+		t.Errorf("%v em = '%v'", dsc, r.ErrorMessage)
+	}
+
+	if r.Verified == true {
+		t.Errorf("verified != false (%v) ", dsc)
+	} else {
+		r.Verified = true
 	}
 
 }

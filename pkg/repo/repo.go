@@ -44,6 +44,11 @@ func (r *Repo) git(args []string) (out string, em string) {
 	return out, em
 }
 
+// error messaging...uhh....erm...
+func (r *Repo) erm() (string, string) {
+	return r.ErrorName, r.ErrorMessage
+}
+
 // Public
 
 // Repo models a Git repository.
@@ -165,6 +170,11 @@ func (r *Repo) Error(dsc string, em string) {
 	if strings.Contains(r.ErrorFirst, "fatal") {
 		r.Verified = false
 	}
+
+	if strings.Contains(r.ErrorFirst, "Not a git repository") {
+		r.Verified = false
+	}
+
 }
 
 // VerifyWorkspace verifies that the r.WorkspacePath is present and accessible.
@@ -247,6 +257,10 @@ func (r *Repo) GitClone(f flags.Flags, st *stat.Stat) {
 func (r *Repo) GitConfigOriginURL() {
 	const dsc = "GitConfigOriginURL"
 
+	if !r.Verified {
+		return
+	}
+
 	args := []string{r.GitDir, "config", "--get", "remote.origin.url"}
 	out, _ := r.git(args)
 
@@ -263,6 +277,10 @@ func (r *Repo) GitConfigOriginURL() {
 // GitRemoteUpdate ...
 func (r *Repo) GitRemoteUpdate() {
 	const dsc = "GitRemoteUpdate"
+
+	if !r.Verified {
+		return
+	}
 
 	args := []string{r.GitDir, r.WorkTree, "fetch", "origin"}
 	_, em := r.git(args)
@@ -281,6 +299,10 @@ func (r *Repo) GitRemoteUpdate() {
 func (r *Repo) GitAbbrevRef() {
 	const dsc = "GitAbbrevRef"
 
+	if !r.Verified {
+		return
+	}
+
 	args := []string{r.GitDir, r.WorkTree, "rev-parse", "--abbrev-ref", "HEAD"}
 	if out, em := r.git(args); em != "" {
 		r.Error(dsc, em)
@@ -292,6 +314,10 @@ func (r *Repo) GitAbbrevRef() {
 // GitLocalSHA ...
 func (r *Repo) GitLocalSHA() {
 	const dsc = "GitLocalSHA"
+
+	if !r.Verified {
+		return
+	}
 
 	args := []string{r.GitDir, r.WorkTree, "rev-parse", "@"}
 	if out, em := r.git(args); em != "" {
@@ -305,6 +331,10 @@ func (r *Repo) GitLocalSHA() {
 func (r *Repo) GitUpstreamSHA() {
 	const dsc = "GitUpstreamSHA"
 
+	if !r.Verified {
+		return
+	}
+
 	args := []string{r.GitDir, r.WorkTree, "rev-parse", "@{u}"}
 	if out, em := r.git(args); em != "" {
 		r.Error(dsc, em)
@@ -316,6 +346,10 @@ func (r *Repo) GitUpstreamSHA() {
 // GitMergeBaseSHA ...
 func (r *Repo) GitMergeBaseSHA() {
 	const dsc = "GitMergeBaseSHA"
+
+	if !r.Verified {
+		return
+	}
 
 	args := []string{r.GitDir, r.WorkTree, "merge-base", "@", "@{u}"}
 	if out, em := r.git(args); em != "" {
@@ -329,6 +363,10 @@ func (r *Repo) GitMergeBaseSHA() {
 func (r *Repo) GitRevParseUpstream() {
 	const dsc = "GitRevParseUpstream"
 
+	if !r.Verified {
+		return
+	}
+
 	args := []string{r.GitDir, r.WorkTree, "rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{u}"}
 	if out, em := r.git(args); em != "" {
 		r.Error(dsc, em)
@@ -341,6 +379,10 @@ func (r *Repo) GitRevParseUpstream() {
 func (r *Repo) GitDiffsNameOnly() {
 	var out, em string
 	const dsc = "GitDiffsNameOnly"
+
+	if !r.Verified {
+		return
+	}
 
 	args := []string{r.GitDir, r.WorkTree, "diff", "--name-only", "@{u}"}
 	if out, em = r.git(args); em != "" {
@@ -359,6 +401,10 @@ func (r *Repo) GitDiffsNameOnly() {
 // GitShortstat ...
 func (r *Repo) GitShortstat() {
 	const dsc = "GitShortstat"
+
+	if !r.Verified {
+		return
+	}
 
 	// command
 	args := []string{r.GitDir, r.WorkTree, "diff", "--shortstat"}
@@ -441,6 +487,10 @@ func (r *Repo) GitUntracked() {
 	var out, em string
 	const dsc = "GitUntracked"
 
+	if !r.Verified {
+		return
+	}
+
 	args := []string{r.GitDir, r.WorkTree, "ls-files", "--others", "--exclude-standard"}
 
 	out, em = r.git(args)
@@ -465,12 +515,22 @@ func (r *Repo) GitUntracked() {
 
 }
 
-// SetStatus ...
+// SetStatus ... GetStatus...?
 func (r *Repo) SetStatus(f flags.Flags) {
 
 	const dsc = "SetStatus"
 
+	if !r.Verified {
+		return
+	}
+
 	switch {
+	case r.LocalSHA == "":
+		r.Error(dsc, "fatal: r.LocalSHA = ''")
+	case r.UpstreamSHA == "":
+		r.Error(dsc, "fatal: r.UpstreamSHA = ''")
+	case r.MergeSHA == "":
+		r.Error(dsc, "fatal: r.MergeSHA = ''")
 	case r.LocalSHA == r.UpstreamSHA:
 		r.Status = "Up-To-Date"
 	case r.LocalSHA == r.MergeSHA:
@@ -480,9 +540,6 @@ func (r *Repo) SetStatus(f flags.Flags) {
 	}
 
 	switch {
-	case r.Verified == false:
-		r.Category = "Skipped"
-		r.Status = "Error"
 	case (r.Clean == true && r.Untracked == false && r.Status == "Ahead"):
 		r.Category = "Pending"
 		r.Status = "Ahead"
@@ -525,7 +582,7 @@ func (r *Repo) SetStatus(f flags.Flags) {
 	default:
 		r.Category = "Skipped"
 		r.Status = "Unknown"
-		r.Error(dsc, "No matches found in SetStatus?")
+		r.Error(dsc, "No matching conditions in SetStatus")
 	}
 
 	if r.ErrorMessage != "" {

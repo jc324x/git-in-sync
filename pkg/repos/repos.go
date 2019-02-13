@@ -7,6 +7,7 @@ import (
 	"log"
 	"sort"
 	"strconv"
+	"strings"
 	"sync"
 
 	"github.com/jychri/git-in-sync/pkg/brf"
@@ -254,31 +255,34 @@ func (rs Repos) infoSummary(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
 
 	st.Complete = false
 
-	var b bytes.Buffer
+	ew := e.Get("Warning")
 	pr := len(st.PendingRepos)
 	skr := len(st.SkippedRepos)
 	scr := len(st.ScheduledRepos)
-	ew := e.Get("Warning")
 
-	b.WriteString(ew)
-	b.WriteString(" [")
-	b.WriteString(strconv.Itoa(cr))
-	b.WriteString(" / ")
-	b.WriteString(strconv.Itoa(tr))
-	b.WriteString("] ")
+	var ssl []string
+
+	if scr >= 1 {
+		sm := brf.Summary(st.ScheduledRepos, 12)
+		s := fmt.Sprintf("scheduled: [%v](%v) ", pr, sm)
+		ssl = append(ssl, s)
+	}
 
 	if pr >= 1 {
-
+		sm := brf.Summary(st.PendingRepos, 12)
+		s := fmt.Sprintf("pending [%v](%v) ", pr, sm)
+		ssl = append(ssl, s)
 	}
 
 	if skr >= 1 {
-
+		sm := brf.Summary(st.SkippedRepos, 12)
+		s := fmt.Sprintf("skipped [%v](%v) ", pr, sm)
+		ssl = append(ssl, s)
 	}
 
-	if scr >= 1 {
+	sm := strings.Join(ssl, ",")
 
-	}
-
+	brf.Printv(f, "%v [%v/%v] repos complete, %v", ew, cr, tr, sm)
 }
 
 // Public

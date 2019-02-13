@@ -224,32 +224,3 @@
 // 	}
 
 // }
-
-// likely removed?
-
-func initPendingRepos(rs Repos) (prs Repos) {
-	for _, r := range rs {
-		if r.Category == "Pending" {
-			prs = append(prs, r)
-		}
-	}
-	return prs
-}
-
-func initScheludedRepos(rs Repos) (srs Repos) {
-	for _, r := range rs {
-		if r.Category == "Scheduled" {
-			srs = append(srs, r)
-		}
-	}
-	return srs
-}
-
-func initSkippedRepos(rs Repos) (skrs Repos) {
-	for _, r := range rs {
-		if r.Category == "Skipped" {
-			skrs = append(skrs, r)
-		}
-	}
-	return skrs
-}

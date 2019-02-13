@@ -236,7 +236,10 @@ func (rs Repos) repoSummary(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
 	if tr == cr {
 		st.Complete = true
 		ec := e.Get("Checkmark")
-		brf.Printv(f, "%v [%v/%v] complete", ec, cr, tr)
+		ti.Mark("repo-summary")
+		ts := ti.Split()
+		tt := ti.Time()
+		brf.Printv(f, "%v [%v/%v] repos verified {%v / %v}", ec, cr, tr, ts, tt)
 		return
 	}
 

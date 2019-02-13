@@ -321,82 +321,6 @@ func (rs Repos) VerifyRepos(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
 	rs.infoSummary(f, st, ti)  // print summary
 }
 
-// func (rs Repos) verifyChanges(e Emoji, f Flags) {
-
-// 	prs := initPendingRepos(rs)
-
-// 	if len(prs) >= 1 {
-// 		for _, r := range prs {
-
-// 			// prompt for approval
-// 			r.checkConfirmed()
-
-// 			// prompt for commit message
-// 			if r.Category != "Skipped" && strings.Contains(r.GitAction, "commit") {
-// 				fmt.Printf("%v commit message: ", e.Memo)
-// 				r.checkCommitMessage()
-// 			}
-// 		}
-
-// 		// t.MarkMoment("verify-changes")
-
-// 		// FLAG:
-// 		// check again see how many pending remain, should be zero...
-// 		// going to push pause for now
-// 		// I need to know count of pending/scheduled prior to the start
-// 		// to see what the difference is since then.
-// 		// things can be autoscheduled, need to account for those
-
-// 		// var sr []string // scheduled repos
-// 		// for _, r := range rs {
-// 		// 	if r.Category == "Scheduled " {
-// 		// 		sr = append(sr, r.Name)
-// 		// 	}
-// 		// }
-
-// 		// var b bytes.Buffer
-// 		// tr := time.Millisecond // truncate
-
-// 		// debug
-// 		// for _, r := range prs {
-// 		// 	fmt.Println(r.Name)
-// 		// }
-
-// 		// switch {
-// 		// case len(prs) >= 1 && len(sr) >= 1:
-// 		// 	b.WriteString(e.Hourglass)
-// 		// 	b.WriteString(" [")
-// 		// 	b.WriteString(strconv.Itoa(len(prs)))
-// 		// case len(prs) >= 1 && len(sr) == 0:
-// 		// 	b.WriteString(e.Warning)
-// 		// 	b.WriteString(" [")
-// 		// 	b.WriteString(strconv.Itoa(len(fcp)))
-// 		// }
-
-// 		// if len(prs) >= 1 && len(sr) >= 1 {
-// 		// 	b.WriteString(e.Hourglass)
-// 		// 	b.WriteString(" [")
-// 		// 	b.WriteString(strconv.Itoa(len(prs)))
-// 		// } else {
-// 		// fmt.Println()
-// 		// b.WriteString(e.Warning)
-// 		// b.WriteString(" [")
-// 		// b.WriteString(strconv.Itoa(len(fcp)))
-// 		// }
-
-// 		// b.WriteString("/")
-// 		// b.WriteString(strconv.Itoa(len(prs)))
-// 		// b.WriteString("] scheduled {")
-// 		// b.WriteString(t.GetSplit().Truncate(tr).String())
-// 		// b.WriteString(" / ")
-// 		// b.WriteString(t.GetTime().Truncate(tr).String())
-// 		// b.WriteString("}")
-
-// 		// targetPrintln(f, b.String())
-// 	}
-
-// }
-
 // VerifyChanges ...
 func (rs Repos) VerifyChanges(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
 	if st.Complete == true {
@@ -416,5 +340,4 @@ func (rs Repos) SubmitChanges(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
 	if st.Complete == true {
 		return
 	}
-
 }

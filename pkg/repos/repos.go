@@ -242,7 +242,6 @@ func (rs Repos) infoSummary(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
 		case r.Category == "Complete":
 			st.CompleteRepos = append(st.CompleteRepos, r.Name)
 		}
-
 	}
 
 	tr := len(st.Repos)
@@ -329,93 +328,6 @@ func (rs Repos) VerifyRepos(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
 // 	if len(prs) >= 1 {
 // 		for _, r := range prs {
 
-// 			var b bytes.Buffer
-
-// 			switch r.Status {
-// 			case "Ahead":
-// 				b.WriteString(e.Bunny)
-// 				b.WriteString(" ")
-// 				b.WriteString(r.Name)
-// 				b.WriteString(" is ahead of ")
-// 				b.WriteString(r.UpstreamBranch)
-// 			case "Behind":
-// 				b.WriteString(e.Turtle)
-// 				b.WriteString(" ")
-// 				b.WriteString(r.Name)
-// 				b.WriteString(" is behind ")
-// 				b.WriteString(r.UpstreamBranch)
-// 			case "Dirty", "DirtyUntracked", "DirtyAhead", "DirtyBehind":
-// 				b.WriteString(e.Pig)
-// 				b.WriteString(" ")
-// 				b.WriteString(r.Name)
-// 				b.WriteString(" is dirty [")
-// 				b.WriteString(strconv.Itoa((len(r.DiffsNameOnly))))
-// 				b.WriteString("]{")
-// 				b.WriteString(r.DiffsSummary)
-// 				b.WriteString("}(")
-// 				b.WriteString(r.ShortStatSummary)
-// 				b.WriteString(")")
-// 			case "Untracked", "UntrackedAhead", "UntrackedBehind":
-// 				b.WriteString(e.Pig)
-// 				b.WriteString(" ")
-// 				b.WriteString(r.Name)
-// 				b.WriteString(" is untracked [")
-// 				b.WriteString(strconv.Itoa(len(r.UntrackedFiles)))
-// 				b.WriteString("]{")
-// 				b.WriteString(r.UntrackedSummary)
-// 				b.WriteString("}")
-// 			case "Up-To-Date":
-// 				b.WriteString(e.Checkmark)
-// 				b.WriteString(" ")
-// 				b.WriteString(r.Name)
-// 				b.WriteString(" is up to date with ")
-// 				b.WriteString(r.UpstreamBranch)
-// 			}
-
-// 			switch r.Status {
-// 			case "DirtyUntracked":
-// 				b.WriteString(" and untracked [")
-// 				b.WriteString(strconv.Itoa(len(r.UntrackedFiles)))
-// 				b.WriteString("]{")
-// 				b.WriteString(r.UntrackedSummary)
-// 				b.WriteString("}")
-// 			case "DirtyAhead":
-// 				b.WriteString(" & ahead of ")
-// 				b.WriteString(r.UpstreamBranch)
-// 			case "DirtyBehind":
-// 				b.WriteString(" & behind")
-// 				b.WriteString(r.UpstreamBranch)
-// 			case "UntrackedAhead":
-// 				b.WriteString(" & is ahead of ")
-// 				b.WriteString(r.UpstreamBranch)
-// 			case "UntrackedBehind":
-// 				b.WriteString(" & is behind ")
-// 				b.WriteString(r.UpstreamBranch)
-// 			}
-
-// 			targetPrintln(f, b.String())
-
-// 			switch r.Status {
-// 			case "Ahead":
-// 				fmt.Printf("%v push changes to %v? ", e.Rocket, r.Remote)
-// 			case "Behind":
-// 				fmt.Printf("%v pull changes from %v? ", e.Boat, r.Remote)
-// 			case "Dirty":
-// 				fmt.Printf("%v add all files, commit and push to %v? ", e.Clipboard, r.Remote)
-// 			case "DirtyUntracked":
-// 				fmt.Printf("%v add all files, commit and push to %v? ", e.Clipboard, r.Remote)
-// 			case "DirtyAhead":
-// 				fmt.Printf("%v add all files, commit and push to %v? ", e.Clipboard, r.Remote)
-// 			case "DirtyBehind":
-// 				fmt.Printf("%v stash all files, pull changes, commit and push to %v? ", e.Clipboard, r.Remote)
-// 			case "Untracked":
-// 				fmt.Printf("%v add all files, commit and push to %v? ", e.Clipboard, r.Remote)
-// 			case "UntrackedAhead":
-// 				fmt.Printf("%v add all files, commit and push to %v? ", e.Clipboard, r.Remote)
-// 			case "UntrackedBehind":
-// 				fmt.Printf("%v stash all files, pull changes, commit and push to %v? ", e.Clipboard, r.Remote)
-// 			}
-
 // 			// prompt for approval
 // 			r.checkConfirmed()
 
@@ -491,6 +403,12 @@ func (rs Repos) VerifyChanges(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
 		return
 	}
 
+	for _, r := range rs {
+		if r.Category == "Pending" {
+			fmt.Println(r.Prompt)
+			fmt.Println(r.Confirm)
+		}
+	}
 }
 
 // SubmitChanges ...

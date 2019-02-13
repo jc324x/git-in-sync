@@ -4,6 +4,7 @@ package repo
 import (
 	"bufio"
 	"bytes"
+	"fmt"
 	"os"
 	"os/exec"
 	"path"
@@ -12,7 +13,7 @@ import (
 	"strings"
 
 	"github.com/jychri/git-in-sync/pkg/brf"
-	e "github.com/jychri/git-in-sync/pkg/emoji"
+	"github.com/jychri/git-in-sync/pkg/emoji"
 	"github.com/jychri/git-in-sync/pkg/fchk"
 	"github.com/jychri/git-in-sync/pkg/flags"
 	"github.com/jychri/git-in-sync/pkg/stat"
@@ -91,6 +92,8 @@ type Repo struct {
 	Category         string   // Complete, Pending, Skipped, Scheduled
 	Status           string   // better term?
 	Action           string   // "..."
+	Prompt           string   //
+	Confirm          string   //
 	Message          string   // "..."
 	Porcelain        bool     // true if `git status --porcelain` returns ""
 }
@@ -183,7 +186,7 @@ func (r *Repo) VerifyWorkspace(f flags.Flags, st *stat.Stat) {
 	const dsc = "verify-workspace"
 
 	if _, err := os.Stat(r.WorkspacePath); os.IsNotExist(err) {
-		brf.Printv(f, "%v creating %v", e.Get("Folder"), r.WorkspacePath)
+		brf.Printv(f, "%v creating %v", emoji.Get("Folder"), r.WorkspacePath)
 		os.MkdirAll(r.WorkspacePath, 0777)
 		st.CreatedWorkspaces = append(st.CreatedWorkspaces, r.Workspace)
 	}
@@ -242,7 +245,7 @@ func (r *Repo) GitClone(f flags.Flags) {
 	}
 
 	// "cloning..."
-	brf.Printv(f, "%v cloning %v {%v}", e.Get("Box"), r.Name, r.Workspace)
+	brf.Printv(f, "%v cloning %v {%v}", emoji.Get("Box"), r.Name, r.Workspace)
 
 	args := []string{"clone", r.URL, r.RepoPath}
 	if out, _ := r.git(args); out != "" {
@@ -605,6 +608,81 @@ func (r *Repo) SetStatus(f flags.Flags) {
 	case f.Logout() && r.Category == "Pending" && r.Status == "Ahead":
 		r.Category = "Scheduled"
 	}
+
+	var b bytes.Buffer
+	var s string
+
+	eb := emoji.Get("Bunny")
+	rn := r.Name
+	ub := r.UpstreamBranch
+	et := emoji.Get("Turtle")
+	ep := emoji.Get("Pig")
+	dfs := len(r.DiffsNameOnly)
+	ds := r.DiffsSummary
+	sss := r.ShortStatSummary
+	ufs := len(r.UntrackedFiles)
+	us := r.UntrackedSummary
+
+	switch r.Status {
+	case "Ahead":
+		s = fmt.Sprintf("%v %v is ahead of %v ", eb, rn, ub)
+	case "Behind":
+		s = fmt.Sprintf("%v %v is behind of %v ", et, rn, ub)
+	case "Dirty", "DirtyUntracked", "DirtyAhead", "DirtyBehind":
+		s = fmt.Sprintf("%v %v is dirty [%v]{%v}(%v)", ep, rn, dfs, ds, sss)
+	case "Untracked", "UntrackedAhead", "UntrackedBehind":
+		s = fmt.Sprintf("%v %v is untracked [%v]{%v}", ep, rn, ufs, us)
+	}
+
+	b.WriteString(s)
+	s = ""
+
+	switch r.Status {
+	case "DirtyUntracked":
+		s = fmt.Sprintf(" and untracked [%v]{%v}", ufs, us)
+	case "DirtyAhead":
+		s = fmt.Sprintf(" & ahead of %v", ub)
+	case "DirtyBehind":
+		s = fmt.Sprintf(" & behind  %v", ub)
+	case "UntrackedAhead":
+		s = fmt.Sprintf(" & is ahead of %v", ub)
+	case "UntrackedBehind":
+		s = fmt.Sprintf(" & is behind %v", ub)
+	}
+
+	if s != "" {
+		b.WriteString(s)
+	}
+
+	r.Prompt = b.String()
+
+	re := r.Remote
+	er := emoji.Get("Rocket")
+	eb = emoji.Get("Boat")
+	ec := emoji.Get("Clipboard")
+
+	switch r.Status {
+	case "Ahead":
+		s = fmt.Sprintf("%v push changes to %v? ", er, re)
+	case "Behind":
+		s = fmt.Sprintf("%v pull changes from %v? ", eb, re)
+	case "Dirty":
+		s = fmt.Sprintf("%v add all files, commit and push to %v? ", ec, re)
+	case "DirtyUntracked":
+		s = fmt.Sprintf("%v add all files, commit and push to %v? ", ec, re)
+	case "DirtyAhead":
+		s = fmt.Sprintf("%v add all files, commit and push to %v? ", ec, re)
+	case "DirtyBehind":
+		s = fmt.Sprintf("%v stash all files, pull changes, commit and push to %v? ", ec, re)
+	case "Untracked":
+		s = fmt.Sprintf("%v add all files, commit and push to %v? ", ec, re)
+	case "UntrackedAhead":
+		s = fmt.Sprintf("%v add all files, commit and push to %v? ", ec, re)
+	case "UntrackedBehind":
+		s = fmt.Sprintf("%v stash all files, pull changes, commit and push to %v? ", ec, re)
+	}
+
+	r.Confirm = s
 }
 
 // NEXT

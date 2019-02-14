@@ -495,7 +495,7 @@ func (r *Repo) GitShortstat() {
 
 // GitUntracked ...
 func (r *Repo) GitUntracked() {
-	var uf []string
+	// var uf []string
 	var out, em string
 	const dsc = "GitUntracked"
 
@@ -517,7 +517,7 @@ func (r *Repo) GitUntracked() {
 		return
 	}
 
-	fmt.Println(out)
+	uf := strings.Fields(out)
 
 	for _, f := range uf {
 		f = path.Base(f)

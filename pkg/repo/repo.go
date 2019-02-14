@@ -48,20 +48,6 @@ func (r *Repo) git(args []string) (out string, em string) {
 	return out, em
 }
 
-// skip returns true if a commit message is not needed.
-// It also probably needs a better name...
-func (r *Repo) skip() bool {
-
-	ac := strings.Contains(r.Action, "commit")
-
-	switch {
-	case r.Status == "Pending" && ac:
-		return false
-	default:
-		return true
-	}
-}
-
 // Public
 
 // Repo models a Git repository.
@@ -698,6 +684,10 @@ func (r *Repo) SetStatus(f flags.Flags) {
 // UserConfirm ...
 func (r *Repo) UserConfirm(f flags.Flags) {
 
+	if r.Category != "Pending" {
+		return
+	}
+
 	if f.Mode == "oneline" {
 		return
 	}
@@ -729,12 +719,13 @@ func (r *Repo) UserConfirm(f flags.Flags) {
 		r.Category = "Skipped"
 	}
 
-	if r.skip() {
+	// return if no commit message needed
+	if ac := strings.Contains(r.Action, "Commit"); ac == false {
 		return
 	}
 
 	em := emoji.Get("Memo")
-	fmt.Printf("%v commit message ", em)
+	fmt.Printf("%v commit message: ", em)
 
 	in, err = rdr.ReadString('\n')
 

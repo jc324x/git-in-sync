@@ -41,10 +41,6 @@ func (st *Stat) Continue() bool {
 	switch {
 	case st.AllComplete():
 		return false
-	case st.OnlyPending():
-		return true
-	case st.OnlyScheduled():
-		return true
 	case st.OnlySkipped():
 		return false
 	default:

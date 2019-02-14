@@ -272,7 +272,7 @@ func (rs Repos) infoSummary(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
 		b.WriteString(ew)
 	}
 
-	b.WriteString(fmt.Sprintf("[%v/%v] repos complete {%v / %v}", cr, tr, ts, tt))
+	b.WriteString(fmt.Sprintf(" [%v/%v] repos complete {%v / %v}", cr, tr, ts, tt))
 	brf.Printv(f, b.String())
 
 	switch {
@@ -308,7 +308,7 @@ func (rs Repos) VerifyWorkspaces(f flags.Flags, st *stat.Stat, ti *timer.Timer) 
 
 // VerifyRepos verifies all Repos in Repos.
 func (rs Repos) VerifyRepos(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
-	rs.cloneSchedule(f, st)    // mark pending clones
+	rs.cloneSchedule(f, st)    // schedule pending clones
 	rs.cloneAsync(f, st, ti)   // clone missing repos (async)
 	rs.cloneSummary(f, st, ti) // print summary
 	rs.infoPrint(f, st)        // print startup
@@ -318,14 +318,13 @@ func (rs Repos) VerifyRepos(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
 
 // VerifyChanges ...
 func (rs Repos) VerifyChanges(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
-	if st.Continue() {
-		return
-	}
+	// if st.Continue() {
+	// 	return
+	// }
 
 	for _, r := range rs {
-		if r.Category == "Pending" {
-			r.UserConfirm(f)
-		}
+		// fmt.Printf("%v/%v\n", r.Name, r.Category)
+		r.UserConfirm(f)
 	}
 }
 

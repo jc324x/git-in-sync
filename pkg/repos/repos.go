@@ -285,6 +285,12 @@ func (rs Repos) infoSummary(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
 	}
 }
 
+func (rs Repos) userConfirm(f flags.Flags) {
+	for _, r := range rs {
+		r.UserConfirm(f)
+	}
+}
+
 // Public
 
 // Repos collects pointers to Repo structs.
@@ -318,25 +324,5 @@ func (rs Repos) VerifyRepos(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
 
 // VerifyChanges ...
 func (rs Repos) VerifyChanges(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
-	// if st.Continue() {
-	// 	return
-	// }
-
-	for _, r := range rs {
-		// fmt.Printf("%v/%v\n", r.Name, r.Category)
-		r.UserConfirm(f)
-	}
-}
-
-// SubmitChanges ...
-func (rs Repos) SubmitChanges(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
-	if st.Continue() {
-		return
-	}
-
-	for _, r := range rs {
-		if r.Category == "Scheduled" {
-			fmt.Printf("%v %v %v", r.Name, r.Action, r.Message)
-		}
-	}
+	rs.userConfirm(f)
 }

@@ -127,7 +127,7 @@ func (rs Repos) workspaceSummary(f flags.Flags, st *stat.Stat, ti *timer.Timer) 
 	ts := ti.Split()                 // last split
 	tt := ti.Time()                  // elapsed time
 
-	var b bytes.Buffer
+	var b bytes.Buffer // buffer
 
 	// Briefcase for match, Slash for mismatch
 	if vw == tw {
@@ -254,40 +254,34 @@ func (rs Repos) infoSummary(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
 	tr := len(st.Repos)          // number of repos
 	cr := len(st.CompleteRepos)  // number of complete repos
 	ec := emoji.Get("Checkmark") // Checkmark emoji
+	es := emoji.Get("Fire")      // Fire emoji (replace with stop sign)
 	ew := emoji.Get("Warning")   // Warning emoji
 	ti.Mark("repo-summary")      // mark repo-summary
 	ts := ti.Split()             // last split
 	tt := ti.Time()              // elapsed time
 
-	if st.IsComplete() {
-		brf.Printv(f, "%v [%v/%v] repos complete {%v / %v}", ec, cr, tr, ts, tt)
+	var b bytes.Buffer // buffer
+
+	// Checkmark for complete, Warning for incomplete, Stop for skipped only
+	switch {
+	case st.AllComplete():
+		b.WriteString(ec)
+	case st.OnlySkipped():
+		b.WriteString(es)
+	default:
+		b.WriteString(ew)
+	}
+
+	b.WriteString(fmt.Sprintf("[%v/%v] repos complete {%v / %v}", cr, tr, ts, tt))
+	brf.Printv(f, b.String())
+
+	switch {
+	case st.AllComplete():
 		return
-	}
-
-	brf.Printv(f, "%v [%v/%v] repos complete {%v / %v}", ew, cr, tr, ts, tt)
-
-	if scr := len(st.ScheduledPull); scr != 0 {
-		etr := emoji.Get("Arrival")
-		srs := brf.Summary(st.ScheduledPull, 12)
-		brf.Printv(f, "%v [%v](%v) pull scheduled", etr, scr, srs)
-	}
-
-	if scr := len(st.ScheduledPush); scr != 0 {
-		etr := emoji.Get("Departure")
-		srs := brf.Summary(st.ScheduledPush, 12)
-		brf.Printv(f, "%v [%v](%v) push scheduled", etr, scr, srs)
-	}
-
-	if pr := len(st.PendingRepos); pr != 0 {
-		etr := emoji.Get("Traffic")
-		srs := brf.Summary(st.PendingRepos, 12)
-		brf.Printv(f, "%v [%v](%v) pending", etr, pr, srs)
-	}
-
-	if skr := len(st.SkippedRepos); skr != 0 {
-		etr := emoji.Get("Stop")
-		srs := brf.Summary(st.SkippedRepos, 12)
-		brf.Printv(f, "%v [%v](%v) pending", etr, skr, srs)
+	case st.OnlySkipped():
+		st.SkippedSummary()
+	case st.OnlyScheduled():
+		st.ScheduledSummary()
 	}
 }
 
@@ -324,7 +318,7 @@ func (rs Repos) VerifyRepos(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
 
 // VerifyChanges ...
 func (rs Repos) VerifyChanges(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
-	if st.IsComplete() {
+	if st.Continue() {
 		return
 	}
 
@@ -337,7 +331,7 @@ func (rs Repos) VerifyChanges(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
 
 // SubmitChanges ...
 func (rs Repos) SubmitChanges(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
-	if st.IsComplete() {
+	if st.Continue() {
 		return
 	}
 

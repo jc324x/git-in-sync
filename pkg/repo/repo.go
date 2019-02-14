@@ -495,7 +495,7 @@ func (r *Repo) GitShortstat() {
 
 // GitUntracked ...
 func (r *Repo) GitUntracked() {
-	// var uf []string
+
 	var out, em string
 	const dsc = "GitUntracked"
 
@@ -521,7 +521,6 @@ func (r *Repo) GitUntracked() {
 
 	for _, f := range uf {
 		f = path.Base(f)
-		fmt.Println(f)
 		r.UntrackedFiles = append(r.UntrackedFiles, f)
 	}
 

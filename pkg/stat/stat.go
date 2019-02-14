@@ -20,7 +20,6 @@ type Stat struct {
 	CompleteRepos          []string
 	ScheduledPull          []string
 	ScheduledPush          []string
-	// Complete               bool
 }
 
 // Init returns a new *Stat.
@@ -37,27 +36,108 @@ func (st *Stat) Reduce() {
 	st.InaccessibleWorkspaces = brf.Reduce(st.InaccessibleWorkspaces)
 }
 
-// IsComplete ...
-func (st *Stat) IsComplete() bool {
+// Continue ...
+func (st *Stat) Continue() bool {
+	switch {
+	case st.AllComplete():
+		return false
+	case st.OnlyPending():
+		return true
+	case st.OnlyScheduled():
+		return true
+	case st.OnlySkipped():
+		return false
+	default:
+		return true
+	}
+}
 
+// AllComplete ...
+func (st *Stat) AllComplete() bool {
 	if len(st.Repos) == len(st.CompleteRepos) {
 		return true
-
 	}
+
 	return false
 }
 
 // OnlyPending ...
 func (st *Stat) OnlyPending() bool {
+
+	if len(st.SkippedRepos) >= 1 {
+		return false
+	}
+
+	if len(st.ScheduledRepos) >= 1 {
+		return false
+	}
+
 	return true
 }
 
 // OnlySkipped ...
 func (st *Stat) OnlySkipped() bool {
+
+	if len(st.PendingRepos) >= 1 {
+		return false
+	}
+
+	if len(st.ScheduledRepos) >= 1 {
+		return false
+	}
+
 	return true
 }
 
 // OnlyScheduled ...
 func (st *Stat) OnlyScheduled() bool {
+
+	if len(st.PendingRepos) >= 1 {
+		return false
+	}
+
+	if len(st.SkippedRepos) >= 1 {
+		return false
+	}
+
 	return true
+}
+
+// if scr := len(st.ScheduledPull); scr != 0 {
+// 	etr := emoji.Get("Arrival")
+// 	srs := brf.Summary(st.ScheduledPull, 12)
+// 	brf.Printv(f, "%v [%v](%v) pull scheduled", etr, scr, srs)
+// }
+
+// if scr := len(st.ScheduledPush); scr != 0 {
+// 	etr := emoji.Get("Departure")
+// 	srs := brf.Summary(st.ScheduledPush, 12)
+// 	brf.Printv(f, "%v [%v](%v) push scheduled", etr, scr, srs)
+// }
+
+// if pr := len(st.PendingRepos); pr != 0 {
+// 	etr := emoji.Get("Traffic")
+// 	srs := brf.Summary(st.PendingRepos, 12)
+// 	brf.Printv(f, "%v [%v](%v) pending", etr, pr, srs)
+// }
+
+// if skr := len(st.SkippedRepos); skr != 0 {
+// 	etr := emoji.Get("Stop")
+// 	srs := brf.Summary(st.SkippedRepos, 12)
+// 	brf.Printv(f, "%v [%v](%v) skipped", etr, skr, srs)
+// }
+
+// SkippedSummary ...
+func (st *Stat) SkippedSummary() {
+
+}
+
+// PendingSummary ...
+func (st *Stat) PendingSummary() {
+
+}
+
+// ScheduledSummary ...
+func (st *Stat) ScheduledSummary() {
+
 }

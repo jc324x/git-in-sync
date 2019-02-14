@@ -9,6 +9,8 @@ import (
 
 // private
 
+// checkMode returns true if the environment variable
+// "MODE" == "TESTING".
 func checkMode() bool {
 	if env := os.Getenv("MODE"); env != "TESTING" {
 		return true
@@ -18,15 +20,16 @@ func checkMode() bool {
 
 // Public
 
-// Out ...
+// Out holds Status and Summary values.
 type Out struct {
 	Status  bool
 	Summary string
 }
 
 // Err evaluates an error, returning an Out struct
-// if possible. If err != nil and mode != "TESTING",
-// Err will call log.Fatalf.
+// if environmental variable "MODE" == "TESTING".
+// If err != nil and mode != "TESTING", Err will call
+// log.Fatalf and execution will stop before Err returns.
 func Err(err error, fm []string, v ...interface{}) Out {
 	var m = checkMode()
 
@@ -41,8 +44,9 @@ func Err(err error, fm []string, v ...interface{}) Out {
 }
 
 // Bool evaluates an bool, returning an Out struct
-// if possible. If bool == false and mode != "TESTING",
-// Err will call log.Fatalf.
+// if environmental variable "MODE" == "TESTING".
+// If bool == false and mode != "TESTING", Err will call
+// log.Fatalf and execution will stop before Bool returns.
 func Bool(b bool, fm []string, v ...interface{}) Out {
 	var m = checkMode()
 

@@ -1,4 +1,4 @@
-// Package flags supports Mode and Config flags in git-in-sync.
+// Package flags add Mode and Config flags to git-in-sync.
 package flags
 
 import (
@@ -33,12 +33,12 @@ func Init() (f Flags) {
 	return Flags{Mode: m, Config: c}
 }
 
-// Testing returns a Flags instance for testing.
+// Testing returns a Flags instance with Mode == "testing".
 func Testing(c string) Flags {
 	return Flags{Mode: "testing", Config: c}
 }
 
-// Login ...
+// Login returns true if f.Mode == "login".
 func (f Flags) Login() bool {
 	if f.Mode == "login" {
 		return true
@@ -46,7 +46,7 @@ func (f Flags) Login() bool {
 	return false
 }
 
-// Logout ...
+// Logout returns true if f.Mode == "logout".
 func (f Flags) Logout() bool {
 	if f.Mode == "logout" {
 		return true

@@ -285,7 +285,7 @@ func (rs Repos) infoSummary(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
 	}
 }
 
-func (rs Repos) userConfirm(f flags.Flags) {
+func (rs Repos) promptUser(f flags.Flags) {
 	for _, r := range rs {
 		r.UserConfirm(f)
 	}
@@ -324,5 +324,6 @@ func (rs Repos) VerifyRepos(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
 
 // VerifyChanges ...
 func (rs Repos) VerifyChanges(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
-	rs.userConfirm(f)
+	rs.promptUser(f)
+	// rs.submitChanges()
 }

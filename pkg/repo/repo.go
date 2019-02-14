@@ -692,10 +692,9 @@ func (r *Repo) UserConfirm(f flags.Flags) {
 		return
 	}
 
+	// prompt and read
 	fmt.Println(r.Prompt)
 	fmt.Printf(r.Confirm)
-
-	// setup reader
 	rdr := bufio.NewReader(os.Stdin)
 	in, err := rdr.ReadString('\n')
 
@@ -724,9 +723,14 @@ func (r *Repo) UserConfirm(f flags.Flags) {
 		return
 	}
 
+	// return if the user declined the commit
+	if r.Category == "Skipped" {
+		return
+	}
+
+	// prompt and read
 	em := emoji.Get("Memo")
 	fmt.Printf("%v commit message: ", em)
-
 	in, err = rdr.ReadString('\n')
 
 	switch in {

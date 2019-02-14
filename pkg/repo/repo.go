@@ -217,8 +217,6 @@ func (r *Repo) VerifyWorkspace(f flags.Flags, st *stat.Stat) {
 		r.Error(dsc, "fatal: No directory")
 		st.InaccessibleWorkspaces = append(st.InaccessibleWorkspaces, r.Workspace)
 	}
-
-	st.Reduce()
 }
 
 // GitSchedule ...

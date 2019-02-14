@@ -20,6 +20,7 @@ import (
 
 // private
 
+// names returns a string slice of all Repo names.
 func (rs Repos) names() (rss []string) {
 
 	for _, r := range rs {
@@ -33,6 +34,7 @@ func (rs Repos) names() (rss []string) {
 	return brf.Reduce(rss)
 }
 
+// names returns a string slice of all Repo workspaces.
 func (rs Repos) workspaces() (wss []string) {
 
 	for _, r := range rs {
@@ -122,6 +124,8 @@ func (rs Repos) workspaceSummary(f flags.Flags, st *stat.Stat, ti *timer.Timer) 
 	vw := len(st.VerifiedWorkspaces)
 	tw := len(st.Workspaces)
 	cw := len(st.CreatedWorkspaces)
+
+	st.Reduce()
 
 	// summary
 	var b bytes.Buffer

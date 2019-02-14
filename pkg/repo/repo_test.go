@@ -9,6 +9,15 @@ import (
 	"github.com/jychri/git-in-sync/pkg/tilde"
 )
 
+// private
+
+// erm returns Repo values ErrorName and
+// ErrorMessage as strings. It's used by
+// TestErrors to streamline the test pattern.
+func (r *Repo) erm() (string, string) {
+	return r.ErrorName, r.ErrorMessage
+}
+
 func TestInit(t *testing.T) {
 	zw := "main"
 	zu := "jychri"
@@ -81,13 +90,13 @@ func TestInit(t *testing.T) {
 	}
 }
 
-// These should all write errors to Repo, repo in example doesn't exist.
 func TestErrors(t *testing.T) {
-	zw := "main"
-	zu := "jychri"
+
+	zw := "fake"
+	zu := "fake"
 	zr := "github"
-	bp := "~/fakegis"
-	rn := "git-in-sync"
+	bp := "~/fake"
+	rn := "fake"
 
 	r := Init(zw, zu, zr, bp, rn)
 	r.Verified = true

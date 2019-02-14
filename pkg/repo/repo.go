@@ -22,7 +22,10 @@ import (
 
 // private
 
-// git runs a Git command.
+// git runs a Git command and returns standard out
+// and standard error values as strings out and em.
+// em is used rather than err to indicate that the
+// value is as string rather than an error.
 func (r *Repo) git(args []string) (out string, em string) {
 
 	if r.Verified == false {
@@ -45,11 +48,8 @@ func (r *Repo) git(args []string) (out string, em string) {
 	return out, em
 }
 
-// error messaging...uhh....erm...
-func (r *Repo) erm() (string, string) {
-	return r.ErrorName, r.ErrorMessage
-}
-
+// skip returns true if a commit message is not needed.
+// It also probably needs a better name...
 func (r *Repo) skip() bool {
 
 	ac := strings.Contains(r.Action, "commit")

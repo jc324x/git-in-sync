@@ -231,7 +231,7 @@ func (rs Repos) infoAsync(f flags.Flags, ti *timer.Timer) {
 	}
 	wg.Wait()
 
-	ti.Mark("info-async")
+	ti.Mark("info-async") // mark info-async
 }
 
 func (rs Repos) infoSummary(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
@@ -263,8 +263,6 @@ func (rs Repos) infoSummary(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
 		brf.Printv(f, "%v [%v/%v] repos verified {%v / %v}", ec, cr, tr, ts, tt)
 		return
 	}
-
-	st.Complete = false
 
 	ew := emoji.Get("Warning")
 	ts := ti.Split()

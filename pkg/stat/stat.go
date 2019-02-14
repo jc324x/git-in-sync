@@ -39,12 +39,25 @@ func (st *Stat) Reduce() {
 
 // IsComplete ...
 func (st *Stat) IsComplete() bool {
-	tr := len(st.Repos)
-	cr := len(st.CompleteRepos)
 
-	if tr == cr {
+	if len(st.Repos) == len(st.CompleteRepos) {
 		return true
-	}
 
+	}
 	return false
+}
+
+// OnlyPending ...
+func (st *Stat) OnlyPending() bool {
+	return true
+}
+
+// OnlySkipped ...
+func (st *Stat) OnlySkipped() bool {
+	return true
+}
+
+// OnlyScheduled ...
+func (st *Stat) OnlyScheduled() bool {
+	return true
 }

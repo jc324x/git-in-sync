@@ -87,7 +87,7 @@ func initSummary(f flags.Flags, st *stat.Stat, ti *timer.Timer, rs Repos) {
 	lw := len(st.Workspaces)       // number of workspaces
 	lr := len(rs)                  // number of repos
 	ts := ti.Split()               // last split
-	tt := ti.Time()                // elapsed run time
+	tt := ti.Time()                // elapsed time
 	brf.Printv(f, "%v [%v|%v] workspaces|repos {%v / %v}", efm, lw, lr, ts, tt)
 }
 
@@ -125,7 +125,7 @@ func (rs Repos) workspaceSummary(f flags.Flags, st *stat.Stat, ti *timer.Timer) 
 	eb := emoji.Get("Briefcase")     // Briefcase emoji
 	es := emoji.Get("Slash")         // Slash emoji
 	ts := ti.Split()                 // last split
-	tt := ti.Time()                  // elapsed run time
+	tt := ti.Time()                  // elapsed time
 
 	var b bytes.Buffer
 
@@ -197,7 +197,7 @@ func (rs Repos) cloneSummary(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
 	lc := len(st.ClonedRepos)   // number of cloned repos
 	lp := len(st.PendingClones) // number of pending clones
 	ts := ti.Split()            // last split
-	tt := ti.Time()             // elapsed run time
+	tt := ti.Time()             // elapsed time
 	brf.Printv(f, "%v [%v/%v] repos cloned {%v / %v}", et, lc, lp, ts, tt)
 }
 
@@ -251,21 +251,18 @@ func (rs Repos) infoSummary(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
 		}
 	}
 
-	tr := len(st.Repos)
-	cr := len(st.CompleteRepos)
+	tr := len(st.Repos)          // number of repos
+	cr := len(st.CompleteRepos)  // number of complete repos
+	ec := emoji.Get("Checkmark") // Checkmark emoji
+	ew := emoji.Get("Warning")   // Warning emoji
+	ti.Mark("repo-summary")      // mark repo-summary
+	ts := ti.Split()             // last split
+	tt := ti.Time()              // elapsed time
 
 	if st.IsComplete() {
-		ec := emoji.Get("Checkmark")
-		ti.Mark("repo-summary")
-		ts := ti.Split()
-		tt := ti.Time()
-		brf.Printv(f, "%v [%v/%v] repos verified {%v / %v}", ec, cr, tr, ts, tt)
+		brf.Printv(f, "%v [%v/%v] repos complete {%v / %v}", ec, cr, tr, ts, tt)
 		return
 	}
-
-	ew := emoji.Get("Warning")
-	ts := ti.Split()
-	tt := ti.Time()
 
 	brf.Printv(f, "%v [%v/%v] repos complete {%v / %v}", ew, cr, tr, ts, tt)
 

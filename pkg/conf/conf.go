@@ -6,38 +6,48 @@ import (
 	"io/ioutil"
 
 	"github.com/jychri/git-in-sync/pkg/flags"
-	q "github.com/jychri/git-in-sync/pkg/quit"
+	"github.com/jychri/git-in-sync/pkg/quit"
 )
 
 // private
 
-func read(f flags.Flags) ([]byte, q.Out) {
+// read reads the file at f.Config. read returns
+// a byte slice and quit.Out. In a normal run,
+// quit.Err will call log.Fatalf() if err != nil.
+// In a test run, quit.Err will record and return
+// the failure as quit.Out.
+func read(f flags.Flags) ([]byte, quit.Out) {
 	var bs []byte
 	var err error
 
 	bs, err = ioutil.ReadFile(f.Config)
 
 	fm := []string{"Cant' read file at (%v)\n", "Read file at (%v)\n"}
-	q := q.Err(err, fm, f.Config)
+	qo := quit.Err(err, fm, f.Config)
 
-	return bs, q
+	return bs, qo
 }
 
-func unmarshal(bs []byte, f flags.Flags) (Config, q.Out) {
+// unmarsmall unmarhalls the contents of a gisrc.json file,
+// read to a byte slice by read, and returns a Config and
+// quit.Out. In a normal run quit.Err will call log.Fatalf()
+// if err != nil. In a test run, quit.Err will record and
+// return the failure as quit.Out.
+func unmarshal(bs []byte, f flags.Flags) (Config, quit.Out) {
 	var c Config
 	var err error
 
 	err = json.Unmarshal(bs, &c)
 
 	fm := []string{"Can't unmarshal JSON from (%v)\n", "Unmarshalled (%v)\n"}
-	q := q.Err(err, fm, f.Config)
+	qo := quit.Err(err, fm, f.Config)
 
-	return c, q
+	return c, qo
 }
 
-// public
+// Public
 
-// Config holds unmrashalled data from gisrc.json.
+// Config holds unmrashalled JSON from a gisrc.json file.
 type Config struct {
 	Bundles []struct {
 		Path  string `json:"path"`
@@ -51,12 +61,10 @@ type Config struct {
 }
 
 // Init returns unmarshalled data from gisrc.json.
-// f.Config is validated before reaching Init.
-// flags.Init() verifies input with tilde.Abs()
+// The Flags' Mode and Config values are validated
+// prior to their use here.
 func Init(f flags.Flags) (c Config) {
-
-	bs, _ := read(f)
-	c, _ = unmarshal(bs, f)
-
+	bs, _ := read(f)        // read the file at path f.Config
+	c, _ = unmarshal(bs, f) // unmarshal the data from file at path f.Config
 	return c
 }

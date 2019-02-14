@@ -4,6 +4,7 @@ package brf
 import (
 	"bytes"
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/jychri/git-in-sync/pkg/flags"
@@ -37,6 +38,7 @@ func Reduce(ssl []string) (sl []string) {
 
 // Summary returns a set length string summarizing the contents of a string slice.
 func Summary(sl []string, l int) string {
+	sort.Strings(sl)
 
 	if len(sl) == 0 {
 		return ""

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log"
 	"sort"
-	"strconv"
 	"sync"
 
 	"github.com/jychri/git-in-sync/pkg/brf"
@@ -62,7 +61,7 @@ func (rs Repos) repos() (rss []string) {
 }
 
 func initPrint(f flags.Flags) {
-	ep := emoji.Get("Pager")
+	ep := emoji.Get("Pager") // Pager emoji
 	brf.Printv(f, "%v parsing workspaces|repos", ep)
 }
 
@@ -84,11 +83,11 @@ func initConvert(c conf.Config) (rs Repos) {
 }
 
 func initSummary(f flags.Flags, st *stat.Stat, ti *timer.Timer, rs Repos) {
-	efm := emoji.Get("FaxMachine")
-	lw := len(st.Workspaces)
-	lr := len(rs)
-	ts := ti.Split()
-	tt := ti.Time()
+	efm := emoji.Get("FaxMachine") // FaxMachine emoji
+	lw := len(st.Workspaces)       // number of workspaces
+	lr := len(rs)                  // number of repos
+	ts := ti.Split()               // last split
+	tt := ti.Time()                // elapsed run time
 	brf.Printv(f, "%v [%v|%v] workspaces|repos {%v / %v}", efm, lw, lr, ts, tt)
 }
 
@@ -103,46 +102,49 @@ func (rs Repos) byWorkspacePath() {
 
 func (rs Repos) workspaceSync(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
 
-	// sort Repos A-Z by *r.WorkspacePath
-	rs.byWorkspacePath()
-
-	// "verifying workspaces ..."
-	efc := emoji.Get("FileCabinet")
-	l := len(st.Workspaces)
-	sm := brf.Summary(st.Workspaces, 25)
-	brf.Printv(f, "%v  verifying workspaces [%v](%v)", efc, l, sm)
+	rs.byWorkspacePath()                 // sort Repos A-Z by WorkspacePath
+	efc := emoji.Get("FileCabinet")      // FileCabinet emoji
+	tw := len(st.Workspaces)             // number of workspaces
+	sm := brf.Summary(st.Workspaces, 25) // summary of workspaces
+	brf.Printv(f, "%v  verifying workspaces [%v](%v)", efc, tw, sm)
 
 	// verify each workspace, create if missing
 	for _, r := range rs {
 		r.VerifyWorkspace(f, st)
 	}
 
-	ti.Mark("workspace-sync")
+	ti.Mark("workspace-sync") // mark workspace-sync
 }
 
 func (rs Repos) workspaceSummary(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
-	vw := len(st.VerifiedWorkspaces)
-	tw := len(st.Workspaces)
-	cw := len(st.CreatedWorkspaces)
 
-	st.Reduce()
+	st.Reduce()                      // reduce slices to their unique items
+	tw := len(st.Workspaces)         // number of workspaces
+	vw := len(st.VerifiedWorkspaces) // number of verified workspaces
+	cw := len(st.CreatedWorkspaces)  // number of created workspaces
+	eb := emoji.Get("Briefcase")     // Briefcase emoji
+	es := emoji.Get("Slash")         // Slash emoji
+	ts := ti.Split()                 // last split
+	tt := ti.Time()                  // elapsed run time
 
-	// summary
 	var b bytes.Buffer
 
+	// Briefcase for match, Slash for mismatch
 	if vw == tw {
-		b.WriteString(emoji.Get("Briefcase"))
+		b.WriteString(eb)
 	} else {
-		b.WriteString(emoji.Get("Slash"))
+		b.WriteString(es)
 	}
 
 	b.WriteString(fmt.Sprintf(" [%v/%v] workspaces verified", vw, tw))
 
-	if len(st.CreatedWorkspaces) >= 1 {
-		b.WriteString(fmt.Sprintf(", created [%v]", strconv.Itoa(cw)))
+	// only print ", created ..." if needed
+	if cw >= 1 {
+		b.WriteString(fmt.Sprintf(", created [%v]", cw))
 	}
 
-	b.WriteString(fmt.Sprintf(" {%v/%v}", ti.Split().String(), ti.Time().String()))
+	// write timer info
+	b.WriteString(fmt.Sprintf(" {%v/%v}", ts, tt))
 
 	brf.Printv(f, b.String())
 }
@@ -153,16 +155,16 @@ func (rs Repos) cloneSchedule(f flags.Flags, st *stat.Stat) {
 	}
 }
 
-// Async
-
 func (rs Repos) cloneAsync(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
 
 	if len(st.PendingClones) > 1 {
-		es := emoji.Get("Sheep")
-		pc := len(st.PendingClones)
-		ps := brf.Summary(st.PendingClones, 25)
+		es := emoji.Get("Sheep")                // Sheep emoji
+		pc := len(st.PendingClones)             // number of pending clones
+		ps := brf.Summary(st.PendingClones, 25) // short summary
 		brf.Printv(f, "%v cloning [%v](%v)", es, pc, ps)
 
+		// asynchorously clone missing repos. GitClone
+		// returns early if PendingClone == false.
 		var wg sync.WaitGroup
 		for i := range rs {
 			wg.Add(1)
@@ -174,39 +176,41 @@ func (rs Repos) cloneAsync(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
 		wg.Wait()
 	}
 
-	ti.Mark("async-clone")
+	ti.Mark("async-clone") // mark async-clone
 }
 
 func (rs Repos) cloneSummary(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
 
+	// loop over repos again, record clone count in Stat.
 	for _, r := range rs {
 		if r.Cloned == true {
 			st.ClonedRepos = append(st.ClonedRepos, r.Name)
 		}
 	}
 
+	// return if nothing was cloned
 	if len(st.ClonedRepos) == 0 {
 		return
 	}
 
-	et := emoji.Get("Truck")
-	lc := len(st.ClonedRepos)
-	lp := len(st.PendingClones)
-	ts := ti.Split()
-	tt := ti.Time()
+	et := emoji.Get("Truck")    // Truck emoji
+	lc := len(st.ClonedRepos)   // number of cloned repos
+	lp := len(st.PendingClones) // number of pending clones
+	ts := ti.Split()            // last split
+	tt := ti.Time()             // elapsed run time
 	brf.Printv(f, "%v [%v/%v] repos cloned {%v / %v}", et, lc, lp, ts, tt)
 }
 
 func (rs Repos) infoPrint(f flags.Flags, st *stat.Stat) {
-	st.Repos = rs.repos()
-
-	ep := emoji.Get("Satellite")
-	lr := len(st.Repos)
-	sr := brf.Summary(st.Repos, 25)
+	st.Repos = rs.repos()           // record repo names
+	ep := emoji.Get("Satellite")    // Satellite emoji
+	lr := len(st.Repos)             // number of repos
+	sr := brf.Summary(st.Repos, 25) // short summary
 	brf.Printv(f, "%v  checking repos [%v](%v)", ep, lr, sr)
 }
 
 func (rs Repos) infoAsync(f flags.Flags, ti *timer.Timer) {
+
 	var wg sync.WaitGroup
 	for i := range rs {
 		wg.Add(1)

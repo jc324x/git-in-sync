@@ -262,7 +262,6 @@ func (r *Repo) GitClone(f flags.Flags) {
 		r.Error(dsc, out)
 	} else {
 		r.Cloned = true
-		// st.ClonedRepos = append(st.ClonedRepos, r.Name)
 	}
 }
 

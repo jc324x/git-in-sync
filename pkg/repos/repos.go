@@ -325,5 +325,7 @@ func (rs Repos) VerifyRepos(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
 // VerifyChanges ...
 func (rs Repos) VerifyChanges(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
 	rs.promptUser(f)
+	// update stat slices here?
+	// verify with user? summary?
 	// rs.submitChanges()
 }

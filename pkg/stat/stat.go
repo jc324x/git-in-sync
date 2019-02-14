@@ -20,7 +20,7 @@ type Stat struct {
 	CompleteRepos          []string
 	ScheduledPull          []string
 	ScheduledPush          []string
-	Complete               bool
+	// Complete               bool
 }
 
 // Init returns a new *Stat.
@@ -35,4 +35,16 @@ func (st *Stat) Reduce() {
 	st.CreatedWorkspaces = brf.Reduce(st.CreatedWorkspaces)
 	st.VerifiedWorkspaces = brf.Reduce(st.VerifiedWorkspaces)
 	st.InaccessibleWorkspaces = brf.Reduce(st.InaccessibleWorkspaces)
+}
+
+// IsComplete ...
+func (st *Stat) IsComplete() bool {
+	tr := len(st.Repos)
+	cr := len(st.CompleteRepos)
+
+	if tr == cr {
+		return true
+	}
+
+	return false
 }

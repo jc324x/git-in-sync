@@ -254,8 +254,7 @@ func (rs Repos) infoSummary(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
 	tr := len(st.Repos)
 	cr := len(st.CompleteRepos)
 
-	if tr == cr {
-		st.Complete = true
+	if st.IsComplete() {
 		ec := emoji.Get("Checkmark")
 		ti.Mark("repo-summary")
 		ts := ti.Split()
@@ -328,7 +327,7 @@ func (rs Repos) VerifyRepos(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
 
 // VerifyChanges ...
 func (rs Repos) VerifyChanges(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
-	if st.Complete == true {
+	if st.IsComplete() {
 		return
 	}
 
@@ -341,7 +340,7 @@ func (rs Repos) VerifyChanges(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
 
 // SubmitChanges ...
 func (rs Repos) SubmitChanges(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
-	if st.Complete == true {
+	if st.IsComplete() {
 		return
 	}
 

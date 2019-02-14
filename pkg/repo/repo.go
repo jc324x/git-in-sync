@@ -517,14 +517,16 @@ func (r *Repo) GitUntracked() {
 		return
 	}
 
+	fmt.Println(out)
+
 	for _, f := range uf {
 		f = path.Base(f)
+		fmt.Println(f)
 		r.UntrackedFiles = append(r.UntrackedFiles, f)
 	}
 
 	r.UntrackedSummary = brf.Summary(r.UntrackedFiles, 12)
 	r.Untracked = true
-
 }
 
 // SetStatus ...

@@ -746,17 +746,17 @@ func (r *Repo) UserConfirm(f flags.Flags) {
 func (r *Repo) GitAdd(f flags.Flags) {
 	const dsc = "GitAdd"
 
-	eo := emoji.Get("Outbox")
-	rn := r.Name
-	df := len(r.DiffsNameOnly)
-	ds := r.DiffsSummary
-	sss := r.ShortStatSummary
+	eo := emoji.Get("Outbox")   // Outbox emoji
+	rn := r.Name                // repo name
+	dfc := len(r.DiffsNameOnly) // count: diff files
+	ds := r.DiffsSummary        // summary: diffs
+	sss := r.ShortStatSummary   // summary: (+/-)
 
 	switch r.Status {
 	case "Dirty", "DirtyUntracked", "DirtyAhead", "DirtyBehind":
-		brf.Printv(f, "%v %v adding changes [%v]{%v}(%v)", eo, rn, df, ds, sss)
+		brf.Printv(f, "%v %v adding changes [%v]{%v}(%v)", eo, rn, dfc, ds, sss)
 	case "Untracked", "UntrackedAhead", "UntrackedBehind":
-		brf.Printv(f, "%v %v adding new files [%v]{%v}(%v)", eo, rn, df, ds, sss)
+		brf.Printv(f, "%v %v adding new files [%v]{%v}(%v)", eo, rn, dfc, ds, sss)
 	}
 
 	// command
@@ -772,13 +772,13 @@ func (r *Repo) GitAdd(f flags.Flags) {
 func (r *Repo) GitCommit(f flags.Flags) {
 	const dsc = "GitCommit"
 
-	ef := emoji.Get("Fire")
-	rn := r.Name
-	dfc := len(r.DiffsNameOnly)
-	ufc := len(r.UntrackedFiles)
-	ds := r.DiffsSummary
-	us := r.UntrackedSummary
-	sss := r.ShortStatSummary
+	ef := emoji.Get("Fire")      // Fire emoji
+	rn := r.Name                 // repo name
+	dfc := len(r.DiffsNameOnly)  // count: diff files
+	ufc := len(r.UntrackedFiles) // count: untracked files
+	ds := r.DiffsSummary         // summary: diffs
+	us := r.UntrackedSummary     // summary: untracked
+	sss := r.ShortStatSummary    // summary: (+/-)
 
 	switch r.Status {
 	case "Dirty", "DirtyUntracked", "DirtyAhead", "DirtyBehind":

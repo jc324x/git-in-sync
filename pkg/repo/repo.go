@@ -794,29 +794,21 @@ func (r *Repo) GitCommit(f flags.Flags) {
 	} else {
 		r.Cloned = true
 	}
-
-	switch r.Status {
-	case "Dirty", "DirtyUntracked", "DirtyAhead", "DirtyBehind":
-		// targetPrintln(f, "%v %v committing changes [%v]{%v}(%v)", e.Fire, r.Name, len(r.DiffsNameOnly), r.DiffsSummary, r.ShortStatSummary)
-	case "Untracked", "UntrackedAhead", "UntrackedBehind":
-		// targetPrintln(f, "%v %v committing new files [%v]{%v}", e.Fire, r.Name, len(r.UntrackedFiles), r.UntrackedSummary)
-	}
-
 }
 
 // GitStash ...
-func (r *Repo) GitStash() {
+func (r *Repo) GitStash(f flags.Flags) {
 	// targetPrintln(f, "%v  %v stashing changes", e.Squirrel, r.Name)
 
 }
 
 // GitPop ...
-func (r *Repo) GitPop() {
+func (r *Repo) GitPop(f flags.Flags) {
 	// targetPrintln(f, "%v %v popping changes", e.Popcorn, r.Name)
 }
 
 // GitPull ...
-func (r *Repo) GitPull() {
+func (r *Repo) GitPull(f flags.Flags) {
 	// targetPrintln(f, "%v %v pulling from %v @ %v", e.Ship, r.Name, r.UpstreamBranch, r.Remote)
 
 	// command
@@ -839,7 +831,7 @@ func (r *Repo) GitPull() {
 }
 
 // GitPush ...
-func (r *Repo) GitPush() {
+func (r *Repo) GitPush(f flags.Flags) {
 	// targetPrintln(f, "%v %v pushing to %v @ %v", e.Rocket, r.Name, r.UpstreamBranch, r.Remote)
 
 	// command
@@ -862,7 +854,7 @@ func (r *Repo) GitPush() {
 
 }
 
-func (r *Repo) gitStatusPorcelain() {
+func (r *Repo) gitStatusPorcelain(f flags.Flags) {
 
 	// return if !Verified
 	if !r.Verified {

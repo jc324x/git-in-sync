@@ -235,7 +235,6 @@ func (r *Repo) GitSchedule(f flags.Flags, st *stat.Stat) {
 func (r *Repo) GitClone(f flags.Flags) {
 	const dsc = "GitClone"
 
-	// return if !PendingClone
 	if !r.PendingClone {
 		return
 	}
@@ -613,10 +612,10 @@ func (r *Repo) SetStatus(f flags.Flags) {
 	ub := r.UpstreamBranch
 	et := emoji.Get("Turtle")
 	ep := emoji.Get("Pig")
-	dfs := len(r.DiffsNameOnly)
+	dfc := len(r.DiffsNameOnly)
 	ds := r.DiffsSummary
 	sss := r.ShortStatSummary
-	ufs := len(r.UntrackedFiles)
+	ufc := len(r.UntrackedFiles)
 	us := r.UntrackedSummary
 
 	switch r.Status {
@@ -625,9 +624,9 @@ func (r *Repo) SetStatus(f flags.Flags) {
 	case "Behind":
 		s = fmt.Sprintf("%v %v is behind of %v ", et, rn, ub)
 	case "Dirty", "DirtyUntracked", "DirtyAhead", "DirtyBehind":
-		s = fmt.Sprintf("%v %v is dirty [%v]{%v}(%v)", ep, rn, dfs, ds, sss)
+		s = fmt.Sprintf("%v %v is dirty [%v]{%v}(%v)", ep, rn, dfc, ds, sss)
 	case "Untracked", "UntrackedAhead", "UntrackedBehind":
-		s = fmt.Sprintf("%v %v is untracked [%v]{%v}", ep, rn, ufs, us)
+		s = fmt.Sprintf("%v %v is untracked [%v]{%v}", ep, rn, ufc, us)
 	}
 
 	b.WriteString(s)
@@ -635,7 +634,7 @@ func (r *Repo) SetStatus(f flags.Flags) {
 
 	switch r.Status {
 	case "DirtyUntracked":
-		s = fmt.Sprintf(" and untracked [%v]{%v}", ufs, us)
+		s = fmt.Sprintf(" and untracked [%v]{%v}", ufc, us)
 	case "DirtyAhead":
 		s = fmt.Sprintf(" & ahead of %v", ub)
 	case "DirtyBehind":
@@ -744,31 +743,58 @@ func (r *Repo) UserConfirm(f flags.Flags) {
 }
 
 // GitAdd ...
-func (r *Repo) GitAdd() {
+func (r *Repo) GitAdd(f flags.Flags) {
+	const dsc = "GitAdd"
+
+	eo := emoji.Get("Outbox")
+	rn := r.Name
+	df := len(r.DiffsNameOnly)
+	ds := r.DiffsSummary
+	sss := r.ShortStatSummary
+
 	switch r.Status {
 	case "Dirty", "DirtyUntracked", "DirtyAhead", "DirtyBehind":
-		// targetPrintln(f, "%v %v adding changes [%v]{%v}(%v)", e.Outbox, r.Name, len(r.DiffsNameOnly), r.DiffsSummary, r.ShortStatSummary)
+		brf.Printv(f, "%v %v adding changes [%v]{%v}(%v)", eo, rn, df, ds, sss)
 	case "Untracked", "UntrackedAhead", "UntrackedBehind":
-		// targetPrintln(f, "%v %v adding new files [%v]{%v}", e.Outbox, r.Name, len(r.UntrackedFiles), r.UntrackedSummary)
+		brf.Printv(f, "%v %v adding new files [%v]{%v}(%v)", eo, rn, df, ds, sss)
 	}
 
 	// command
 	args := []string{"-C", r.RepoPath, "add", "-A"}
-	cmd := exec.Command("git", args...)
-	var out bytes.Buffer
-	var err bytes.Buffer
-	cmd.Stderr = &err
-	cmd.Stdout = &out
-	cmd.Run()
-
-	// check error, set value(s)
-	if err := err.String(); err != "" {
-		// r.markError(e, f, err, "gitAdd")
+	if _, err := r.git(args); err != "" {
+		r.Error(dsc, err)
+	} else {
+		r.Cloned = true
 	}
-
 }
 
-func (r *Repo) gitCommit() {
+// GitCommit ...
+func (r *Repo) GitCommit(f flags.Flags) {
+	const dsc = "GitCommit"
+
+	ef := emoji.Get("Fire")
+	rn := r.Name
+	dfc := len(r.DiffsNameOnly)
+	ufc := len(r.UntrackedFiles)
+	ds := r.DiffsSummary
+	us := r.UntrackedSummary
+	sss := r.ShortStatSummary
+
+	switch r.Status {
+	case "Dirty", "DirtyUntracked", "DirtyAhead", "DirtyBehind":
+		brf.Printv(f, "%v %v committing changes [%v]{%v}(%v)", ef, rn, dfc, ds, sss)
+	case "Untracked", "UntrackedAhead", "UntrackedBehind":
+		brf.Printv(f, "%v %v committing new files [%v]{%v}", ef, rn, ufc, us)
+	}
+
+	// command
+	args := []string{"-C", r.RepoPath, "commit", "-m", r.Message}
+	if _, err := r.git(args); err != "" {
+		r.Error(dsc, err)
+	} else {
+		r.Cloned = true
+	}
+
 	switch r.Status {
 	case "Dirty", "DirtyUntracked", "DirtyAhead", "DirtyBehind":
 		// targetPrintln(f, "%v %v committing changes [%v]{%v}(%v)", e.Fire, r.Name, len(r.DiffsNameOnly), r.DiffsSummary, r.ShortStatSummary)
@@ -776,32 +802,21 @@ func (r *Repo) gitCommit() {
 		// targetPrintln(f, "%v %v committing new files [%v]{%v}", e.Fire, r.Name, len(r.UntrackedFiles), r.UntrackedSummary)
 	}
 
-	// command
-	args := []string{"-C", r.RepoPath, "commit", "-m", r.Message}
-	cmd := exec.Command("git", args...)
-	var out bytes.Buffer
-	var err bytes.Buffer
-	cmd.Stderr = &err
-	cmd.Stdout = &out
-	cmd.Run()
-
-	// check error, set value(s)
-	if err := err.String(); err != "" {
-		// r.markError(e, f, err, "gitCommit")
-	}
-
 }
 
-func (r *Repo) gitStash() {
+// GitStash ...
+func (r *Repo) GitStash() {
 	// targetPrintln(f, "%v  %v stashing changes", e.Squirrel, r.Name)
 
 }
 
-func (r *Repo) gitPop() {
+// GitPop ...
+func (r *Repo) GitPop() {
 	// targetPrintln(f, "%v %v popping changes", e.Popcorn, r.Name)
 }
 
-func (r *Repo) gitPull() {
+// GitPull ...
+func (r *Repo) GitPull() {
 	// targetPrintln(f, "%v %v pulling from %v @ %v", e.Ship, r.Name, r.UpstreamBranch, r.Remote)
 
 	// command
@@ -823,7 +838,8 @@ func (r *Repo) gitPull() {
 	}
 }
 
-func (r *Repo) gitPush() {
+// GitPush ...
+func (r *Repo) GitPush() {
 	// targetPrintln(f, "%v %v pushing to %v @ %v", e.Rocket, r.Name, r.UpstreamBranch, r.Remote)
 
 	// command

@@ -90,8 +90,8 @@ type Repo struct {
 	Category         string   // Complete, Pending, Skipped, Scheduled
 	Status           string   // better term?
 	Action           string   // "..."
-	Prompt           string   //
-	Confirm          string   //
+	Prompt1          string   //
+	Prompt2          string   //
 	Message          string   // "..."
 	Porcelain        bool     // true if `git status --porcelain` returns ""
 }
@@ -650,7 +650,7 @@ func (r *Repo) SetStatus(f flags.Flags) {
 		b.WriteString(s)
 	}
 
-	r.Prompt = b.String()
+	r.Prompt1 = b.String()
 
 	re := r.Remote
 	er := emoji.Get("Rocket")
@@ -678,10 +678,10 @@ func (r *Repo) SetStatus(f flags.Flags) {
 		s = fmt.Sprintf("%v stash all files, pull changes, commit and push to %v? ", ec, re)
 	}
 
-	r.Confirm = s
+	r.Prompt2 = s
 }
 
-// UserConfirm ...
+// UserConfirm prompts Prompt1 and Prompt2
 func (r *Repo) UserConfirm(f flags.Flags) {
 
 	if r.Category != "Pending" {
@@ -693,8 +693,8 @@ func (r *Repo) UserConfirm(f flags.Flags) {
 	}
 
 	// prompt and read
-	fmt.Println(r.Prompt)
-	fmt.Printf(r.Confirm)
+	fmt.Println(r.Prompt1)
+	fmt.Printf(r.Prompt2)
 	rdr := bufio.NewReader(os.Stdin)
 	in, err := rdr.ReadString('\n')
 
@@ -743,7 +743,8 @@ func (r *Repo) UserConfirm(f flags.Flags) {
 	}
 }
 
-func (r *Repo) gitAdd() {
+// GitAdd ...
+func (r *Repo) GitAdd() {
 	switch r.Status {
 	case "Dirty", "DirtyUntracked", "DirtyAhead", "DirtyBehind":
 		// targetPrintln(f, "%v %v adding changes [%v]{%v}(%v)", e.Outbox, r.Name, len(r.DiffsNameOnly), r.DiffsSummary, r.ShortStatSummary)

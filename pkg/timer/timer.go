@@ -62,6 +62,6 @@ func (ti *Timer) Get(s string) (Moment, error) {
 		}
 	}
 
-	var em Moment // (e)mpty (m)oment
+	var em Moment // empty moment
 	return em, errors.New("no moment found")
 }

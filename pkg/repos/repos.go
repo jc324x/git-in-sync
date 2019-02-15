@@ -291,6 +291,64 @@ func (rs Repos) promptUser(f flags.Flags) {
 	}
 }
 
+func (rs Repos) submitChanges(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
+	if st.Continue() == false {
+		return
+	}
+
+	var wg sync.WaitGroup
+	for i := range rs {
+		wg.Add(1)
+		go func(r *repo.Repo) {
+			defer wg.Done()
+			switch r.Action {
+			case "Pull":
+				r.GitPull(f)
+			case "Push":
+				r.GitPush(f)
+			case "Add-Commit-Push":
+				r.GitAdd(f)
+				r.GitCommit(f)
+				r.GitPush(f)
+			case "Stash-Pull-Pop-Commit-Push":
+				r.GitStash(f)
+				r.GitPull(f)
+				r.GitPop(f)
+				r.GitCommit(f)
+				r.GitPush(f)
+			}
+			// r.gitRemoteUpdate(e, f)
+			// r.gitStatusPorcelain(e, f)
+
+		}(rs[i])
+	}
+	wg.Wait()
+
+	// var vc []string // verified complete repos
+
+	// for _, r := range srs {
+	// 	if r.Category == "Complete" {
+	// 		vc = append(vc, r.Name)
+	// 	}
+	// }
+
+	//
+	// switch {
+	// case len(srs) == len(vc) && len(skrs) == 0:
+	// 	fmt.Println("all good. nothing skipped, everything completed")
+	// // case len(srs) == len(vc) && len(skrs) >= 1:
+	// // 	fmt.Println("all pending actions complete - did skip this though (as planned)")
+	// case len(srs) != len(vc) && len(skrs) >= 1:
+	// 	fmt.Println("all changes not submitted correctly, also skipped")
+	// }
+
+	// if len(srs) == len(vc) {
+	// 	fmt.Println("All changes submitted for pending repos")
+	// } else {
+	// 	fmt.Println("Hmm...schedule didn't complete")
+	// }
+}
+
 // Public
 
 // Repos collects pointers to Repo structs.
@@ -325,7 +383,5 @@ func (rs Repos) VerifyRepos(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
 // VerifyChanges ...
 func (rs Repos) VerifyChanges(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
 	rs.promptUser(f)
-	// update stat slices here?
-	// verify with user? summary?
-	// rs.submitChanges()
+	rs.submitChanges(f, st, ti)
 }

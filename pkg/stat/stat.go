@@ -43,6 +43,8 @@ func (st *Stat) Continue() bool {
 		return false
 	case st.OnlySkipped():
 		return false
+	case len(st.ScheduledRepos) >= 1:
+		return true
 	default:
 		return true
 	}

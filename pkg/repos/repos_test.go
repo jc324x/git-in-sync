@@ -69,8 +69,9 @@ func TestVerifyRepos(t *testing.T) {
 }
 
 func TestVerifyChanges(t *testing.T) {
-	p, cleanup = atp.Hub("repos")
+	atp.Hub("repos")
+	// atp.Hub("repos")
 
-	defer cleanup()
+	// defer cleanup()
 
 }

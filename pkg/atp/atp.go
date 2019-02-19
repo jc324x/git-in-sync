@@ -265,7 +265,7 @@ func Direct(pkg string, k string) (string, func()) {
 		log.Fatalf("Unable to write to %v (%v)", tg, err.Error())
 	}
 
-	if er := os.MkdirAll(td, 0777); err != nil {
+	if err := os.MkdirAll(td, 0777); err != nil {
 		log.Fatalf("Unable to create %v", td)
 	}
 

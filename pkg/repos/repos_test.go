@@ -16,7 +16,7 @@ func TestVerifyWorkspaces(t *testing.T) {
 	for _, tr := range []struct {
 		pkg, k string
 	}{
-		{"repos", "recipes"},
+		{"repos-workspaces", "recipes"},
 	} {
 		p, _ := atp.Setup(tr.pkg, tr.k)
 		// p, cleanup := atp.Setup(tr.pkg, tr.k)
@@ -43,7 +43,7 @@ func TestVerifyRepos(t *testing.T) {
 	for _, tr := range []struct {
 		pkg, k string
 	}{
-		{"repos", "recipes"},
+		{"repos-repos", "recipes"},
 	} {
 		p, _ := atp.Setup(tr.pkg, tr.k)
 		// p, cleanup := atp.Setup(tr.pkg, tr.k)
@@ -75,9 +75,9 @@ func TestVerifyChanges(t *testing.T) {
 	for _, tr := range []struct {
 		pkg, k string
 	}{
-		{"repos", "tmps"},
+		{"repos-changes", "tmp"},
 	} {
-		p, _ := atp.Hub(tr.pkg)
+		p, _ := atp.Hub(tr.pkg, tr.k)
 		// p, cleanup := atp.Hub(tr.pkg)
 		ti := timer.Init()
 		f := flags.Testing(p)

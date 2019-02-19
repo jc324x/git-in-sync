@@ -51,28 +51,7 @@ var jmap = map[string][]byte{
 				]
 			}]
 		}
-`), "google-apps-script": []byte(`
-		{
-			"bundles": [{
-				"path": "SETPATH",
-				"zones": [{
-						"user": "jychri",
-						"remote": "github",
-						"workspace": "google-apps-script",
-						"repositories": [
-							"crunchy-calendar",
-							"daily-sign-up",
-							"data-flipper",
-							"easy-csv",
-							"frequency-responder",
-							"google-apps-script-cheat-sheet",
-							"mega-merge",
-							"missing-homework"
-						]
-					}
-				]
-			}]
-		}`),
+`),
 	"tmp": []byte(`
 	{
 		"bundles": [{
@@ -82,11 +61,11 @@ var jmap = map[string][]byte{
 					"remote": "github",
 					"workspace": "tmp",
 					"repositories": [
-						"tmp1",
-						"tmp2",
-						"tmp3",
-						"tmp4",
-						"tmp5"
+						"tmpgis0",
+						"tmpgis1",
+						"tmpgis2",
+						"tmpgis3",
+						"tmpgis4"
 					]
 				}
 			]
@@ -102,24 +81,13 @@ var rmap = map[string]Results{
 		{"rochacbruno", "github", "recipes", []string{"vegan_recipes"}},
 		{"niw", "github", "recipes", []string{"ramen"}},
 	},
-	"google-apps-script": {
-		{"jychri", "github", "google-apps-script", []string{
-			"crunchy-calendar",
-			"daily-sign-up",
-			"data-flipper",
-			"easy-csv",
-			"frequency-responder",
-			"google-apps-script-cheat-sheet",
-			"mega-merge",
-			"missing-homework",
-		}}},
 	"tmp": {
 		{"jychri", "github", "tmp", []string{
-			"tmp1",
-			"tmp2",
-			"tmp3",
-			"tmp4",
-			"tmp5",
+			"tmpgis0",
+			"tmpgis1",
+			"tmpgis2",
+			"tmpgis3",
+			"tmpgis4",
 		}}},
 }
 
@@ -130,14 +98,9 @@ var trs = []string{
 	"tmpgis2",
 	"tmpgis3",
 	"tmpgis4",
-	// "tmpgis5",
-	// "tmpgis6",
-	// "tmpgis7",
-	// "tmpgis8",
-	// "tmpgis9",
 }
 
-func config() (string, error) {
+func readConfig() (string, error) {
 
 	var file *os.File
 	var err error
@@ -179,7 +142,7 @@ func config() (string, error) {
 	}
 }
 
-func paths(pkg string, k string) (string, string) {
+func paths(pkg string) (string, string) {
 	if pkg == "" {
 		log.Fatalf("pkg is empty")
 	}
@@ -226,14 +189,14 @@ func write(dir string, k string) string {
 // and a cleanup function that removes ~/tmpgis/$pkg/.
 // Note: Look at spec doc for os.MkdirAll and pull in.
 func Setup(pkg string, k string) (string, func()) {
-	base, dir := paths(pkg, k)
+	base, dir := paths(pkg)
 	gisrc := write(dir, k)
 	return gisrc, func() { os.RemoveAll(base) }
 }
 
-// Directory returns that path of testing environment ~/tmpgis/$pkg/.
-func Directory(pkg string) string {
-	base, _ := paths(pkg, "")
+// Base returns the base testing directory
+func Base(pkg string) string {
+	base, _ := paths(pkg)
 	return base
 }
 
@@ -303,12 +266,16 @@ func Resulter(k string) Results {
 // Hub uses hub to do stuff...
 // this needs to return a string path to a .gisrc just like Setup
 // should be ~/tmpgis/tmp/
-func Hub(pkg string) (string, func()) {
+func Hub(pkg string, k string) (string, func()) {
+
+	// base, dir := paths(pkg)
+	// gisrc := write(dir, k)
+	// return gisrc, func() { os.RemoveAll(base) }
 
 	var gu string // GitHub user set in ~/.config/hub
 	var err error
 
-	if gu, err = config(); err != nil {
+	if gu, err = readConfig(); err != nil {
 		log.Fatal(err)
 	}
 

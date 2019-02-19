@@ -14,13 +14,13 @@ func TestInit(t *testing.T) {
 		pkg, recipe string
 	}{
 		{"conf", "recipes"},
-		{"conf", "google-apps-script"},
 		{"conf", "tmp"},
 	} {
 
-		p, clean := atp.Setup(tr.pkg, tr.recipe)
+		// p, clean := atp.Setup(tr.pkg, tr.recipe)
+		// defer clean()
 
-		defer clean()
+		p, _ := atp.Setup(tr.pkg, tr.recipe)
 
 		f := flags.Testing(p)
 

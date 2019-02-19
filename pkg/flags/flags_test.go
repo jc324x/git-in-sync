@@ -28,9 +28,10 @@ func TestTesting(t *testing.T) {
 		{"flags", "recipes"},
 	} {
 
-		p, cleanup := atp.Setup(tr.pkg, tr.k)
+		// p, cleanup := atp.Setup(tr.pkg, tr.k)
+		// defer cleanup()
 
-		defer cleanup()
+		p, _ := atp.Setup(tr.pkg, tr.k)
 
 		f := Testing(p)
 

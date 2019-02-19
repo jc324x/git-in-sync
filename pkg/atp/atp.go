@@ -269,7 +269,7 @@ func Direct(pkg string, k string) (string, func()) {
 		log.Fatalf("Unable to create %v", td)
 	}
 
-	return tg, func() { log.Printf("removing %v\n", tg); os.Remove(tg) }
+	return tg, func() { os.Remove(tg) }
 }
 
 // Result holds the expected values for a zone.
@@ -293,7 +293,9 @@ func Resulter(k string) Results {
 	return rmap[k]
 }
 
-// Hub uses hub to do stuf...
+// Hub uses hub to do stuff...
+// this needs to return a string path to a .gisrc just like Setup
+// should be ~/tmpgis/tmp/
 func Hub(pkg string) (string, func()) {
 
 	var gu string // GitHub user set in ~/.config/hub
@@ -330,37 +332,37 @@ func Hub(pkg string) (string, func()) {
 
 			// git init
 			cmd := exec.Command("git", "init")
-			log.Printf("init %v\n", tp)
+			// log.Printf("init %v\n", tp)
 			cmd.Dir = tp
 			cmd.Run()
 
 			// hub create
 			cmd = exec.Command("hub", "create")
-			log.Printf("hub create %v\n", tp)
+			// log.Printf("hub create %v\n", tp)
 			cmd.Dir = tp
 			cmd.Run()
 
 			// touch README.md
 			cmd = exec.Command("touch", "README.md")
-			log.Printf("touch %v\n", tp)
+			// log.Printf("touch %v\n", tp)
 			cmd.Dir = tp
 			cmd.Run()
 
 			// git add *
 			cmd = exec.Command("git", "add", "*")
-			log.Printf("git add * %v\n", tp)
+			// log.Printf("git add * %v\n", tp)
 			cmd.Dir = tp
 			cmd.Run()
 
 			// git commit -m "Initial commit"
 			cmd = exec.Command("git", "commit", "-m", "Initial commit")
-			log.Printf("touch %v\n", tp)
+			// log.Printf("touch %v\n", tp)
 			cmd.Dir = tp
 			cmd.Run()
 
 			// git commit -- set-upstream origin master
 			cmd = exec.Command("git", "push", "--set-upstream", "origin", "master")
-			log.Printf("push upstream %v\n", tp)
+			// log.Printf("push upstream %v\n", tp)
 			cmd.Dir = tp
 			cmd.Run()
 
@@ -374,7 +376,7 @@ func Hub(pkg string) (string, func()) {
 
 		for _, gp := range gps {
 			cmd := exec.Command("hub", "delete", "-y", gp)
-			log.Printf("delete %v\n", gp)
+			// log.Printf("delete %v\n", gp)
 			cmd.Run()
 		}
 	}

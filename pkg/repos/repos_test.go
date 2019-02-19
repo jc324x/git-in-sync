@@ -18,14 +18,15 @@ func TestVerifyWorkspaces(t *testing.T) {
 	}{
 		{"repos", "recipes"},
 	} {
-		p, cleanup := atp.Setup(tr.pkg, tr.k)
+		p, _ := atp.Setup(tr.pkg, tr.k)
+		// p, cleanup := atp.Setup(tr.pkg, tr.k)
 		ti := timer.Init()
 		f := flags.Testing(p)
 		c := conf.Init(f)
 		st := stat.Init()
 		rs := Init(c, f, st, ti)
 
-		defer cleanup()
+		// defer cleanup()
 
 		rs.VerifyWorkspaces(f, st, ti)
 
@@ -44,14 +45,15 @@ func TestVerifyRepos(t *testing.T) {
 	}{
 		{"repos", "recipes"},
 	} {
-		p, cleanup := atp.Setup(tr.pkg, tr.k)
+		p, _ := atp.Setup(tr.pkg, tr.k)
+		// p, cleanup := atp.Setup(tr.pkg, tr.k)
 		ti := timer.Init()
 		f := flags.Testing(p)
 		c := conf.Init(f)
 		st := stat.Init()
 		rs := Init(c, f, st, ti)
 
-		defer cleanup()
+		// defer cleanup()
 
 		rs.VerifyWorkspaces(f, st, ti)
 		rs.VerifyRepos(f, st, ti)
@@ -69,9 +71,29 @@ func TestVerifyRepos(t *testing.T) {
 }
 
 func TestVerifyChanges(t *testing.T) {
-	atp.Hub("repos")
-	// atp.Hub("repos")
+
+	for _, tr := range []struct {
+		pkg, k string
+	}{
+		{"repos", "tmps"},
+	} {
+		p, _ := atp.Hub(tr.pkg)
+		// p, cleanup := atp.Hub(tr.pkg)
+		ti := timer.Init()
+		f := flags.Testing(p)
+		c := conf.Init(f)
+		st := stat.Init()
+		rs := Init(c, f, st, ti)
+
+		// defer cleanup()
+
+		rs.VerifyWorkspaces(f, st, ti)
+		rs.VerifyRepos(f, st, ti)
+	}
+
+	// _, cleanup := atp.Hub("repos")
+
+	//  ~/tmpgis/repos/tmpgis0 - 5 (repos)
 
 	// defer cleanup()
-
 }

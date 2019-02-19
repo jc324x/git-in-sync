@@ -67,3 +67,5 @@ func TestVerifyRepos(t *testing.T) {
 		}
 	}
 }
+
+func TestVerifyChanges(t *testing.T) {}

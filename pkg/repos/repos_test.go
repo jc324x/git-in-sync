@@ -1,6 +1,7 @@
 package repos
 
 import (
+	"log"
 	"os"
 	"testing"
 
@@ -18,15 +19,14 @@ func TestVerifyWorkspaces(t *testing.T) {
 	}{
 		{"repos-workspaces", "recipes"},
 	} {
-		p, _ := atp.Setup(tr.pkg, tr.k)
-		// p, cleanup := atp.Setup(tr.pkg, tr.k)
+		p, cleanup := atp.Setup(tr.pkg, tr.k)
 		ti := timer.Init()
 		f := flags.Testing(p)
 		c := conf.Init(f)
 		st := stat.Init()
 		rs := Init(c, f, st, ti)
 
-		// defer cleanup()
+		defer cleanup()
 
 		rs.VerifyWorkspaces(f, st, ti)
 
@@ -45,15 +45,14 @@ func TestVerifyRepos(t *testing.T) {
 	}{
 		{"repos-repos", "recipes"},
 	} {
-		p, _ := atp.Setup(tr.pkg, tr.k)
-		// p, cleanup := atp.Setup(tr.pkg, tr.k)
+		p, cleanup := atp.Setup(tr.pkg, tr.k)
 		ti := timer.Init()
 		f := flags.Testing(p)
 		c := conf.Init(f)
 		st := stat.Init()
 		rs := Init(c, f, st, ti)
 
-		// defer cleanup()
+		defer cleanup()
 
 		rs.VerifyWorkspaces(f, st, ti)
 		rs.VerifyRepos(f, st, ti)
@@ -77,23 +76,22 @@ func TestVerifyChanges(t *testing.T) {
 	}{
 		{"repos-changes", "tmp"},
 	} {
-		p, _ := atp.Hub(tr.pkg, tr.k)
-		// p, cleanup := atp.Hub(tr.pkg)
+		p, cleanup := atp.Hub(tr.pkg, tr.k)
 		ti := timer.Init()
 		f := flags.Testing(p)
 		c := conf.Init(f)
 		st := stat.Init()
 		rs := Init(c, f, st, ti)
 
-		// defer cleanup()
+		defer cleanup()
 
 		rs.VerifyWorkspaces(f, st, ti)
 		rs.VerifyRepos(f, st, ti)
+
+		for _, r := range rs {
+			if r.Clean != true {
+				log.Println(r.Name)
+			}
+		}
 	}
-
-	// _, cleanup := atp.Hub("repos")
-
-	//  ~/tmpgis/repos/tmpgis0 - 5 (repos)
-
-	// defer cleanup()
 }

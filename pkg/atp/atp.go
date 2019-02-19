@@ -171,7 +171,7 @@ func write(dir string, k string) string {
 
 func startup(dir string, user string, tmp string) string {
 
-	local := path.Join(dir, tmp)
+	local := path.Join(dir, "tmp", tmp)
 
 	os.RemoveAll(local)      // remove
 	os.MkdirAll(local, 0777) // create
@@ -318,6 +318,8 @@ func Hub(pkg string, k string) (string, func()) {
 		}(tmps[i])
 	}
 	wg.Wait()
+
+	// repos exist locally and on GitHub. Do interesting stuff here.
 
 	return gisrc, func() {
 		os.RemoveAll(base)

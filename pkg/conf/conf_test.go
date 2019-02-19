@@ -17,10 +17,10 @@ func TestInit(t *testing.T) {
 		{"conf", "tmp"},
 	} {
 
-		// p, clean := atp.Setup(tr.pkg, tr.recipe)
-		// defer clean()
+		p, clean := atp.Setup(tr.pkg, tr.recipe)
+		defer clean()
 
-		p, _ := atp.Setup(tr.pkg, tr.recipe)
+		// 		p, _ := atp.Setup(tr.pkg, tr.recipe)
 
 		f := flags.Testing(p)
 

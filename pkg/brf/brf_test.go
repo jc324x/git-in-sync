@@ -70,3 +70,24 @@ func TestFirst(t *testing.T) {
 		}
 	}
 }
+
+func TestMatchLine(t *testing.T) {
+
+	s1 := "- user: jychri "
+	s2 := "  oath_token: 324\n"
+
+	for _, tr := range []struct {
+		in, pfx, want string
+	}{
+		{s1, "- user:", "jychri"},
+		{s2, "oath_token:", "324"},
+	} {
+		got := MatchLine(tr.in, tr.pfx)
+
+		if got != tr.want {
+			t.Errorf("MatchLine: ('%v' != '%v')", got, tr.want)
+		}
+
+	}
+
+}

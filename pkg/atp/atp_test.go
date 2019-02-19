@@ -20,7 +20,6 @@ func TestResulter(t *testing.T) {
 }
 
 func TestHub(t *testing.T) {
-	Hub("atp")
-	// _, cleanup := Hub("atp")
-	// cleanup()
+	_, cleanup := Hub("atp")
+	cleanup()
 }

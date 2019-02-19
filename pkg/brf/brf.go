@@ -75,3 +75,19 @@ func First(s string) string {
 
 	return ""
 }
+
+// MatchLine returns the string after the match...
+func MatchLine(s string, pfx string) string {
+
+	if !strings.Contains(s, pfx) {
+		return ""
+	}
+
+	s = strings.TrimSpace(s)
+
+	s = strings.TrimPrefix(s, pfx)
+
+	s = strings.TrimSpace(s)
+
+	return s
+}

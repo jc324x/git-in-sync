@@ -4,14 +4,15 @@ package atp
 import (
 	"bufio"
 	"bytes"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
 	"path"
-	"strings"
 	"sync"
 
+	"github.com/jychri/git-in-sync/pkg/brf"
 	"github.com/jychri/git-in-sync/pkg/tilde"
 )
 
@@ -122,7 +123,21 @@ var rmap = map[string]Results{
 		}}},
 }
 
-func user() (string, error) {
+// test repos
+var trs = []string{
+	"tmpgis0",
+	"tmpgis1",
+	"tmpgis2",
+	"tmpgis3",
+	"tmpgis4",
+	"tmpgis5",
+	"tmpgis6",
+	"tmpgis7",
+	"tmpgis8",
+	"tmpgis9",
+}
+
+func config() (string, error) {
 
 	var file *os.File
 	var err error
@@ -137,21 +152,31 @@ func user() (string, error) {
 
 	scanner := bufio.NewScanner(file)
 
-	// var user string
-	// var token bool
+	var u string // user set in ~/.config/hub
+	var t bool   // token present in ~/.config/hub
 
 	for scanner.Scan() {
-		if strings.Contains(scanner.Text(), "user:") {
-			log.Println(scanner.Text())
+		l := scanner.Text()
+
+		if m := brf.MatchLine(l, "- user:"); m != "" {
+			u = m
 		}
 
-		if strings.Contains(scanner.Text(), "oauth_token") {
-			log.Println(scanner.Text())
+		if m := brf.MatchLine(l, "oauth_token:"); m != "" {
+			t = true
 		}
-
 	}
 
-	return "ok", nil // obligatory
+	switch {
+	case u != "" && t == true:
+		return u, nil
+	case u != "" && t == false:
+		return u, fmt.Errorf("No token set in ~/.config.hub")
+	case u == "" && t == true:
+		return u, fmt.Errorf("No user set in ~/.config.hub")
+	default:
+		return u, fmt.Errorf("Error in ~/.config.hub")
+	}
 }
 
 // Public
@@ -268,13 +293,15 @@ func Resulter(k string) Results {
 	return rmap[k]
 }
 
-// Hub uses GitHub's binary to create repos
-// with remotes.
+// Hub uses hub to do stuf...
 func Hub(pkg string) (string, func()) {
 
-	user()
+	var gu string // GitHub user set in ~/.config/hub
+	var err error
 
-	var trps []string
+	if gu, err = config(); err != nil {
+		log.Fatal(err)
+	}
 
 	if pkg == "" {
 		log.Fatalf("pkg is empty")
@@ -289,72 +316,82 @@ func Hub(pkg string) (string, func()) {
 
 	var wg sync.WaitGroup
 
-	// don't use trs, just increment by 1...
+	for i := range trs {
+		wg.Add(1)
+		go func(tr string) {
+			defer wg.Done()
 
-	// for i := range trs {
-	// 	wg.Add(1)
-	// 	go func(tr string) {
-	// 		defer wg.Done()
+			tp := path.Join(td, tr) // test path
 
-	// 		tp := path.Join(td, tr) // test path
+			// mkdir
+			if _, err := os.Stat(tp); os.IsNotExist(err) {
+				log.Printf("creating %v\n", tp)
+				os.MkdirAll(tp, 0777)
+			}
 
-	// 		// mkdir
-	// 		if _, err := os.Stat(tp); os.IsNotExist(err) {
-	// 			log.Printf("creating %v\n", tp)
-	// 			os.MkdirAll(tp, 0777)
-	// 		}
+			// git init
+			cmd := exec.Command("git", "init")
+			log.Printf("init %v\n", tp)
+			cmd.Dir = tp
+			cmd.Run()
 
-	// 		// git init
-	// 		cmd := exec.Command("git", "init")
-	// 		log.Printf("init %v\n", tp)
-	// 		cmd.Dir = tp
-	// 		cmd.Run()
+			// hub create
+			cmd = exec.Command("hub", "create")
+			log.Printf("hub create %v\n", tp)
+			cmd.Dir = tp
+			cmd.Run()
 
-	// 		// hub create
-	// 		cmd = exec.Command("hub", "create")
-	// 		log.Printf("hub create %v\n", tp)
-	// 		cmd.Dir = tp
-	// 		cmd.Run()
+			// touch README.md
+			cmd = exec.Command("touch", "README.md")
+			log.Printf("touch %v\n", tp)
+			cmd.Dir = tp
+			cmd.Run()
 
-	// 		// touch README.md
-	// 		cmd = exec.Command("touch", "README.md")
-	// 		log.Printf("touch %v\n", tp)
-	// 		cmd.Dir = tp
-	// 		cmd.Run()
+			// git add *
+			cmd = exec.Command("git", "add", "*")
+			log.Printf("git add * %v\n", tp)
+			cmd.Dir = tp
+			cmd.Run()
 
-	// 		// git add *
-	// 		cmd = exec.Command("git", "add", "*")
-	// 		log.Printf("git add * %v\n", tp)
-	// 		cmd.Dir = tp
-	// 		cmd.Run()
+			// git commit -m "Initial commit"
+			cmd = exec.Command("git", "commit", "-m", "Initial commit")
+			log.Printf("touch %v\n", tp)
+			cmd.Dir = tp
+			cmd.Run()
 
-	// 		// git commit -m "Initial commit"
-	// 		cmd = exec.Command("git", "commit", "-m", "Initial commit")
-	// 		log.Printf("touch %v\n", tp)
-	// 		cmd.Dir = tp
-	// 		cmd.Run()
+			// git commit -- set-upstream origin master
+			cmd = exec.Command("git", "push", "--set-upstream", "origin", "master")
+			log.Printf("push upstream %v\n", tp)
+			cmd.Dir = tp
+			cmd.Run()
 
-	// 		// git commit -- set-upstream origin master
-	// 		cmd = exec.Command("git", "push", "--set-upstream", "origin", "master")
-	// 		log.Printf("push upstream %v\n", tp)
-	// 		cmd.Dir = tp
-	// 		cmd.Run()
-
-	// 		// add to trp for removal later
-	// 		trps = append(trps, tp)
-
-	// 	}(trs[i])
-	// }
+		}(trs[i])
+	}
 	wg.Wait()
 
 	return td, func() {
 		os.RemoveAll(tb)
 
-		for _, trp := range trps {
-			// hub delet
-			cmd := exec.Command("hub", "delete", "yes")
-			log.Printf("hub delete %v\n", trp)
-			cmd.Dir = trp
+		for _, tr := range trs {
+			rp := path.Join(gu, tr) // relative path
+			log.Println(rp)
+
+			cmd := exec.Command("hub", "delete", "-y", rp)
+			log.Printf("hub delete %v\n", rp)
+
+			var err bytes.Buffer
+			var out bytes.Buffer
+			cmd.Stderr = &err
+			cmd.Stdout = &out
+
+			if es := err.String(); es != "" {
+				log.Printf("err: %v", es)
+			}
+
+			if os := err.String(); os != "" {
+				log.Printf("out: %v", os)
+			}
+
 			cmd.Run()
 		}
 	}

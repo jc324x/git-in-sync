@@ -130,11 +130,11 @@ var trs = []string{
 	"tmpgis2",
 	"tmpgis3",
 	"tmpgis4",
-	"tmpgis5",
-	"tmpgis6",
-	"tmpgis7",
-	"tmpgis8",
-	"tmpgis9",
+	// "tmpgis5",
+	// "tmpgis6",
+	// "tmpgis7",
+	// "tmpgis8",
+	// "tmpgis9",
 }
 
 func config() (string, error) {
@@ -265,7 +265,7 @@ func Direct(pkg string, k string) (string, func()) {
 		log.Fatalf("Unable to write to %v (%v)", tg, err.Error())
 	}
 
-	if err := os.MkdirAll(td, 0777); err != nil {
+	if er := os.MkdirAll(td, 0777); err != nil {
 		log.Fatalf("Unable to create %v", td)
 	}
 
@@ -315,6 +315,7 @@ func Hub(pkg string) (string, func()) {
 	}
 
 	var wg sync.WaitGroup
+	var gps []string
 
 	for i := range trs {
 		wg.Add(1)
@@ -322,12 +323,10 @@ func Hub(pkg string) (string, func()) {
 			defer wg.Done()
 
 			tp := path.Join(td, tr) // test path
+			gp := path.Join(gu, tr) // git path
 
-			// mkdir
-			if _, err := os.Stat(tp); os.IsNotExist(err) {
-				log.Printf("creating %v\n", tp)
-				os.MkdirAll(tp, 0777)
-			}
+			os.RemoveAll(tp)      // remove
+			os.MkdirAll(tp, 0777) // create
 
 			// git init
 			cmd := exec.Command("git", "init")
@@ -365,6 +364,7 @@ func Hub(pkg string) (string, func()) {
 			cmd.Dir = tp
 			cmd.Run()
 
+			gps = append(gps, gp)
 		}(trs[i])
 	}
 	wg.Wait()
@@ -372,26 +372,9 @@ func Hub(pkg string) (string, func()) {
 	return td, func() {
 		os.RemoveAll(tb)
 
-		for _, tr := range trs {
-			rp := path.Join(gu, tr) // relative path
-			log.Println(rp)
-
-			cmd := exec.Command("hub", "delete", "-y", rp)
-			log.Printf("hub delete %v\n", rp)
-
-			var err bytes.Buffer
-			var out bytes.Buffer
-			cmd.Stderr = &err
-			cmd.Stdout = &out
-
-			if es := err.String(); es != "" {
-				log.Printf("err: %v", es)
-			}
-
-			if os := err.String(); os != "" {
-				log.Printf("out: %v", os)
-			}
-
+		for _, gp := range gps {
+			cmd := exec.Command("hub", "delete", "-y", gp)
+			log.Printf("delete %v\n", gp)
 			cmd.Run()
 		}
 	}

@@ -18,3 +18,9 @@ func TestResulter(t *testing.T) {
 		t.Errorf("Resulter: != DeepEqual (%v != %v)", got, want)
 	}
 }
+
+func TestHub(t *testing.T) {
+	Hub("atp")
+	// _, cleanup := Hub("atp")
+	// cleanup()
+}

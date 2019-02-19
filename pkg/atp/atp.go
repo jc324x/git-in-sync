@@ -6,7 +6,9 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"os/exec"
 	"path"
+	"sync"
 
 	"github.com/jychri/git-in-sync/pkg/tilde"
 )
@@ -118,6 +120,20 @@ var rmap = map[string]Results{
 		}}},
 }
 
+// test repos
+var trs = []string{
+	"tmpgis0",
+	"tmpgis1",
+	"tmpgis2",
+	"tmpgis3",
+	"tmpgis4",
+	"tmpgis5",
+	"tmpgis6",
+	"tmpgis7",
+	"tmpgis8",
+	"tmpgis9",
+}
+
 // Public
 
 // Setup creates a test environment at ~/tmpgis/$pkg/.
@@ -126,6 +142,7 @@ var rmap = map[string]Results{
 // $td replaces 'SETPATH' in j, which is written to gisrc.json.
 // Setup returns the absolute path of ~/tmpgis/$pkg/gisrc.json
 // and a cleanup function that removes ~/tmpgis/$pkg/.
+// Note: Look at spec doc for os.MkdirAll and pull in.
 func Setup(pkg string, k string) (string, func()) {
 
 	var j []byte
@@ -139,17 +156,15 @@ func Setup(pkg string, k string) (string, func()) {
 		log.Fatalf("%v not found in jmap", k)
 	}
 
-	tb := tilde.Abs("~/tmpgis")
-
-	td := path.Join(tb, pkg) // test dir
+	tb := tilde.Abs("~/tmpgis") // test base
+	td := path.Join(tb, pkg)    // test dir
 
 	if err := os.MkdirAll(td, 0777); err != nil {
 		log.Fatalf("Unable to create %v", td)
 	}
 
-	tg := path.Join(td, "gisrc.json") // test gisrc
-
-	j = bytes.Replace(j, []byte("SETPATH"), []byte(td), -1)
+	tg := path.Join(td, "gisrc.json")                       // test gisrc
+	j = bytes.Replace(j, []byte("SETPATH"), []byte(td), -1) // SETPATH set
 
 	if err := ioutil.WriteFile(tg, j, 0777); err != nil {
 		log.Fatalf("Unable to write to %v (%v)", tg, err.Error())
@@ -159,7 +174,6 @@ func Setup(pkg string, k string) (string, func()) {
 }
 
 // Directory returns that path of testing environment ~/tmpgis/$pkg/.
-// Setup and tear down are handled with Setup()....
 func Directory(pkg string) string {
 
 	if pkg == "" {
@@ -176,7 +190,7 @@ func Directory(pkg string) string {
 // Direct creates a ~/.gisrc.json and returns its absolute path
 // with a clean up function that removes it. If ~/.gisrc.json
 // is present, the absolute path of ~/.gisrc.json
-// is returned with an empty cleanup function.
+// is returned with a mute cleanup function.
 func Direct(pkg string, k string) (string, func()) {
 
 	var j []byte
@@ -232,4 +246,91 @@ func Resulter(k string) Results {
 	}
 
 	return rmap[k]
+}
+
+// Hub uses GitHub's binary to create repos
+// with remotes.
+func Hub(pkg string) (string, func()) {
+
+	var trps []string
+
+	if pkg == "" {
+		log.Fatalf("pkg is empty")
+	}
+
+	tb := tilde.Abs("~/tmpgis") // test base
+	td := path.Join(tb, pkg)    // test dir
+
+	if err := os.MkdirAll(td, 0777); err != nil {
+		log.Fatalf("Unable to create %v", td)
+	}
+
+	var wg sync.WaitGroup
+	for i := range trs {
+		wg.Add(1)
+		go func(tr string) {
+			defer wg.Done()
+
+			tp := path.Join(td, tr) // test path
+
+			// mkdir
+			if _, err := os.Stat(tp); os.IsNotExist(err) {
+				log.Printf("creating %v\n", tp)
+				os.MkdirAll(tp, 0777)
+			}
+
+			// git init
+			cmd := exec.Command("git", "init")
+			log.Printf("init %v\n", tp)
+			cmd.Dir = tp
+			cmd.Run()
+
+			// hub create
+			cmd = exec.Command("hub", "create")
+			log.Printf("hub create %v\n", tp)
+			cmd.Dir = tp
+			cmd.Run()
+
+			// touch README.md
+			cmd = exec.Command("touch", "README.md")
+			log.Printf("touch %v\n", tp)
+			cmd.Dir = tp
+			cmd.Run()
+
+			// git add *
+			cmd = exec.Command("git", "add", "*")
+			log.Printf("git add * %v\n", tp)
+			cmd.Dir = tp
+			cmd.Run()
+
+			// git commit -m "Initial commit"
+			cmd = exec.Command("git", "commit", "-m", "Initial commit")
+			log.Printf("touch %v\n", tp)
+			cmd.Dir = tp
+			cmd.Run()
+
+			// git commit -- set-upstream origin master
+			cmd = exec.Command("git", "push", "--set-upstream", "origin", "master")
+			log.Printf("push upstream %v\n", tp)
+			cmd.Dir = tp
+			cmd.Run()
+
+			// add to trp for removal later
+			trps = append(trps, tp)
+
+		}(trs[i])
+	}
+	wg.Wait()
+
+	return td, func() {
+		os.RemoveAll(tb)
+
+		for _, trp := range trps {
+			// hub delet
+			cmd := exec.Command("hub", "delete", "yes")
+			log.Printf("hub delete %v\n", trp)
+			cmd.Dir = trp
+			cmd.Run()
+		}
+	}
 }

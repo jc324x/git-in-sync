@@ -22,7 +22,7 @@ func read(f flags.Flags) ([]byte, quit.Out) {
 
 	bs, err = ioutil.ReadFile(f.Config)
 
-	fm := []string{"Cant' read file at (%v)\n", "Read file at (%v)\n"}
+	fm := []string{"Can't read file at (%v)\n", "Read file at (%v)\n"}
 	qo := quit.Err(err, fm, f.Config)
 
 	return bs, qo

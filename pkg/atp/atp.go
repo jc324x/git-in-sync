@@ -100,7 +100,7 @@ var trs = []string{
 	"tmpgis4",
 }
 
-func readConfig() (string, error) {
+func config() (string, error) {
 
 	var file *os.File
 	var err error
@@ -268,14 +268,14 @@ func Resulter(k string) Results {
 // should be ~/tmpgis/tmp/
 func Hub(pkg string, k string) (string, func()) {
 
-	// base, dir := paths(pkg)
-	// gisrc := write(dir, k)
+	base, dir := paths(pkg)
+	gisrc := write(dir, k)
 	// return gisrc, func() { os.RemoveAll(base) }
 
 	var gu string // GitHub user set in ~/.config/hub
 	var err error
 
-	if gu, err = readConfig(); err != nil {
+	if gu, err = config(); err != nil {
 		log.Fatal(err)
 	}
 

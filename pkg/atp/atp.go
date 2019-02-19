@@ -179,6 +179,43 @@ func config() (string, error) {
 	}
 }
 
+func paths(pkg string, k string) (string, string) {
+	if pkg == "" {
+		log.Fatalf("pkg is empty")
+	}
+
+	base := tilde.Abs("~/tmpgis")
+	dir := path.Join(base, pkg)
+
+	if err := os.MkdirAll(dir, 0777); err != nil {
+		log.Fatalf("Unable to create %v", dir)
+	}
+
+	return base, dir
+}
+
+func write(dir string, k string) string {
+	var j []byte
+	var ok bool
+
+	if j, ok = jmap[k]; ok != true {
+		log.Fatalf("%v not found in jmap", k)
+	}
+
+	gisrc := path.Join(dir, "gisrc.json")
+
+	j = bytes.Replace(j, []byte("SETPATH"), []byte(dir), -1)
+
+	if err := ioutil.WriteFile(gisrc, j, 0777); err != nil {
+		log.Fatalf("Unable to write to %v (%v)", gisrc, err.Error())
+	}
+
+	return gisrc
+}
+
+// base, work := paths()
+// path := write(work, k)
+
 // Public
 
 // Setup creates a test environment at ~/tmpgis/$pkg/.
@@ -189,45 +226,15 @@ func config() (string, error) {
 // and a cleanup function that removes ~/tmpgis/$pkg/.
 // Note: Look at spec doc for os.MkdirAll and pull in.
 func Setup(pkg string, k string) (string, func()) {
-
-	var j []byte
-	var ok bool
-
-	if pkg == "" {
-		log.Fatalf("pkg is empty")
-	}
-
-	if j, ok = jmap[k]; ok != true {
-		log.Fatalf("%v not found in jmap", k)
-	}
-
-	tb := tilde.Abs("~/tmpgis") // test base
-	td := path.Join(tb, pkg)    // test dir
-
-	if err := os.MkdirAll(td, 0777); err != nil {
-		log.Fatalf("Unable to create %v", td)
-	}
-
-	tg := path.Join(td, "gisrc.json")                       // test gisrc
-	j = bytes.Replace(j, []byte("SETPATH"), []byte(td), -1) // SETPATH set
-
-	if err := ioutil.WriteFile(tg, j, 0777); err != nil {
-		log.Fatalf("Unable to write to %v (%v)", tg, err.Error())
-	}
-
-	return tg, func() { os.RemoveAll(tb) }
+	base, dir := paths(pkg, k)
+	gisrc := write(dir, k)
+	return gisrc, func() { os.RemoveAll(base) }
 }
 
 // Directory returns that path of testing environment ~/tmpgis/$pkg/.
 func Directory(pkg string) string {
-
-	if pkg == "" {
-		log.Fatalf("pkg is empty")
-	}
-
-	tb := tilde.Abs("~/tmpgis")
-
-	return path.Join(tb, pkg)
+	base, _ := paths(pkg, "")
+	return base
 }
 
 // Direct verifies the existence of a gisrc.json at ~/.gisrc.json;

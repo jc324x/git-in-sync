@@ -2,12 +2,14 @@
 package atp
 
 import (
+	"bufio"
 	"bytes"
 	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
 	"path"
+	"strings"
 	"sync"
 
 	"github.com/jychri/git-in-sync/pkg/tilde"
@@ -120,18 +122,36 @@ var rmap = map[string]Results{
 		}}},
 }
 
-// test repos
-var trs = []string{
-	"tmpgis0",
-	"tmpgis1",
-	"tmpgis2",
-	"tmpgis3",
-	"tmpgis4",
-	"tmpgis5",
-	"tmpgis6",
-	"tmpgis7",
-	"tmpgis8",
-	"tmpgis9",
+func user() (string, error) {
+
+	var file *os.File
+	var err error
+
+	path := tilde.Abs("~/.config/hub")
+
+	if file, err = os.Open(path); err != nil {
+		return "", err
+	}
+
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+
+	// var user string
+	// var token bool
+
+	for scanner.Scan() {
+		if strings.Contains(scanner.Text(), "user:") {
+			log.Println(scanner.Text())
+		}
+
+		if strings.Contains(scanner.Text(), "oauth_token") {
+			log.Println(scanner.Text())
+		}
+
+	}
+
+	return "ok", nil // obligatory
 }
 
 // Public
@@ -252,6 +272,8 @@ func Resulter(k string) Results {
 // with remotes.
 func Hub(pkg string) (string, func()) {
 
+	user()
+
 	var trps []string
 
 	if pkg == "" {
@@ -266,60 +288,63 @@ func Hub(pkg string) (string, func()) {
 	}
 
 	var wg sync.WaitGroup
-	for i := range trs {
-		wg.Add(1)
-		go func(tr string) {
-			defer wg.Done()
 
-			tp := path.Join(td, tr) // test path
+	// don't use trs, just increment by 1...
 
-			// mkdir
-			if _, err := os.Stat(tp); os.IsNotExist(err) {
-				log.Printf("creating %v\n", tp)
-				os.MkdirAll(tp, 0777)
-			}
+	// for i := range trs {
+	// 	wg.Add(1)
+	// 	go func(tr string) {
+	// 		defer wg.Done()
 
-			// git init
-			cmd := exec.Command("git", "init")
-			log.Printf("init %v\n", tp)
-			cmd.Dir = tp
-			cmd.Run()
+	// 		tp := path.Join(td, tr) // test path
 
-			// hub create
-			cmd = exec.Command("hub", "create")
-			log.Printf("hub create %v\n", tp)
-			cmd.Dir = tp
-			cmd.Run()
+	// 		// mkdir
+	// 		if _, err := os.Stat(tp); os.IsNotExist(err) {
+	// 			log.Printf("creating %v\n", tp)
+	// 			os.MkdirAll(tp, 0777)
+	// 		}
 
-			// touch README.md
-			cmd = exec.Command("touch", "README.md")
-			log.Printf("touch %v\n", tp)
-			cmd.Dir = tp
-			cmd.Run()
+	// 		// git init
+	// 		cmd := exec.Command("git", "init")
+	// 		log.Printf("init %v\n", tp)
+	// 		cmd.Dir = tp
+	// 		cmd.Run()
 
-			// git add *
-			cmd = exec.Command("git", "add", "*")
-			log.Printf("git add * %v\n", tp)
-			cmd.Dir = tp
-			cmd.Run()
+	// 		// hub create
+	// 		cmd = exec.Command("hub", "create")
+	// 		log.Printf("hub create %v\n", tp)
+	// 		cmd.Dir = tp
+	// 		cmd.Run()
 
-			// git commit -m "Initial commit"
-			cmd = exec.Command("git", "commit", "-m", "Initial commit")
-			log.Printf("touch %v\n", tp)
-			cmd.Dir = tp
-			cmd.Run()
+	// 		// touch README.md
+	// 		cmd = exec.Command("touch", "README.md")
+	// 		log.Printf("touch %v\n", tp)
+	// 		cmd.Dir = tp
+	// 		cmd.Run()
 
-			// git commit -- set-upstream origin master
-			cmd = exec.Command("git", "push", "--set-upstream", "origin", "master")
-			log.Printf("push upstream %v\n", tp)
-			cmd.Dir = tp
-			cmd.Run()
+	// 		// git add *
+	// 		cmd = exec.Command("git", "add", "*")
+	// 		log.Printf("git add * %v\n", tp)
+	// 		cmd.Dir = tp
+	// 		cmd.Run()
 
-			// add to trp for removal later
-			trps = append(trps, tp)
+	// 		// git commit -m "Initial commit"
+	// 		cmd = exec.Command("git", "commit", "-m", "Initial commit")
+	// 		log.Printf("touch %v\n", tp)
+	// 		cmd.Dir = tp
+	// 		cmd.Run()
 
-		}(trs[i])
-	}
+	// 		// git commit -- set-upstream origin master
+	// 		cmd = exec.Command("git", "push", "--set-upstream", "origin", "master")
+	// 		log.Printf("push upstream %v\n", tp)
+	// 		cmd.Dir = tp
+	// 		cmd.Run()
+
+	// 		// add to trp for removal later
+	// 		trps = append(trps, tp)
+
+	// 	}(trs[i])
+	// }
 	wg.Wait()
 
 	return td, func() {

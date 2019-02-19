@@ -62,7 +62,7 @@ func (rs Repos) repos() (rss []string) {
 
 func initPrint(f flags.Flags) {
 	ep := emoji.Get("Pager") // Pager emoji
-	brf.Printv(f, "%v parsing workspaces|repos", ep)
+	flags.Printv(f, "%v parsing workspaces|repos", ep)
 }
 
 func initConvert(c conf.Config) (rs Repos) {
@@ -88,7 +88,7 @@ func initSummary(f flags.Flags, st *stat.Stat, ti *timer.Timer, rs Repos) {
 	lr := len(rs)                  // number of repos
 	ts := ti.Split()               // last split
 	tt := ti.Time()                // elapsed time
-	brf.Printv(f, "%v [%v|%v] workspaces|repos {%v / %v}", efm, lw, lr, ts, tt)
+	flags.Printv(f, "%v [%v|%v] workspaces|repos {%v / %v}", efm, lw, lr, ts, tt)
 }
 
 func (rs Repos) byName() {
@@ -106,7 +106,7 @@ func (rs Repos) workspaceSync(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
 	efc := emoji.Get("FileCabinet")      // FileCabinet emoji
 	tw := len(st.Workspaces)             // number of workspaces
 	sm := brf.Summary(st.Workspaces, 25) // summary of workspaces
-	brf.Printv(f, "%v  verifying workspaces [%v](%v)", efc, tw, sm)
+	flags.Printv(f, "%v  verifying workspaces [%v](%v)", efc, tw, sm)
 
 	// verify each workspace, create if missing
 	for _, r := range rs {
@@ -146,7 +146,7 @@ func (rs Repos) workspaceSummary(f flags.Flags, st *stat.Stat, ti *timer.Timer) 
 	// write timer info
 	b.WriteString(fmt.Sprintf(" {%v/%v}", ts, tt))
 
-	brf.Printv(f, b.String())
+	flags.Printv(f, b.String())
 }
 
 func (rs Repos) cloneSchedule(f flags.Flags, st *stat.Stat) {
@@ -161,7 +161,7 @@ func (rs Repos) cloneAsync(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
 		es := emoji.Get("Sheep")                // Sheep emoji
 		pc := len(st.PendingClones)             // number of pending clones
 		ps := brf.Summary(st.PendingClones, 25) // short summary
-		brf.Printv(f, "%v cloning [%v](%v)", es, pc, ps)
+		flags.Printv(f, "%v cloning [%v](%v)", es, pc, ps)
 
 		// asynchorously clone missing repos. GitClone
 		// returns early if PendingClone == false.
@@ -198,7 +198,7 @@ func (rs Repos) cloneSummary(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
 	lp := len(st.PendingClones) // number of pending clones
 	ts := ti.Split()            // last split
 	tt := ti.Time()             // elapsed time
-	brf.Printv(f, "%v [%v/%v] repos cloned {%v / %v}", et, lc, lp, ts, tt)
+	flags.Printv(f, "%v [%v/%v] repos cloned {%v / %v}", et, lc, lp, ts, tt)
 }
 
 func (rs Repos) infoPrint(f flags.Flags, st *stat.Stat) {
@@ -206,7 +206,7 @@ func (rs Repos) infoPrint(f flags.Flags, st *stat.Stat) {
 	ep := emoji.Get("Satellite")    // Satellite emoji
 	lr := len(st.Repos)             // number of repos
 	sr := brf.Summary(st.Repos, 25) // short summary
-	brf.Printv(f, "%v  checking repos [%v](%v)", ep, lr, sr)
+	flags.Printv(f, "%v  checking repos [%v](%v)", ep, lr, sr)
 }
 
 func (rs Repos) infoAsync(f flags.Flags, ti *timer.Timer) {
@@ -273,7 +273,7 @@ func (rs Repos) infoSummary(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
 	}
 
 	b.WriteString(fmt.Sprintf(" [%v/%v] repos complete {%v / %v}", cr, tr, ts, tt))
-	brf.Printv(f, b.String())
+	flags.Printv(f, b.String())
 
 	switch {
 	case st.AllComplete():

@@ -184,7 +184,7 @@ func (r *Repo) VerifyWorkspace(f flags.Flags, st *stat.Stat) {
 	const dsc = "verify-workspace"
 
 	if _, err := os.Stat(r.WorkspacePath); os.IsNotExist(err) {
-		brf.Printv(f, "%v creating %v", emoji.Get("Folder"), r.WorkspacePath)
+		flags.Printv(f, "%v creating %v", emoji.Get("Folder"), r.WorkspacePath)
 		os.MkdirAll(r.WorkspacePath, 0777)
 		st.CreatedWorkspaces = append(st.CreatedWorkspaces, r.Workspace)
 	}
@@ -240,7 +240,7 @@ func (r *Repo) GitClone(f flags.Flags) {
 	}
 
 	// "cloning..."
-	brf.Printv(f, "%v cloning %v {%v}", emoji.Get("Box"), r.Name, r.Workspace)
+	flags.Printv(f, "%v cloning %v {%v}", emoji.Get("Box"), r.Name, r.Workspace)
 
 	args := []string{"clone", r.URL, r.RepoPath}
 	if out, _ := r.git(args); out != "" {
@@ -754,9 +754,9 @@ func (r *Repo) GitAdd(f flags.Flags) {
 
 	switch r.Status {
 	case "Dirty", "DirtyUntracked", "DirtyAhead", "DirtyBehind":
-		brf.Printv(f, "%v %v adding changes [%v]{%v}(%v)", eo, rn, dfc, ds, sss)
+		flags.Printv(f, "%v %v adding changes [%v]{%v}(%v)", eo, rn, dfc, ds, sss)
 	case "Untracked", "UntrackedAhead", "UntrackedBehind":
-		brf.Printv(f, "%v %v adding new files [%v]{%v}(%v)", eo, rn, dfc, ds, sss)
+		flags.Printv(f, "%v %v adding new files [%v]{%v}(%v)", eo, rn, dfc, ds, sss)
 	}
 
 	// command
@@ -782,9 +782,9 @@ func (r *Repo) GitCommit(f flags.Flags) {
 
 	switch r.Status {
 	case "Dirty", "DirtyUntracked", "DirtyAhead", "DirtyBehind":
-		brf.Printv(f, "%v %v committing changes [%v]{%v}(%v)", ef, rn, dfc, ds, sss)
+		flags.Printv(f, "%v %v committing changes [%v]{%v}(%v)", ef, rn, dfc, ds, sss)
 	case "Untracked", "UntrackedAhead", "UntrackedBehind":
-		brf.Printv(f, "%v %v committing new files [%v]{%v}", ef, rn, ufc, us)
+		flags.Printv(f, "%v %v committing new files [%v]{%v}", ef, rn, ufc, us)
 	}
 
 	// command

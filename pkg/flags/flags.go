@@ -3,7 +3,7 @@ package flags
 
 import (
 	"flag"
-
+	"fmt"
 	"github.com/jychri/git-in-sync/pkg/tilde"
 )
 
@@ -53,4 +53,14 @@ func (f Flags) Logout() bool {
 	}
 	return false
 
+}
+
+// Printv calls prints to standard output if not running in 'oneline' or 'testing' mode.
+func Printv(f Flags, s string, z ...interface{}) {
+	switch f.Mode {
+	case "oneline":
+	case "testing":
+	default:
+		fmt.Println(fmt.Sprintf(s, z...))
+	}
 }

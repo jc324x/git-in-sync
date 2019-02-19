@@ -3,21 +3,8 @@ package brf
 
 import (
 	"bytes"
-	"fmt"
 	"strings"
-
-	"github.com/jychri/git-in-sync/pkg/flags"
 )
-
-// Printv calls prints to standard output if not running in 'oneline' or 'testing' mode.
-func Printv(f flags.Flags, s string, z ...interface{}) {
-	switch f.Mode {
-	case "oneline":
-	case "testing":
-	default:
-		fmt.Println(fmt.Sprintf(s, z...))
-	}
-}
 
 // Reduce returns a string slice with no duplicate entries.
 func Reduce(ssl []string) (sl []string) {
@@ -79,11 +66,12 @@ func First(s string) string {
 // MatchLine returns the string after the match...
 func MatchLine(s string, pfx string) string {
 
+	pfx = strings.TrimSpace(pfx)
+	s = strings.TrimSpace(s)
+
 	if !strings.Contains(s, pfx) {
 		return ""
 	}
-
-	s = strings.TrimSpace(s)
 
 	s = strings.TrimPrefix(s, pfx)
 

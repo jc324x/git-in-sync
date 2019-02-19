@@ -80,6 +80,9 @@ func TestMatchLine(t *testing.T) {
 		in, pfx, want string
 	}{
 		{s1, "- user:", "jychri"},
+		{s1, " - user:", "jychri"},
+		// {s1, "user:", "jychri"},
+		// {s1, ":", "jychri"},
 		{s2, "oath_token:", "324"},
 	} {
 		got := MatchLine(tr.in, tr.pfx)

@@ -4,7 +4,7 @@ package atp
 import (
 	"bufio"
 	"bytes"
-	"fmt"
+	// "fmt"
 	"io/ioutil"
 	"log"
 	"os"
@@ -92,7 +92,7 @@ var rmap = map[string]Results{
 }
 
 // test repos
-var trs = []string{
+var tmps = []string{
 	"tmpgis0",
 	"tmpgis1",
 	"tmpgis2",
@@ -100,46 +100,39 @@ var trs = []string{
 	"tmpgis4",
 }
 
-func config() (string, error) {
-
-	var file *os.File
-	var err error
+func config() string {
 
 	path := tilde.Abs("~/.config/hub")
+	file, err := os.Open(path)
 
-	if file, err = os.Open(path); err != nil {
-		return "", err
+	if err != nil {
+		log.Fatal(err)
 	}
 
 	defer file.Close()
 
 	scanner := bufio.NewScanner(file)
 
-	var u string // user set in ~/.config/hub
-	var t bool   // token present in ~/.config/hub
+	var user string // user set in ~/.config/hub
+	var token bool  // token present in ~/.config/hub
 
 	for scanner.Scan() {
 		l := scanner.Text()
 
-		if m := brf.MatchLine(l, "- user:"); m != "" {
-			u = m
+		if match := brf.MatchLine(l, "- user:"); match != "" {
+			user = match
 		}
 
-		if m := brf.MatchLine(l, "oauth_token:"); m != "" {
-			t = true
+		if match := brf.MatchLine(l, "oauth_token:"); match != "" {
+			token = true
 		}
 	}
 
-	switch {
-	case u != "" && t == true:
-		return u, nil
-	case u != "" && t == false:
-		return u, fmt.Errorf("No token set in ~/.config.hub")
-	case u == "" && t == true:
-		return u, fmt.Errorf("No user set in ~/.config.hub")
-	default:
-		return u, fmt.Errorf("Error in ~/.config.hub")
+	if user == "" || token == false {
+		log.Fatalf("Error in ~/.config.hub")
 	}
+
+	return user
 }
 
 func paths(pkg string) (string, string) {
@@ -174,6 +167,46 @@ func write(dir string, k string) string {
 	}
 
 	return gisrc
+}
+
+func startup(dir string, user string, tmp string) string {
+
+	local := path.Join(dir, tmp)
+
+	os.RemoveAll(local)      // remove
+	os.MkdirAll(local, 0777) // create
+
+	// git init
+	cmd := exec.Command("git", "init")
+	cmd.Dir = local
+	cmd.Run()
+
+	// hub create
+	cmd = exec.Command("hub", "create")
+	cmd.Dir = local
+	cmd.Run()
+
+	// touch README.md
+	cmd = exec.Command("touch", "README.md")
+	cmd.Dir = local
+	cmd.Run()
+
+	// git add *
+	cmd = exec.Command("git", "add", "*")
+	cmd.Dir = local
+	cmd.Run()
+
+	// git commit -m "Initial commit"
+	cmd = exec.Command("git", "commit", "-m", "Initial commit")
+	cmd.Dir = local
+	cmd.Run()
+
+	// git commit -- set-upstream origin master
+	cmd = exec.Command("git", "push", "--set-upstream", "origin", "master")
+	cmd.Dir = local
+	cmd.Run()
+
+	return path.Join(user, tmp)
 }
 
 // base, work := paths()
@@ -270,87 +303,27 @@ func Hub(pkg string, k string) (string, func()) {
 
 	base, dir := paths(pkg)
 	gisrc := write(dir, k)
-	// return gisrc, func() { os.RemoveAll(base) }
+	user := config()
 
-	var gu string // GitHub user set in ~/.config/hub
-	var err error
-
-	if gu, err = config(); err != nil {
-		log.Fatal(err)
-	}
-
-	if pkg == "" {
-		log.Fatalf("pkg is empty")
-	}
-
-	tb := tilde.Abs("~/tmpgis") // test base
-	td := path.Join(tb, pkg)    // test dir
-
-	if err := os.MkdirAll(td, 0777); err != nil {
-		log.Fatalf("Unable to create %v", td)
-	}
+	var repos []string
 
 	var wg sync.WaitGroup
-	var gps []string
 
-	for i := range trs {
+	for i := range tmps {
 		wg.Add(1)
-		go func(tr string) {
+		go func(tmp string) {
 			defer wg.Done()
-
-			tp := path.Join(td, tr) // test path
-			gp := path.Join(gu, tr) // git path
-
-			os.RemoveAll(tp)      // remove
-			os.MkdirAll(tp, 0777) // create
-
-			// git init
-			cmd := exec.Command("git", "init")
-			// log.Printf("init %v\n", tp)
-			cmd.Dir = tp
-			cmd.Run()
-
-			// hub create
-			cmd = exec.Command("hub", "create")
-			// log.Printf("hub create %v\n", tp)
-			cmd.Dir = tp
-			cmd.Run()
-
-			// touch README.md
-			cmd = exec.Command("touch", "README.md")
-			// log.Printf("touch %v\n", tp)
-			cmd.Dir = tp
-			cmd.Run()
-
-			// git add *
-			cmd = exec.Command("git", "add", "*")
-			// log.Printf("git add * %v\n", tp)
-			cmd.Dir = tp
-			cmd.Run()
-
-			// git commit -m "Initial commit"
-			cmd = exec.Command("git", "commit", "-m", "Initial commit")
-			// log.Printf("touch %v\n", tp)
-			cmd.Dir = tp
-			cmd.Run()
-
-			// git commit -- set-upstream origin master
-			cmd = exec.Command("git", "push", "--set-upstream", "origin", "master")
-			// log.Printf("push upstream %v\n", tp)
-			cmd.Dir = tp
-			cmd.Run()
-
-			gps = append(gps, gp)
-		}(trs[i])
+			repo := startup(dir, user, tmp)
+			repos = append(repos, repo)
+		}(tmps[i])
 	}
 	wg.Wait()
 
-	return td, func() {
-		os.RemoveAll(tb)
+	return gisrc, func() {
+		os.RemoveAll(base)
 
-		for _, gp := range gps {
-			cmd := exec.Command("hub", "delete", "-y", gp)
-			// log.Printf("delete %v\n", gp)
+		for _, repo := range repos {
+			cmd := exec.Command("hub", "delete", "-y", repo)
 			cmd.Run()
 		}
 	}

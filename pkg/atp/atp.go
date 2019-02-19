@@ -61,11 +61,16 @@ var jmap = map[string][]byte{
 					"remote": "github",
 					"workspace": "tmp",
 					"repositories": [
-						"tmpgis0",
-						"tmpgis1",
-						"tmpgis2",
-						"tmpgis3",
-						"tmpgis4"
+						"gis-Ahead",
+						"gis-Behind",
+						"gis-Dirty",
+						"gis-DirtyUntracked",
+						"gis-DirtyAhead",
+						"gis-DirtyBehind",
+						"gis-Untracked",
+						"gis-UntrackedAhead",
+						"gis-UntrackedBehind",
+						"gis-Complete"
 					]
 				}
 			]
@@ -83,21 +88,31 @@ var rmap = map[string]Results{
 	},
 	"tmp": {
 		{"jychri", "github", "tmp", []string{
-			"tmpgis0",
-			"tmpgis1",
-			"tmpgis2",
-			"tmpgis3",
-			"tmpgis4",
+			"gis-Ahead",
+			"gis-Behind",
+			"gis-Dirty",
+			"gis-DirtyUntracked",
+			"gis-DirtyAhead",
+			"gis-DirtyBehind",
+			"gis-Untracked",
+			"gis-UntrackedAhead",
+			"gis-UntrackedBehind",
+			"gis-Complete",
 		}}},
 }
 
 // test repos
 var tmps = []string{
-	"tmpgis0",
-	"tmpgis1",
-	"tmpgis2",
-	"tmpgis3",
-	"tmpgis4",
+	"gis-Ahead",
+	"gis-Behind",
+	"gis-Dirty",
+	"gis-DirtyUntracked",
+	"gis-DirtyAhead",
+	"gis-DirtyBehind",
+	"gis-Untracked",
+	"gis-UntrackedAhead",
+	"gis-UntrackedBehind",
+	"gis-Complete",
 }
 
 func config() string {

@@ -115,7 +115,7 @@ var tmps = []string{
 	"gis-Complete",
 }
 
-func config() string {
+func hubconfig() string {
 
 	path := tilde.Abs("~/.config/hub")
 	file, err := os.Open(path)
@@ -184,6 +184,12 @@ func write(dir string, k string) string {
 	return gisrc
 }
 
+// startup creates a new temporary repo in the local test directory
+// 'tmp'. The repo is initialized with a blank README.md file, a first
+// commit with a message of 'Initial commit' and a upstream master branch
+// available at github.com/$user/$tmp. startup is called by Hub, which returns
+// a cleanup function that deletes the remote branch and deletes all temp
+// repos and directories.
 func startup(dir string, user string, tmp string) string {
 
 	local := path.Join(dir, "tmp", tmp)
@@ -223,9 +229,6 @@ func startup(dir string, user string, tmp string) string {
 
 	return path.Join(user, tmp)
 }
-
-// base, work := paths()
-// path := write(work, k)
 
 // Public
 
@@ -318,7 +321,7 @@ func Hub(pkg string, k string) (string, func()) {
 
 	base, dir := paths(pkg)
 	gisrc := write(dir, k)
-	user := config()
+	user := hubconfig()
 
 	var repos []string
 
@@ -337,6 +340,7 @@ func Hub(pkg string, k string) (string, func()) {
 	// repos exist locally and on GitHub. Do interesting stuff here.
 
 	return gisrc, func() {
+
 		os.RemoveAll(base)
 
 		for _, repo := range repos {

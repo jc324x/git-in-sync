@@ -4,6 +4,7 @@ package atp
 import (
 	"bufio"
 	"bytes"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"math/rand"
@@ -119,6 +120,12 @@ var tmps = []string{
 	"gis-Complete",
 }
 
+var behinds = []string{
+	"gis-Behind",
+	"gis-UntrackedBehind",
+	"gis-DirtyBehind",
+}
+
 func read() string {
 
 	path := tilde.Abs("~/.config/hub")
@@ -196,16 +203,6 @@ func gisrcer(dir string, k string) string {
 	return gisrc
 }
 
-// readmer writes a readme to file, with some lorem ipsum
-func readmer(dir string, tmp string) {
-
-	filename := path.Join(dir, "tmp", tmp, "README.md")
-
-	if err := ioutil.WriteFile(filename, lorem(), 0777); err != nil {
-		log.Fatal(err)
-	}
-}
-
 // startup creates a new temporary repo in the local test directory
 // 'tmp'. The repo is initialized with a blank README.md file, a first
 // commit with a message of 'Initial commit' and a upstream master branch
@@ -257,7 +254,7 @@ func startup(dir string, user string, tmp string) string {
 }
 
 // create all remotes on GitHub
-func create(tmps []string, dir string, user string) (remotes []string) {
+func hubs(tmps []string, dir string, user string) (remotes []string) {
 	var wg sync.WaitGroup
 
 	for i := range tmps {
@@ -295,7 +292,7 @@ func clone(dir string, remotes []string) {
 func rando() string {
 	var b bytes.Buffer
 
-	for i := 0; i <= 8; i++ {
+	for i := 0; i <= 6; i++ {
 		rand.Seed(time.Now().UnixNano())
 		min := 0
 		max := len(abc)
@@ -307,32 +304,51 @@ func rando() string {
 	return b.String()
 }
 
-// adds creates a new file with a random name in a directory.
-func add(dir string) {
+// add adds a file to a directory, random name and all that...
+func create(dir string) string {
+	rnd := rando()
+	filename := path.Join(dir, rnd)
+	ioutil.WriteFile(filename, lorem(), 0777)
+	return fmt.Sprintf("Added %v, status += BEHIND", rnd)
+}
 
+func add(dir string) {
+	cmd := exec.Command("git", "add", "*")
+	cmd.Dir = dir
+	cmd.Run()
+}
+
+func commit(dir string, m string) {
+	cmd := exec.Command("git", "commit", "-m", m)
+	cmd.Dir = dir
+	cmd.Run()
+}
+
+func push(dir string) {
+	cmd := exec.Command("git", "push", "origin", "master")
+	cmd.Dir = dir
+	cmd.Run()
 }
 
 // condition sets up testing conditions
 func simulate(dir string, remotes []string) {
-	set := path.Join(dir, "set")
 
-	if err := os.MkdirAll(set, 0777); err != nil {
+	dir = path.Join(dir, "set")
+
+	if err := os.MkdirAll(dir, 0777); err != nil {
 		log.Fatal(err)
 	}
 
-	clone(set, remotes)
+	clone(dir, remotes)
 
-	gb := path.Join(set, "gis-Behind")
-	gub := path.Join(set, "gis-UntrackedBehind")
-	gdb := path.Join(set, "gis-DirtyBehind")
+	for _, b := range behinds {
+		p := path.Join(dir, b) // path of repo
+		m := create(p)         // create file to put mirror behind
+		add(p)                 // add
+		commit(p, m)           // commit
+		push(p)                // push it
+	}
 
-	add(gb)
-	add(gub)
-	add(gdb)
-
-	// commit and push in the following repos:
-	// gis-Behind, gis-UntrackedBehind, gis-DirtyBehind
-	// so that they can be behind origin
 }
 
 // Public
@@ -423,11 +439,11 @@ func Resulter(k string) Results {
 // this needs to return a string path to a .gisrc just like Setup
 // should be ~/tmpgis/tmp/
 func Hub(pkg string, k string) (string, func()) {
-	base, dir := paths(pkg)            // base and directory paths
-	gisrc := gisrcer(dir, k)           // write gisrc
-	user := read()                     // read user ~/.config/hub
-	remotes := create(tmps, dir, user) // creates repos and remotes on GitHub
-	simulate(dir, remotes)             // create conditions
+	base, dir := paths(pkg)          // base and directory paths
+	gisrc := gisrcer(dir, k)         // write gisrc
+	user := read()                   // read user ~/.config/hub
+	remotes := hubs(tmps, dir, user) // hubs creates repos and remotes on GitHub
+	simulate(dir, remotes)           // create conditions
 
 	return gisrc, func() {
 		os.RemoveAll(base) // rm -rf base

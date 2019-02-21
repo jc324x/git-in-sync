@@ -4,19 +4,22 @@ package atp
 import (
 	"bufio"
 	"bytes"
-	"fmt"
 	"io/ioutil"
 	"log"
+	"math/rand"
 	"os"
 	"os/exec"
 	"path"
 	"sync"
+	"time"
 
 	"github.com/jychri/git-in-sync/pkg/brf"
 	"github.com/jychri/git-in-sync/pkg/tilde"
 )
 
 // private
+
+const abc = "abcdefghijklmnopqrstuvwxzyABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 // JSON map
 var jmap = map[string][]byte{
@@ -116,14 +119,7 @@ var tmps = []string{
 	"gis-Complete",
 }
 
-// Tmp is holds tmp repository details.
-type Tmp struct {
-	Category string // main or exp? along those lines
-	Path     string // absolute path on disk
-	Remote   string // $user/$repo
-}
-
-func hubconfig() string {
+func read() string {
 
 	path := tilde.Abs("~/.config/hub")
 	file, err := os.Open(path)
@@ -159,6 +155,7 @@ func hubconfig() string {
 }
 
 func paths(pkg string) (string, string) {
+
 	if pkg == "" {
 		log.Fatalf("pkg is empty")
 	}
@@ -173,8 +170,14 @@ func paths(pkg string) (string, string) {
 	return base, dir
 }
 
-// write writes a gisrc to file
-func write(dir string, k string) string {
+func lorem() []byte {
+	ls := "Lorem ipsum dolor sit amet, consectetur adipiscing elit. \n Morbi ac vulputate mi, sit amet euismod nibh. Donec at interdum sapien, non pretium tortor. Duis et dapibus eros. Sed tempus non dui vel maximus. \n Vivamus faucibus tellus in scelerisque ultrices. Duis ac libero a leo gravida convallis. Aliquam viverra lacinia arcu, ac molestie metus pharetra sit amet. "
+
+	return []byte(ls)
+}
+
+// gisrcer writes a gisrc to file, data from jmap matching key k.
+func gisrcer(dir string, k string) string {
 	var j []byte
 	var ok bool
 
@@ -191,6 +194,11 @@ func write(dir string, k string) string {
 	}
 
 	return gisrc
+}
+
+// readmeer writes a readme to file, with some lorem ipsum
+func readmeer() {
+
 }
 
 // startup creates a new temporary repo in the local test directory
@@ -216,7 +224,7 @@ func startup(dir string, user string, tmp string) string {
 	cmd.Dir = local
 	cmd.Run()
 
-	// touch README.md
+	// touch README.md (starting point, add file with Go builtins and data next)
 	cmd = exec.Command("touch", "README.md")
 	cmd.Dir = local
 	cmd.Run()
@@ -264,13 +272,58 @@ func remove(remotes []string) {
 	}
 }
 
-// commit creates an additional commit to a repo at path
-func commit() {
+// clone all remotes from GitHub with hub
+
+func clone(dir string, remotes []string) {
+	for _, remote := range remotes {
+		cmd := exec.Command("hub", "clone", remote)
+		cmd.Dir = dir
+		cmd.Run()
+	}
+}
+
+// rando returns a random string, 8 characters long
+func rando() string {
+	var b bytes.Buffer
+
+	for i := 0; i <= 8; i++ {
+		rand.Seed(time.Now().UnixNano())
+		min := 0
+		max := len(abc)
+		r := rand.Intn(max-min) + min
+		char := abc[r]
+		b.WriteByte(char)
+	}
+
+	return b.String()
+}
+
+// adds creates a new file with a random name in a directory.
+func add(dir string) {
 
 }
 
-func dirty() {
+// condition sets up testing conditions
+func simulate(dir string, remotes []string) {
+	set := path.Join(dir, "set")
 
+	if err := os.MkdirAll(set, 0777); err != nil {
+		log.Fatal(err)
+	}
+
+	clone(set, remotes)
+
+	gb := path.Join(set, "gis-Behind")
+	gub := path.Join(set, "gis-UntrackedBehind")
+	gdb := path.Join(set, "gis-DirtyBehind")
+
+	add(gb)
+	add(gub)
+	add(gdb)
+
+	// commit and push in the following repos:
+	// gis-Behind, gis-UntrackedBehind, gis-DirtyBehind
+	// so that they can be behind origin
 }
 
 // Public
@@ -284,7 +337,7 @@ func dirty() {
 // Note: Look at spec doc for os.MkdirAll and pull in.
 func Setup(pkg string, k string) (string, func()) {
 	base, dir := paths(pkg)
-	gisrc := write(dir, k)
+	gisrc := gisrcer(dir, k)
 	return gisrc, func() { os.RemoveAll(base) }
 }
 
@@ -360,28 +413,15 @@ func Resulter(k string) Results {
 // Hub uses hub to do stuff...
 // this needs to return a string path to a .gisrc just like Setup
 // should be ~/tmpgis/tmp/
-func Hub(pkg string, k string) (string, string, func()) {
-
+func Hub(pkg string, k string) (string, func()) {
 	base, dir := paths(pkg)            // base and directory paths
-	gisrc := write(dir, k)             // create the main gisrc
-	user := hubconfig()                // read the user from ~/.config/hub
+	gisrc := gisrcer(dir, k)           // write gisrc
+	user := read()                     // read user ~/.config/hub
 	remotes := create(tmps, dir, user) // creates repos and remotes on GitHub
-	exp := fmt.Sprintf("%v-exp", pkg)  // secondary exp
-	_, dir = paths(exp)                // exp path
-	egisrc := write(dir, k)            // create secondary gisrc in exp
+	simulate(dir, remotes)             // create conditions
 
-	// cleanup function
-	return gisrc, egisrc, func() {
-		os.RemoveAll(base)
-		remove(remotes)
+	return gisrc, func() {
+		os.RemoveAll(base) // rm -rf base
+		remove(remotes)    // delete all remotes on GitHub
 	}
-}
-
-// Conditions sets Setup
-func Conditions() {
-	// @ exp path, get all directories
-	// if name has Behind, drop in a commit and push to remote
-
-	// @ main path, get all directories
-	// if
 }

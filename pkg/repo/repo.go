@@ -755,9 +755,9 @@ func (r *Repo) UserConfirm(f flags.Flags) {
 	}
 
 	// prompt and read
-	em := emoji.Get("Memo")
-	fmt.Printf("%v commit message: ", em)
-	in, err = rdr.ReadString('\n')
+	em := emoji.Get("Memo")               // Memo emoji
+	fmt.Printf("%v commit message: ", em) // print
+	in, err = rdr.ReadString('\n')        // read
 
 	switch in {
 	case "n", "no", "nah", "0", "stop", "skip", "abort", "halt", "quit", "exit", "":
@@ -771,8 +771,7 @@ func (r *Repo) UserConfirm(f flags.Flags) {
 
 // GitAdd ...
 func (r *Repo) GitAdd(f flags.Flags) {
-	const dsc = "GitAdd"
-
+	const dsc = "GitAdd"        // description
 	eo := emoji.Get("Outbox")   // Outbox emoji
 	rn := r.Name                // repo name
 	dfc := len(r.DiffsNameOnly) // count: diff files
@@ -846,12 +845,12 @@ func (r *Repo) GitPull(f flags.Flags) {
 
 // GitPush ...
 func (r *Repo) GitPush(f flags.Flags) {
-	const dsc = "GitPull"                                                // description
-	er := emoji.Get("Rocket")                                            // Rocket emoji
-	rn := r.Name                                                         // repo name
-	ub := r.UpstreamBranch                                               // upstream branch
-	rr := r.Remote                                                       // remote
-	flags.Printv(f, "%v  %v pushing changes to %v @ %v", er, rn, ub, rr) // print
-	args := []string{"-C", r.RepoPath, "push"}                           // arguments
-	r.gitP(args, dsc)                                                    // command
+	const dsc = "GitPull"                                               // description
+	er := emoji.Get("Rocket")                                           // Rocket emoji
+	rn := r.Name                                                        // repo name
+	ub := r.UpstreamBranch                                              // upstream branch
+	rr := r.Remote                                                      // remote
+	flags.Printv(f, "%v %v pushing changes to %v @ %v", er, rn, ub, rr) // print
+	args := []string{"-C", r.RepoPath, "push"}                          // arguments
+	r.gitP(args, dsc)                                                   // command
 }

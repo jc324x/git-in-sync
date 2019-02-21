@@ -535,7 +535,7 @@ func (r *Repo) SetStatus(f flags.Flags) {
 	case r.MergeSHA == "":
 		r.Error(dsc, "fatal: r.MergeSHA = ''")
 	case r.LocalSHA == r.UpstreamSHA:
-		r.Status = "Up-To-Date"
+		r.Status = "Complete"
 	case r.LocalSHA == r.MergeSHA:
 		r.Status = "Behind"
 	case r.UpstreamSHA == r.MergeSHA:
@@ -551,11 +551,11 @@ func (r *Repo) SetStatus(f flags.Flags) {
 		r.Category = "Pending"
 		r.Status = "Behind"
 		r.Action = "Pull"
-	case (r.Clean == false && r.Untracked == false && r.Status == "Up-To-Date"):
+	case (r.Clean == false && r.Untracked == false && r.Status == "Complete"):
 		r.Category = "Pending"
 		r.Status = "Dirty"
 		r.Action = "Add-Commit-Push"
-	case (r.Clean == false && r.Untracked == true && r.Status == "Up-To-Date"):
+	case (r.Clean == false && r.Untracked == true && r.Status == "Complete"):
 		r.Category = "Pending"
 		r.Status = "DirtyUntracked"
 		r.Action = "Add-Commit-Push"
@@ -567,7 +567,7 @@ func (r *Repo) SetStatus(f flags.Flags) {
 		r.Category = "Pending"
 		r.Status = "DirtyBehind"
 		r.Action = "Stash-Pull-Pop-Commit-Push"
-	case (r.Clean == true && r.Untracked == true && r.Status == "Up-To-Date"):
+	case (r.Clean == true && r.Untracked == true && r.Status == "Complete"):
 		r.Category = "Pending"
 		r.Status = "Untracked"
 		r.Action = "Add-Commit-Push"
@@ -578,9 +578,9 @@ func (r *Repo) SetStatus(f flags.Flags) {
 	case (r.Clean == true && r.Untracked == true && r.Status == "Behind"):
 		r.Category = "Pending"
 		r.Status = "UntrackedBehind"
-	case (r.Clean == true && r.Untracked == false && r.Status == "Up-To-Date"):
+	case (r.Clean == true && r.Untracked == false && r.Status == "Complete"):
 		r.Category = "Complete"
-		r.Status = "Up-To-Date"
+		r.Status = "Complete"
 	default:
 		r.Category = "Skipped"
 		r.Status = "Unknown"

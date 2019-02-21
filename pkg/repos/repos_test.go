@@ -1,8 +1,9 @@
 package repos
 
 import (
-	"log"
+	// "log"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/jychri/git-in-sync/pkg/atp"
@@ -77,7 +78,6 @@ func TestVerifyChanges(t *testing.T) {
 		{"repos-changes", "tmp"},
 	} {
 		p, cleanup := atp.Hub(tr.pkg, tr.k)
-		// p, _ := atp.Hub(tr.pkg, tr.k)
 		ti := timer.Init()
 		f := flags.Testing(p)
 		c := conf.Init(f)
@@ -90,15 +90,8 @@ func TestVerifyChanges(t *testing.T) {
 		rs.VerifyRepos(f, st, ti)
 
 		for _, r := range rs {
-
-			if r.ErrorName != "" || r.ErrorMessage != "" {
-				log.Printf("repo name: %v", r.Name)
-				// log.Printf("repo error name: %v", r.ErrorName)
-				log.Printf("Clean: %v", r.Clean)
-				log.Printf("Untracked: %v", r.Untracked)
-				log.Printf("Status: %v", r.Status)
-
-				// case (r.Clean == false && r.Untracked == true && r.Status == "Behind"):
+			if trim := strings.TrimPrefix(r.Name, "gis-"); trim != r.Status {
+				t.Errorf("VerifyChanges: %v error: %v != %v", r.Name, trim, r.Status)
 			}
 		}
 	}

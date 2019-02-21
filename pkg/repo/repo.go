@@ -856,35 +856,3 @@ func (r *Repo) GitPush(f flags.Flags) {
 	}
 
 }
-
-func (r *Repo) gitStatusPorcelain(f flags.Flags) {
-
-	// return if !Verified
-	if !r.Verified {
-		return
-	}
-
-	// command
-	args := []string{r.GitDir, r.WorkTree, "status", "--porcelain"}
-	cmd := exec.Command("git", args...)
-	var out bytes.Buffer
-	var err bytes.Buffer
-	cmd.Stdout = &out
-	cmd.Stderr = &err
-	cmd.Run()
-
-	// check error, set value(s)
-	if err := err.String(); err != "" {
-		// r.markError(e, f, err, "gitStatusPorcelain")
-	}
-
-	if str := out.String(); str != "" {
-		r.Porcelain = false
-		// targetPrintln(f, "%v commit error (%v)", e.Slash, r.ErrorFirst)
-	} else {
-		r.Category = "Complete"
-		r.Porcelain = true
-		// targetPrintln(f, "%v %v up to date!", e.Checkmark, r.Name)
-	}
-
-}

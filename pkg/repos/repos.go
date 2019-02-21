@@ -326,9 +326,17 @@ func (rs Repos) submitChanges(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
 				r.GitCommit(f)
 				r.GitPush(f)
 			}
-			// r.gitRemoteUpdate(e, f)
-			// r.gitStatusPorcelain(e, f)
-
+			r.GitConfigOriginURL()
+			r.GitRemoteUpdate()
+			r.GitAbbrevRef()
+			r.GitLocalSHA()
+			r.GitUpstreamBranch()
+			r.GitMergeBaseSHA()
+			r.GitRevParseUpstream()
+			r.GitDiffsNameOnly()
+			r.GitShortstat()
+			r.GitUntracked()
+			r.SetStatus(f)
 		}(rs[i])
 	}
 	wg.Wait()

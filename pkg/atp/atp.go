@@ -236,6 +236,7 @@ func gisrcer(dir string, k string) string {
 // a cleanup function that deletes the remote branch and deletes all temp
 // repos and directories.
 func startup(dir string, user string, tmp string) string {
+	// NOTE: flick local to dir
 
 	local := path.Join(dir, "tmp", tmp)
 
@@ -273,6 +274,7 @@ func startup(dir string, user string, tmp string) string {
 
 	// git commit -- set-upstream origin master
 	cmd = exec.Command("git", "push", "--set-upstream", "origin", "master")
+	// cmd := exec.Command("git", "push", "-u", "origin", "master")
 	cmd.Dir = local
 	cmd.Run()
 
@@ -351,12 +353,13 @@ func commit(dir string, m string) {
 }
 
 func push(dir string) {
-	cmd := exec.Command("git", "push", "origin", "master")
+	cmd := exec.Command("git", "push", "-u", "origin", "master")
 	cmd.Dir = dir
 	cmd.Run()
 }
 
 func overwrite(filename string) {
+	// log.Printf("overwriting: %v", filename)
 	ioutil.WriteFile(filename, fox(), 0777)
 }
 
@@ -373,27 +376,34 @@ func simulate(dir string, remotes []string) {
 
 	for _, r := range behinds {
 		p := path.Join(sdir, r) // path of repo
-		m := create(p)          // create file on mirror and push = behind
-		add(p)                  // add
-		commit(p, m)            // commit
-		push(p)                 // push it
+		// log.Printf("set behind: %v", p)
+		m := create(p) // create file on mirror and push = behind
+		add(p)         // add
+		commit(p, m)   // commit
+		push(p)        // push it
 	}
+
+	dir = path.Join(dir, "tmp")
 
 	for _, r := range aheads {
 		p := path.Join(dir, r) // path of repo
-		m := create(p)         // create file and push = ahead
-		add(p)                 // add
-		commit(p, m)           // commit
+		// log.Printf("set ahead: %v", p)
+		m := create(p) // create file, don't push = ahead
+		add(p)         // add
+		commit(p, m)   // commit
 	}
 
 	for _, r := range untrackeds {
 		p := path.Join(dir, r) // path of repo
-		create(p)              // create file, no commit = dirty
+		// log.Printf("set untracked: %v", p)
+		create(p) // create file, no commit = untracked
 	}
 
 	for _, r := range dirties {
-		readme := path.Join(dir, r, "README.md") // path of repo
-		overwrite(readme)
+		p := path.Join(dir, r, "README.md")
+		// log.Printf("set dirty: %v", p)
+		// readme := path.Join(p) // path of repo
+		overwrite(p) // overwrite README.md = dirty
 	}
 }
 

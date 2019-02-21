@@ -260,10 +260,13 @@ func (r *Repo) GitConfigOriginURL() {
 
 	args := []string{r.GitDir, "config", "--get", "remote.origin.url"}
 	out, _ := r.git(args)
+	mod := strings.TrimSuffix(out, ".git")
 
 	switch {
 	case out == "":
 		r.Error(dsc, "fatal: 'origin' does not appear to be a git repository")
+	case mod == r.URL:
+		r.OriginURL = out
 	case out != r.URL:
 		r.Error(dsc, "fatal: URL != OriginURL")
 	default:
@@ -287,8 +290,10 @@ func (r *Repo) GitRemoteUpdate() {
 
 	switch {
 	case strings.Contains(em, "warning: redirecting") && strings.Contains(em, wgit):
-	case em != "":
+	case strings.Contains(em, "fatal"):
 		r.Error(dsc, em)
+		// case em != "":
+		// 	r.Error(dsc, em)
 	}
 }
 

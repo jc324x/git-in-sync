@@ -19,6 +19,15 @@ import (
 
 // private
 
+func (rs Repos) direct(name string) *repo.Repo {
+	for _, r := range rs {
+		if name == r.Name {
+			return r
+		}
+	}
+	return nil
+}
+
 // names returns a string slice of all Repo names.
 func (rs Repos) names() (rss []string) {
 

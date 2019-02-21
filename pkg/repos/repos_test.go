@@ -78,6 +78,7 @@ func TestVerifyChanges(t *testing.T) {
 		{"repos-changes", "tmp"},
 	} {
 		p, cleanup := atp.Hub(tr.pkg, tr.k)
+		// p, _ := atp.Hub(tr.pkg, tr.k)
 		ti := timer.Init()
 		f := flags.Testing(p)
 		c := conf.Init(f)
@@ -90,8 +91,21 @@ func TestVerifyChanges(t *testing.T) {
 		rs.VerifyRepos(f, st, ti)
 
 		for _, r := range rs {
+
 			if trim := strings.TrimPrefix(r.Name, "gis-"); trim != r.Status {
-				t.Errorf("VerifyChanges: %v error: %v != %v", r.Name, trim, r.Status)
+				t.Errorf("VerifyChanges: %v mismatch: %v != %v", r.Name, trim, r.Status)
+			}
+
+			r.Category = "Scheduled"
+			r.Message = "Test commit"
+		}
+
+		rs.submitChanges(f, st, ti)
+		rs.infoAsync(f, ti) // get info for all repos (async)
+
+		for _, r := range rs {
+			if r.Status != "Complete" {
+				t.Errorf("VerifyChanges: %v not complete? %v != %v", r.Name, r.Status, "Complete")
 			}
 		}
 	}

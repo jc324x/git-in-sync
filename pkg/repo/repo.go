@@ -796,8 +796,6 @@ func (r *Repo) GitCommit(f flags.Flags) {
 	args := []string{"-C", r.RepoPath, "commit", "-m", r.Message}
 	if _, err := r.git(args); err != "" {
 		r.Error(dsc, err)
-	} else {
-		r.Cloned = true
 	}
 }
 

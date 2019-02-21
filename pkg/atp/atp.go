@@ -196,9 +196,14 @@ func gisrcer(dir string, k string) string {
 	return gisrc
 }
 
-// readmeer writes a readme to file, with some lorem ipsum
-func readmeer() {
+// readmer writes a readme to file, with some lorem ipsum
+func readmer(dir string, tmp string) {
 
+	filename := path.Join(dir, "tmp", tmp, "README.md")
+
+	if err := ioutil.WriteFile(filename, lorem(), 0777); err != nil {
+		log.Fatal(err)
+	}
 }
 
 // startup creates a new temporary repo in the local test directory
@@ -224,10 +229,12 @@ func startup(dir string, user string, tmp string) string {
 	cmd.Dir = local
 	cmd.Run()
 
-	// touch README.md (starting point, add file with Go builtins and data next)
-	cmd = exec.Command("touch", "README.md")
-	cmd.Dir = local
-	cmd.Run()
+	// README.md with some Lorem Ipsum
+	readme := path.Join(local, "README.md")
+
+	if err := ioutil.WriteFile(readme, lorem(), 0777); err != nil {
+		log.Fatal(err)
+	}
 
 	// git add *
 	cmd = exec.Command("git", "add", "*")
@@ -235,6 +242,8 @@ func startup(dir string, user string, tmp string) string {
 	cmd.Run()
 
 	// git commit -m "Initial commit"
+
+	// committer("Initial commit)
 	cmd = exec.Command("git", "commit", "-m", "Initial commit")
 	cmd.Dir = local
 	cmd.Run()

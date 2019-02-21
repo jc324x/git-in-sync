@@ -48,6 +48,28 @@ func (r *Repo) git(args []string) (out string, em string) {
 	return out, em
 }
 
+// git Private. Don't return anything, record error if any
+func (r *Repo) gitP(args []string, dsc string) {
+
+	if r.Verified == false {
+		return
+	}
+
+	var errb bytes.Buffer
+
+	cmd := exec.Command("git", args...)
+	cmd.Stderr = &errb
+	cmd.Run()
+
+	em := errb.String()
+	em = strings.TrimSuffix(em, "\n")
+
+	if em != "" {
+		r.ErrorName = dsc
+		r.ErrorMessage = em
+	}
+}
+
 // Public
 
 // Repo models a Git repository.
@@ -764,19 +786,13 @@ func (r *Repo) GitAdd(f flags.Flags) {
 		flags.Printv(f, "%v %v adding new files [%v]{%v}(%v)", eo, rn, dfc, ds, sss)
 	}
 
-	// command
 	args := []string{"-C", r.RepoPath, "add", "-A"}
-	if _, err := r.git(args); err != "" {
-		r.Error(dsc, err)
-	} else {
-		r.Cloned = true
-	}
+	r.gitP(args, dsc) // arguments and command
 }
 
 // GitCommit ...
 func (r *Repo) GitCommit(f flags.Flags) {
-	const dsc = "GitCommit"
-
+	const dsc = "GitCommit"      // description
 	ef := emoji.Get("Fire")      // Fire emoji
 	rn := r.Name                 // repo name
 	dfc := len(r.DiffsNameOnly)  // count: diff files
@@ -792,67 +808,50 @@ func (r *Repo) GitCommit(f flags.Flags) {
 		flags.Printv(f, "%v %v committing new files [%v]{%v}", ef, rn, ufc, us)
 	}
 
-	// command
 	args := []string{"-C", r.RepoPath, "commit", "-m", r.Message}
-	if _, err := r.git(args); err != "" {
-		r.Error(dsc, err)
-	}
+	r.gitP(args, dsc) // arguments and command
 }
 
 // GitStash ...
 func (r *Repo) GitStash(f flags.Flags) {
-	// targetPrintln(f, "%v  %v stashing changes", e.Squirrel, r.Name)
-
+	const dsc = "GitStash"                             // description
+	es := emoji.Get("Squirrel")                        // Squirrel emoji
+	rn := r.Name                                       // repo name
+	flags.Printv(f, "%v  %v stashing changes", es, rn) // print
+	args := []string{"-C", r.RepoPath, "stash"}        // arguments
+	r.gitP(args, dsc)                                  // command
 }
 
 // GitPop ...
 func (r *Repo) GitPop(f flags.Flags) {
-	// targetPrintln(f, "%v %v popping changes", e.Popcorn, r.Name)
+	const dsc = "GitPop"                              // description
+	ep := emoji.Get("Popcorn")                        // Popcorn emoji
+	rn := r.Name                                      // repo name
+	flags.Printv(f, "%v  %v popping changes", ep, rn) // print
+	args := []string{"-C", r.RepoPath, "pop"}         // arguments
+	r.gitP(args, dsc)                                 // command
 }
 
 // GitPull ...
 func (r *Repo) GitPull(f flags.Flags) {
-	// targetPrintln(f, "%v %v pulling from %v @ %v", e.Ship, r.Name, r.UpstreamBranch, r.Remote)
-
-	// command
-	args := []string{"-C", r.RepoPath, "pull"}
-	cmd := exec.Command("git", args...)
-	// var out bytes.Buffer
-	var err bytes.Buffer
-	cmd.Stderr = &err
-	// cmd.Stdout = &out
-	cmd.Run()
-
-	// check error, set value(s)
-	if err := err.String(); err != "" {
-		// r.markError(e, f, err, "gitPull")
-	}
-
-	if r.Verified == false {
-		// targetPrintln(f, "%v %v pull failed", e.Slash, r.Name)
-	}
+	const dsc = "GitPull"                                                  // description
+	es := emoji.Get("Ship")                                                // Ship emoji
+	rn := r.Name                                                           // repo name
+	ub := r.UpstreamBranch                                                 // upstream branch
+	rr := r.Remote                                                         // remote
+	flags.Printv(f, "%v  %v pulling changes from %v @ %v", es, rn, ub, rr) // print
+	args := []string{"-C", r.RepoPath, "pull"}                             // arguments
+	r.gitP(args, dsc)                                                      // command
 }
 
 // GitPush ...
 func (r *Repo) GitPush(f flags.Flags) {
-	// targetPrintln(f, "%v %v pushing to %v @ %v", e.Rocket, r.Name, r.UpstreamBranch, r.Remote)
-
-	// command
-	args := []string{"-C", r.RepoPath, "push"}
-	cmd := exec.Command("git", args...)
-	var out bytes.Buffer
-	var err bytes.Buffer
-	cmd.Stderr = &err
-	cmd.Stdout = &out
-	cmd.Run()
-
-	// check error, set value(s)
-	if err := err.String(); err != "" {
-		// r.markError(e, f, err, "gitPush")
-	}
-
-	if r.Verified == false {
-		// targetPrintln(f, "%v %v push failed", e.Slash, r.Name)
-	}
-
+	const dsc = "GitPull"                                                // description
+	er := emoji.Get("Rocket")                                            // Rocket emoji
+	rn := r.Name                                                         // repo name
+	ub := r.UpstreamBranch                                               // upstream branch
+	rr := r.Remote                                                       // remote
+	flags.Printv(f, "%v  %v pushing changes to %v @ %v", er, rn, ub, rr) // print
+	args := []string{"-C", r.RepoPath, "pull"}                           // arguments
+	r.gitP(args, dsc)                                                    // command
 }

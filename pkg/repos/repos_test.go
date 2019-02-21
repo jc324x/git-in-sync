@@ -1,7 +1,7 @@
 package repos
 
 import (
-	// "log"
+	"log"
 	"os"
 	"strings"
 	"testing"
@@ -77,15 +77,15 @@ func TestVerifyChanges(t *testing.T) {
 	}{
 		{"repos-changes", "tmp"},
 	} {
-		p, cleanup := atp.Hub(tr.pkg, tr.k)
-		// p, _ := atp.Hub(tr.pkg, tr.k)
+		// p, cleanup := atp.Hub(tr.pkg, tr.k)
+		p, _ := atp.Hub(tr.pkg, tr.k)
 		ti := timer.Init()
 		f := flags.Testing(p)
 		c := conf.Init(f)
 		st := stat.Init()
 		rs := Init(c, f, st, ti)
 
-		defer cleanup()
+		// defer cleanup()
 
 		rs.VerifyWorkspaces(f, st, ti)
 		rs.VerifyRepos(f, st, ti)
@@ -98,6 +98,8 @@ func TestVerifyChanges(t *testing.T) {
 
 			r.Category = "Scheduled"
 			r.Message = "Test commit"
+
+			log.Printf("%v (%v)", r.Name, r.Action)
 		}
 
 		rs.submitChanges(f, st, ti)

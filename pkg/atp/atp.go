@@ -190,6 +190,8 @@ func paths(pkg string) (string, string) {
 	base := tilde.Abs("~/tmpgis")
 	dir := path.Join(base, pkg)
 
+	os.RemoveAll(dir)
+
 	if err := os.MkdirAll(dir, 0777); err != nil {
 		log.Fatalf("Unable to create %v", dir)
 	}
@@ -236,7 +238,10 @@ func gisrcer(dir string, k string) string {
 // a cleanup function that deletes the remote branch and deletes all temp
 // repos and directories.
 func startup(dir string, user string, tmp string) string {
-	// NOTE: flick local to dir
+
+	remote := path.Join(user, tmp)
+	cmd := exec.Command("hub", "delete", "-y", remote)
+	cmd.Run()
 
 	local := path.Join(dir, "tmp", tmp)
 
@@ -244,7 +249,7 @@ func startup(dir string, user string, tmp string) string {
 	os.MkdirAll(local, 0777) // create
 
 	// git init
-	cmd := exec.Command("git", "init")
+	cmd = exec.Command("git", "init")
 	cmd.Dir = local
 	cmd.Run()
 

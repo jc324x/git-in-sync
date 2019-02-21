@@ -575,7 +575,7 @@ func (r *Repo) SetStatus(f flags.Flags) {
 		r.Category = "Pending"
 		r.Status = "UntrackedAhead"
 		r.Action = "Add-Commit-Push"
-	case (r.Clean == false && r.Untracked == true && r.Status == "Behind"):
+	case (r.Clean == true && r.Untracked == true && r.Status == "Behind"):
 		r.Category = "Pending"
 		r.Status = "UntrackedBehind"
 	case (r.Clean == true && r.Untracked == false && r.Status == "Up-To-Date"):

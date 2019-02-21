@@ -93,8 +93,12 @@ func TestVerifyChanges(t *testing.T) {
 
 			if r.ErrorName != "" || r.ErrorMessage != "" {
 				log.Printf("repo name: %v", r.Name)
-				log.Printf("repo error name: %v", r.ErrorName)
-				log.Printf("repo error message: %v", r.ErrorMessage)
+				// log.Printf("repo error name: %v", r.ErrorName)
+				log.Printf("Clean: %v", r.Clean)
+				log.Printf("Untracked: %v", r.Untracked)
+				log.Printf("Status: %v", r.Status)
+
+				// case (r.Clean == false && r.Untracked == true && r.Status == "Behind"):
 			}
 		}
 	}

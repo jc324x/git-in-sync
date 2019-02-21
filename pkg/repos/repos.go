@@ -219,8 +219,8 @@ func (rs Repos) infoPrint(f flags.Flags, st *stat.Stat) {
 }
 
 func (rs Repos) infoAsync(f flags.Flags, ti *timer.Timer) {
-
 	var wg sync.WaitGroup
+
 	for i := range rs {
 		wg.Add(1)
 		go func(r *repo.Repo) {
@@ -243,7 +243,11 @@ func (rs Repos) infoAsync(f flags.Flags, ti *timer.Timer) {
 	ti.Mark("info-async") // mark info-async
 }
 
-func (rs Repos) infoSummary(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
+func (rs Repos) statCategory(st *stat.Stat) {
+	st.PendingRepos = nil
+	st.SkippedRepos = nil
+	st.ScheduledRepos = nil
+	st.CompleteRepos = nil
 
 	for _, r := range rs {
 		switch {
@@ -259,7 +263,11 @@ func (rs Repos) infoSummary(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
 			st.CompleteRepos = append(st.CompleteRepos, r.Name)
 		}
 	}
+}
 
+// infoSummary ...
+func (rs Repos) infoSummary(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
+	rs.statCategory(st)          // set current category stats
 	tr := len(st.Repos)          // number of repos
 	cr := len(st.CompleteRepos)  // number of complete repos
 	ec := emoji.Get("Checkmark") // Checkmark emoji
@@ -300,7 +308,7 @@ func (rs Repos) promptUser(f flags.Flags) {
 	}
 }
 
-func (rs Repos) submitChanges(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
+func (rs Repos) changesAsync(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
 	if st.Continue() == false {
 		return
 	}
@@ -327,30 +335,19 @@ func (rs Repos) submitChanges(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
 				r.GitCommit(f)
 				r.GitPush(f)
 			}
-			r.GitConfigOriginURL()
-			r.GitRemoteUpdate()
-			r.GitAbbrevRef()
-			r.GitLocalSHA()
-			r.GitUpstreamBranch()
-			r.GitMergeBaseSHA()
-			r.GitRevParseUpstream()
-			r.GitDiffsNameOnly()
-			r.GitShortstat()
-			r.GitUntracked()
-			r.SetStatus(f)
 		}(rs[i])
 	}
 	wg.Wait()
+}
 
-	// var vc []string // verified complete repos
+func (rs Repos) changesSummary(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
+	rs.infoAsync(f, ti)
+	rs.statCategory(st)
 
-	// for _, r := range srs {
-	// 	if r.Category == "Complete" {
-	// 		vc = append(vc, r.Name)
-	// 	}
-	// }
+	if st.AllComplete() {
+		flags.Printv(f, "OK")
+	}
 
-	//
 	// switch {
 	// case len(srs) == len(vc) && len(skrs) == 0:
 	// 	fmt.Println("all good. nothing skipped, everything completed")
@@ -401,5 +398,6 @@ func (rs Repos) VerifyRepos(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
 // VerifyChanges ...
 func (rs Repos) VerifyChanges(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
 	rs.promptUser(f)
-	rs.submitChanges(f, st, ti)
+	rs.changesAsync(f, st, ti)
+	rs.changesSummary(f, st, ti)
 }

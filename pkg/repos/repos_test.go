@@ -1,7 +1,7 @@
 package repos
 
 import (
-	"log"
+	// "log"
 	"os"
 	"strings"
 	"testing"
@@ -90,6 +90,7 @@ func TestVerifyChanges(t *testing.T) {
 		rs.VerifyWorkspaces(f, st, ti)
 		rs.VerifyRepos(f, st, ti)
 
+		// setup
 		for _, r := range rs {
 
 			if trim := strings.TrimPrefix(r.Name, "gis-"); trim != r.Status {
@@ -98,16 +99,23 @@ func TestVerifyChanges(t *testing.T) {
 
 			r.Category = "Scheduled"
 			r.Message = "Test commit"
-
-			log.Printf("%v (%v)", r.Name, r.Action)
 		}
 
-		rs.submitChanges(f, st, ti)
-		rs.infoAsync(f, ti) // get info for all repos (async)
+		rs.changesAsync(f, st, ti)
+		rs.changesSummary(f, st, ti)
+
+		// if st.AllComplete() == false {
+		// 	t.Errorf("NOT COMPLETE")
+		// }
 
 		for _, r := range rs {
 			if r.Status != "Complete" {
-				t.Errorf("VerifyChanges: %v not complete? %v != %v", r.Name, r.Status, "Complete")
+				t.Errorf("Name(%v) Verified (%v)", r.Name, r.Verified)
+				t.Errorf("Clean(%v) Untracked (%v) Status (%v)", r.Clean, r.Untracked, r.Status)
+				t.Errorf("Error(%v) Error Message (%v)", r.ErrorName, r.ErrorMessage)
+
+				// case (r.Clean == true && r.Untracked == false && r.Status == "Ahead"):
+				// t.Errorf("VerifyChanges: %v not complete? %v != %v", r.Name, r.Status, "Complete")
 			}
 		}
 	}

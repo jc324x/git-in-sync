@@ -1,7 +1,7 @@
 package repos
 
 import (
-	"log"
+	// "log"
 	"os"
 	"testing"
 
@@ -76,21 +76,31 @@ func TestVerifyChanges(t *testing.T) {
 	}{
 		{"repos-changes", "tmp"},
 	} {
-		p, cleanup := atp.Hub(tr.pkg, tr.k)
+		// p, ep, cleanup := atp.Hub(tr.pkg, tr.k)
+		// defer cleanup()
+
+		p, ep, _ := atp.Hub(tr.pkg, tr.k)
+
+		eti := timer.Init()
+		ef := flags.Testing(ep)
+		ec := conf.Init(ef)
+		est := stat.Init()
+		ers := Init(ec, ef, est, eti)
+		ers.VerifyWorkspaces(ef, est, eti)
+		ers.VerifyRepos(ef, est, eti)
+
+		// do stuff with exp split, then push and shit
+
 		ti := timer.Init()
 		f := flags.Testing(p)
 		c := conf.Init(f)
 		st := stat.Init()
 		rs := Init(c, f, st, ti)
-
-		defer cleanup()
-
 		rs.VerifyWorkspaces(f, st, ti)
-		rs.VerifyRepos(f, st, ti)
+		rs.VerifyWorkspaces(f, st, ti)
 
 		for _, r := range rs {
 			if r.Clean != true {
-				log.Println(r.Name)
 			}
 		}
 	}

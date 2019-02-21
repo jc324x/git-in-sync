@@ -4,7 +4,7 @@ package atp
 import (
 	"bufio"
 	"bytes"
-	// "fmt"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
@@ -101,7 +101,8 @@ var rmap = map[string]Results{
 		}}},
 }
 
-// test repos
+// tmp repo names. Hub creates these repos on disk and remotes on GitHub...
+// tmps are matched to Results and JSON config in rmap and jmap...
 var tmps = []string{
 	"gis-Ahead",
 	"gis-Behind",
@@ -113,6 +114,13 @@ var tmps = []string{
 	"gis-UntrackedAhead",
 	"gis-UntrackedBehind",
 	"gis-Complete",
+}
+
+// Tmp is holds tmp repository details.
+type Tmp struct {
+	Category string // main or exp? along those lines
+	Path     string // absolute path on disk
+	Remote   string // $user/$repo
 }
 
 func hubconfig() string {
@@ -165,6 +173,7 @@ func paths(pkg string) (string, string) {
 	return base, dir
 }
 
+// write writes a gisrc to file
 func write(dir string, k string) string {
 	var j []byte
 	var ok bool
@@ -228,6 +237,40 @@ func startup(dir string, user string, tmp string) string {
 	cmd.Run()
 
 	return path.Join(user, tmp)
+}
+
+// create all remotes on GitHub
+func create(tmps []string, dir string, user string) (remotes []string) {
+	var wg sync.WaitGroup
+
+	for i := range tmps {
+		wg.Add(1)
+		go func(tmp string) {
+			defer wg.Done()
+			remote := startup(dir, user, tmp)
+			remotes = append(remotes, remote)
+		}(tmps[i])
+	}
+	wg.Wait()
+
+	return remotes
+}
+
+// remove (delete) all remotes on GitHub
+func remove(remotes []string) {
+	for _, remote := range remotes {
+		cmd := exec.Command("hub", "delete", "-y", remote)
+		cmd.Run()
+	}
+}
+
+// commit creates an additional commit to a repo at path
+func commit() {
+
+}
+
+func dirty() {
+
 }
 
 // Public
@@ -317,35 +360,28 @@ func Resulter(k string) Results {
 // Hub uses hub to do stuff...
 // this needs to return a string path to a .gisrc just like Setup
 // should be ~/tmpgis/tmp/
-func Hub(pkg string, k string) (string, func()) {
+func Hub(pkg string, k string) (string, string, func()) {
 
-	base, dir := paths(pkg)
-	gisrc := write(dir, k)
-	user := hubconfig()
+	base, dir := paths(pkg)            // base and directory paths
+	gisrc := write(dir, k)             // create the main gisrc
+	user := hubconfig()                // read the user from ~/.config/hub
+	remotes := create(tmps, dir, user) // creates repos and remotes on GitHub
+	exp := fmt.Sprintf("%v-exp", pkg)  // secondary exp
+	_, dir = paths(exp)                // exp path
+	egisrc := write(dir, k)            // create secondary gisrc in exp
 
-	var repos []string
-
-	var wg sync.WaitGroup
-
-	for i := range tmps {
-		wg.Add(1)
-		go func(tmp string) {
-			defer wg.Done()
-			repo := startup(dir, user, tmp)
-			repos = append(repos, repo)
-		}(tmps[i])
-	}
-	wg.Wait()
-
-	// repos exist locally and on GitHub. Do interesting stuff here.
-
-	return gisrc, func() {
-
+	// cleanup function
+	return gisrc, egisrc, func() {
 		os.RemoveAll(base)
-
-		for _, repo := range repos {
-			cmd := exec.Command("hub", "delete", "-y", repo)
-			cmd.Run()
-		}
+		remove(remotes)
 	}
+}
+
+// Conditions sets Setup
+func Conditions() {
+	// @ exp path, get all directories
+	// if name has Behind, drop in a commit and push to remote
+
+	// @ main path, get all directories
+	// if
 }

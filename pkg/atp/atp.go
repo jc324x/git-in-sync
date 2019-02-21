@@ -126,6 +126,26 @@ var behinds = []string{
 	"gis-DirtyBehind",
 }
 
+var aheads = []string{
+	"gis-Ahead",
+	"gis-UntrackedAhead",
+	"gis-DirtyAhead",
+}
+
+var dirties = []string{
+	"gis-Dirty",
+	"gis-DirtyAhead",
+	"gis-DirtyBehind",
+	"gis-DirtyUntracked",
+}
+
+var untrackeds = []string{
+	"gis-DirtyUntracked",
+	"gis-Untracked",
+	"gis-UntrackedAhead",
+	"gis-UntrackedBehind",
+}
+
 func read() string {
 
 	path := tilde.Abs("~/.config/hub")
@@ -181,6 +201,12 @@ func lorem() []byte {
 	ls := "Lorem ipsum dolor sit amet, consectetur adipiscing elit. \n Morbi ac vulputate mi, sit amet euismod nibh. Donec at interdum sapien, non pretium tortor. Duis et dapibus eros. Sed tempus non dui vel maximus. \n Vivamus faucibus tellus in scelerisque ultrices. Duis ac libero a leo gravida convallis. Aliquam viverra lacinia arcu, ac molestie metus pharetra sit amet. "
 
 	return []byte(ls)
+}
+
+func fox() []byte {
+	fox := "The sly brown fox jumped over the lazy dog."
+
+	return []byte(fox)
 }
 
 // gisrcer writes a gisrc to file, data from jmap matching key k.
@@ -330,25 +356,45 @@ func push(dir string) {
 	cmd.Run()
 }
 
+func overwrite(filename string) {
+	ioutil.WriteFile(filename, fox(), 0777)
+}
+
 // condition sets up testing conditions
 func simulate(dir string, remotes []string) {
 
-	dir = path.Join(dir, "set")
+	sdir := path.Join(dir, "set")
 
-	if err := os.MkdirAll(dir, 0777); err != nil {
+	if err := os.MkdirAll(sdir, 0777); err != nil {
 		log.Fatal(err)
 	}
 
-	clone(dir, remotes)
+	clone(sdir, remotes)
 
-	for _, b := range behinds {
-		p := path.Join(dir, b) // path of repo
-		m := create(p)         // create file to put mirror behind
-		add(p)                 // add
-		commit(p, m)           // commit
-		push(p)                // push it
+	for _, r := range behinds {
+		p := path.Join(sdir, r) // path of repo
+		m := create(p)          // create file on mirror and push = behind
+		add(p)                  // add
+		commit(p, m)            // commit
+		push(p)                 // push it
 	}
 
+	for _, r := range aheads {
+		p := path.Join(dir, r) // path of repo
+		m := create(p)         // create file and push = ahead
+		add(p)                 // add
+		commit(p, m)           // commit
+	}
+
+	for _, r := range untrackeds {
+		p := path.Join(dir, r) // path of repo
+		create(p)              // create file, no commit = dirty
+	}
+
+	for _, r := range dirties {
+		readme := path.Join(dir, r, "README.md") // path of repo
+		overwrite(readme)
+	}
 }
 
 // Public

@@ -320,6 +320,7 @@ func (rs Repos) submitChanges(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
 				r.GitCommit(f)
 				r.GitPush(f)
 			case "Stash-Pull-Pop-Commit-Push":
+				r.GitAdd(f)
 				r.GitStash(f)
 				r.GitPull(f)
 				r.GitPop(f)

@@ -824,12 +824,12 @@ func (r *Repo) GitStash(f flags.Flags) {
 
 // GitPop ...
 func (r *Repo) GitPop(f flags.Flags) {
-	const dsc = "GitPop"                              // description
-	ep := emoji.Get("Popcorn")                        // Popcorn emoji
-	rn := r.Name                                      // repo name
-	flags.Printv(f, "%v  %v popping changes", ep, rn) // print
-	args := []string{"-C", r.RepoPath, "pop"}         // arguments
-	r.gitP(args, dsc)                                 // command
+	const dsc = "GitPop"                               // description
+	ep := emoji.Get("Popcorn")                         // Popcorn emoji
+	rn := r.Name                                       // repo name
+	flags.Printv(f, "%v  %v popping changes", ep, rn)  // print
+	args := []string{"-C", r.RepoPath, "stash", "pop"} // arguments
+	r.gitP(args, dsc)                                  // command
 }
 
 // GitPull ...
@@ -852,6 +852,6 @@ func (r *Repo) GitPush(f flags.Flags) {
 	ub := r.UpstreamBranch                                               // upstream branch
 	rr := r.Remote                                                       // remote
 	flags.Printv(f, "%v  %v pushing changes to %v @ %v", er, rn, ub, rr) // print
-	args := []string{"-C", r.RepoPath, "pull"}                           // arguments
+	args := []string{"-C", r.RepoPath, "push"}                           // arguments
 	r.gitP(args, dsc)                                                    // command
 }

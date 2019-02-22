@@ -439,7 +439,7 @@ func (r *Repo) GitShortstat() {
 	}
 
 	// scrape with regular expressions
-	// Set Insertions, Deletions
+	// Set Changed, Insertions, Deletions
 	rxc := regexp.MustCompile(`(.*)? file`)
 	rxs := rxc.FindStringSubmatch(r.ShortStat)
 	if len(rxs) == 2 {

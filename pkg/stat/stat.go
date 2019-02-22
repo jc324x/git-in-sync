@@ -101,6 +101,23 @@ func (st *Stat) OnlyScheduled() bool {
 	return true
 }
 
+// Clear clears out slice based stats
+func (st *Stat) Clear() {
+	st.Workspaces = nil
+	st.CreatedWorkspaces = nil
+	st.VerifiedWorkspaces = nil
+	st.InaccessibleWorkspaces = nil
+	st.PendingClones = nil
+	st.Repos = nil
+	st.ClonedRepos = nil
+	st.PendingRepos = nil
+	st.ScheduledRepos = nil
+	st.SkippedRepos = nil
+	st.CompleteRepos = nil
+	st.ScheduledPull = nil
+	st.ScheduledPush = nil
+}
+
 // if scr := len(st.ScheduledPull); scr != 0 {
 // 	etr := emoji.Get("Arrival")
 // 	srs := brf.Summary(st.ScheduledPull, 12)

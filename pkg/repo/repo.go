@@ -24,7 +24,7 @@ import (
 // private
 
 // git runs a Git command and returns standard out
-// and standard error values as strings out and em.
+// and standard error messages as strings out and em.
 // em is used rather than err to indicate that the
 // value is as string rather than an error.
 func (r *Repo) git(args []string) (out string, em string) {
@@ -49,7 +49,8 @@ func (r *Repo) git(args []string) (out string, em string) {
 	return out, em
 }
 
-// git Private. Don't return anything, record error if any
+// gitP runs a Git command and records the error
+// values in r.ErrorName and r.ErrorMessage.
 func (r *Repo) gitP(args []string, dsc string) {
 
 	if r.Verified == false {
@@ -102,21 +103,20 @@ type Repo struct {
 	DiffsNameOnly    []string // `git diff --name-only @{u}`, [a, b, c, d, e]
 	DiffsSummary     string   // "a, b, c..."
 	ShortStat        string   // `git diff --shortstat`, "x files changed, y insertions(+), z deletions(-)"
-	Changed          int      // x
-	Insertions       int      // y
-	Deletions        int      // z
+	Changed          int      // count of changed files (x)
+	Insertions       int      // count of inserted files (y)
+	Deletions        int      // count of deleted files (z)
 	ShortStatSummary string   // "+y|-z" or "D" for Deleted if (x >= 1 && y == 0 && z == 0)
 	Clean            bool     // true if Changed, Insertions and Deletions are all 0
 	Untracked        bool     // true if if len(r.UntrackedFiles) >= 1
 	UntrackedFiles   []string // `git ls-files --others --exclude-standard`, [a, b, c, d, e]
 	UntrackedSummary string   // "a, b, c..."
 	Category         string   // Complete, Pending, Skipped, Scheduled
-	Status           string   // better term?
-	Action           string   // "..."
-	Prompt1          string   //
-	Prompt2          string   //
-	Message          string   // "..."
-	Porcelain        bool     // true if `git status --porcelain` returns ""
+	Status           string   // Complete is the last step
+	Action           string   // Push, Pull, Add-Commit-Push etc.
+	Prompt1          string   // First prompt message
+	Prompt2          string   // Second prompt message
+	Message          string   // Commit message
 }
 
 // Init returns an initialized *Repo.
@@ -181,11 +181,10 @@ func Init(zw string, zu string, zr string, bp string, rn string) *Repo {
 	return r
 }
 
-// Error records the last error.
+// Error records and evaluates last error.
 func (r *Repo) Error(dsc string, em string) {
 	r.ErrorMessage = em
 	r.ErrorName = dsc
-	// r.ErrorFirst = brf.First(em)
 
 	if strings.Contains(r.ErrorFirst, "warning") {
 		r.Verified = true

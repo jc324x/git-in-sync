@@ -26,11 +26,12 @@ type Out struct {
 	Summary string
 }
 
-// Err evaluates an error, returning an Out struct
-// if environmental variable "MODE" == "TESTING".
-// If err != nil and mode != "TESTING", Err will call
-// log.Fatalf and execution will stop before Err returns.
+// Err evaluates an error, and returns Out,
+// if environment variable "MODE" == "TESTING".
+// If mode != "TESTING" && err != nil, execution
+// will stop with log.Fatalf().
 func Err(err error, fm []string, v ...interface{}) Out {
+
 	var m = checkMode()
 
 	switch {
@@ -43,11 +44,12 @@ func Err(err error, fm []string, v ...interface{}) Out {
 	return Out{true, fmt.Sprintf(fm[1], v...)}
 }
 
-// Bool evaluates an bool, returning an Out struct
-// if environmental variable "MODE" == "TESTING".
-// If bool == false and mode != "TESTING", Err will call
-// log.Fatalf and execution will stop before Bool returns.
+// Bool evaluates a bool, and returns Out
+// if environment variable "MODE" == "TESTING".
+// If mode != "TESTING" && b != true, execution
+// will stop with log.Fatalf().
 func Bool(b bool, fm []string, v ...interface{}) Out {
+
 	var m = checkMode()
 
 	switch {

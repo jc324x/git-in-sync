@@ -113,6 +113,7 @@ func TestVerifyChanges(t *testing.T) {
 				t.Errorf("Name(%v) Verified (%v)", r.Name, r.Verified)
 				t.Errorf("Clean(%v) Untracked (%v) Status (%v)", r.Clean, r.Untracked, r.Status)
 				t.Errorf("Error(%v) Error Message (%v)", r.ErrorName, r.ErrorMessage)
+				t.Errorf("Diffs(%v) Untracked(%v)", len(r.DiffsNameOnly), len(r.UntrackedFiles))
 
 				// case (r.Clean == true && r.Untracked == false && r.Status == "Ahead"):
 				// t.Errorf("VerifyChanges: %v not complete? %v != %v", r.Name, r.Status, "Complete")

@@ -184,7 +184,7 @@ func Init(zw string, zu string, zr string, bp string, rn string) *Repo {
 func (r *Repo) Error(dsc string, em string) {
 	r.ErrorMessage = em
 	r.ErrorName = dsc
-	r.ErrorFirst = brf.First(em)
+	// r.ErrorFirst = brf.First(em)
 
 	if strings.Contains(r.ErrorFirst, "warning") {
 		r.Verified = true
@@ -845,7 +845,7 @@ func (r *Repo) GitPull(f flags.Flags) {
 
 // GitPush ...
 func (r *Repo) GitPush(f flags.Flags) {
-	const dsc = "GitPull"                                               // description
+	const dsc = "GitPush"                                               // description
 	er := emoji.Get("Rocket")                                           // Rocket emoji
 	rn := r.Name                                                        // repo name
 	ub := r.UpstreamBranch                                              // upstream branch

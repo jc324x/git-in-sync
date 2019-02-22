@@ -69,3 +69,8 @@ func Printv(f Flags, s string, z ...interface{}) string {
 	}
 	return out
 }
+
+// Testing returns a Flags instance with Mode == "testing".
+func Testing(c string) Flags {
+	return Flags{Mode: "testing", Config: c}
+}

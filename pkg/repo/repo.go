@@ -119,6 +119,47 @@ type Repo struct {
 	Message          string   // Commit message
 }
 
+// func Init(workspace string, user string, remote string, bundle string, name string) *Repo {
+
+// 	bundle = tilde.Abs(bundle)
+
+// 	r := new(Repo)
+// 	r.BundlePath = bundle   // "~/tmpgis" (bundle path)
+// 	r.Workspace = workspace // "'main', 'go', 'bash' etc." (zone workspace)
+// 	r.User = user           // "jychri" (zone user)
+// 	r.Remote = remote       // "'github', 'gitlab'" (zone remote)
+// 	r.Name = name           // "git-in-sync" (repo name)
+
+// 	// "/Users/jychri/tmpgis/go-lang/src/github.com/jychri"
+// 	if workspace != "main" {
+// 		r.WorkspacePath = path.Join(bundle, workspace)
+// 	} else {
+// 		r.WorkspacePath = bundle
+// 	}
+
+// 	// "/Users/jychri/tmpgis/go-lang/src/github.com/jychri/git-in-sync"
+// 	r.RepoPath = path.Join(r.WorkspacePath, name)
+
+// 	// "/Users/jychri/tmpgis/go-lang/src/github.com/jychri/git-in-sync/.git"
+// 	r.GitPath = path.Join(r.RepoPath, ".git")
+
+// 	// "--git-dir=/Users/jychri/tmpgis/go-lang/src/github.com/jychri/git-in-sync/.git"
+// 	r.GitDir = strings.Join([]string{"--git-dir", r.GitPath}, "")
+
+// 	// "--work-tree=/Users/jychri/tmpgis/go-lang/src/github.com/jychri/git-in-sync"
+// 	r.GitDir = strings.Join([]string{"--work-tree=", r.RepoPath}, "")
+
+// 	// "https://github.com/jychri/git-in-sync"
+// 	switch r.Remote {
+// 	case "github":
+// 		r.URL = path.Join("https://github.com", r.User, r.Name)
+// 	case "gitlab":
+// 		r.URL = path.Join("https://gitlab.com", r.User, r.Name)
+// 	}
+
+// 	return r
+// }
+
 // Init returns an initialized *Repo.
 func Init(zw string, zu string, zr string, bp string, rn string) *Repo {
 

@@ -11,11 +11,27 @@ import (
 
 // private
 
-// erm returns Repo values ErrorName and
-// ErrorMessage as strings. It's used by
-// TestErrors to streamline the test pattern.
-func (r *Repo) erm() (string, string) {
-	return r.ErrorName, r.ErrorMessage
+func (r *Repo) eval(want string, dsc string, t *testing.T) {
+	en := r.ErrorName
+	em := r.ErrorMessage
+	var m bool
+
+	switch {
+	case strings.Contains(em, "fatal:"):
+		m = true
+	case strings.Contains(em, "Not a git"):
+		m = true
+	case strings.Contains(em, "No matching"):
+		m = true
+	default:
+		m = false
+	}
+
+	if !m {
+		t.Errorf("Uncaught fatal error: %v %v", en, em)
+	} else {
+		r.Verified = true // true to keep testing
+	}
 }
 
 func TestInit(t *testing.T) {
@@ -101,151 +117,49 @@ func TestErrors(t *testing.T) {
 	r := Init(zw, zu, zr, bp, rn)
 	r.Verified = true
 
-	var en, em string
-
 	dsc := "GitConfigOriginURL"
 	r.GitConfigOriginURL()
 	want := "fatal: 'origin' does not appear to be a git repository"
-
-	if en, em = r.erm(); en != dsc || em != want {
-		t.Errorf("%v %v != %v", dsc, r.ErrorMessage, want)
-	}
-
-	if r.Verified == true {
-		t.Errorf("verified != false (%v) ", dsc)
-	} else {
-		r.Verified = true
-	}
+	r.eval(want, dsc, t)
 
 	dsc = "GitRemoteUpdate"
 	r.GitRemoteUpdate()
-
-	if en, em = r.erm(); en != dsc && em == "" {
-		t.Errorf("%v em = '%v'", dsc, r.ErrorMessage)
-	}
-
-	if r.Verified == true {
-		t.Errorf("verified != false (%v) ", dsc)
-	} else {
-		r.Verified = true
-	}
+	r.eval(want, dsc, t)
 
 	dsc = "GitAbbrevRef"
 	r.GitAbbrevRef()
-
-	if en, em = r.erm(); en != dsc && em == "" {
-		t.Errorf("%v em = '%v'", dsc, r.ErrorMessage)
-	}
-
-	if r.Verified == true {
-		t.Errorf("verified != false (%v) ", dsc)
-	} else {
-		r.Verified = true
-	}
+	r.eval(want, dsc, t)
 
 	dsc = "GitLocalSHA"
 	r.GitLocalSHA()
-
-	if en, em = r.erm(); en != dsc && em == "" {
-		t.Errorf("%v em = '%v'", dsc, r.ErrorMessage)
-	}
-
-	if r.Verified == true {
-		t.Errorf("verified != false (%v) ", dsc)
-	} else {
-		r.Verified = true
-	}
+	r.eval(want, dsc, t)
 
 	dsc = "GitRevParseUpstream"
 	r.GitRevParseUpstream()
-
-	if en, em = r.erm(); en != dsc && em == "" {
-		t.Errorf("%v em = '%v'", dsc, r.ErrorMessage)
-	}
-
-	if r.Verified == true {
-		t.Errorf("verified != false (%v) ", dsc)
-	} else {
-		r.Verified = true
-	}
+	r.eval(want, dsc, t)
 
 	dsc = "GitMergeBaseSHA"
 	r.GitMergeBaseSHA()
-
-	if en, em = r.erm(); en != dsc && em == "" {
-		t.Errorf("%v em = '%v'", dsc, r.ErrorMessage)
-	}
-
-	if r.Verified == true {
-		t.Errorf("verified != false (%v) ", dsc)
-	} else {
-		r.Verified = true
-	}
+	r.eval(want, dsc, t)
 
 	dsc = "GitRevParseUpstream"
 	r.GitMergeBaseSHA()
-
-	if en, em = r.erm(); en != dsc && em == "" {
-		t.Errorf("%v em = '%v'", dsc, r.ErrorMessage)
-	}
-
-	if r.Verified == true {
-		t.Errorf("verified != false (%v) ", dsc)
-	} else {
-		r.Verified = true
-	}
+	r.eval(want, dsc, t)
 
 	dsc = "GitDiffsNameOnly"
 	r.GitDiffsNameOnly()
-
-	if en, em = r.erm(); en != dsc && em == "" {
-		t.Errorf("%v em = '%v'", dsc, r.ErrorMessage)
-	}
-
-	if r.Verified == true {
-		t.Errorf("verified != false (%v) ", dsc)
-	} else {
-		r.Verified = true
-	}
+	r.eval(want, dsc, t)
 
 	dsc = "GitShortstat"
 	r.GitShortstat()
-
-	if en, em = r.erm(); en != dsc && em == "" {
-		t.Errorf("%v em = '%v'", dsc, r.ErrorMessage)
-	}
-
-	if r.Verified == true {
-		t.Errorf("verified != false (%v) ", dsc)
-	} else {
-		r.Verified = true
-	}
+	r.eval(want, dsc, t)
 
 	dsc = "GitUntracked"
 	r.GitUntracked()
-
-	if en, em = r.erm(); en != dsc && em == "" {
-		t.Errorf("%v em = '%v'", dsc, r.ErrorMessage)
-	}
-
-	if r.Verified == true {
-		t.Errorf("verified != false (%v) ", dsc)
-	} else {
-		r.Verified = true
-	}
+	r.eval(want, dsc, t)
 
 	dsc = "SetStatus"
 	f := flags.Testing("~/fakegisrc.json")
 	r.SetStatus(f)
-
-	if en, em = r.erm(); en != dsc && em == "" {
-		t.Errorf("%v em = '%v'", dsc, r.ErrorMessage)
-	}
-
-	if r.Verified == true {
-		t.Errorf("verified != false (%v) ", dsc)
-	} else {
-		r.Verified = true
-	}
-
+	r.eval(want, dsc, t)
 }

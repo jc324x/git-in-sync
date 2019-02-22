@@ -4,9 +4,10 @@ package flags
 import (
 	"flag"
 	"fmt"
-	"github.com/jychri/git-in-sync/pkg/tilde"
 	"os"
 	"os/exec"
+
+	"github.com/jychri/git-in-sync/pkg/tilde"
 )
 
 // Flags records values for Mode and Config.

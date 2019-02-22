@@ -680,7 +680,8 @@ func (r *Repo) SetStatus(f flags.Flags) {
 	r.Prompt2 = s
 }
 
-// UserConfirm prompts Prompt1 and Prompt2
+// UserConfirm prompts the user with prompts Prompt1 and Prompt2
+// and records the response.
 func (r *Repo) UserConfirm(f flags.Flags) {
 
 	if r.Category != "Pending" {

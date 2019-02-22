@@ -16,14 +16,14 @@ func TestInit(t *testing.T) {
 		{"conf", "recipes"},
 		{"conf", "tmp"},
 	} {
-		p, clean := atp.Setup(tr.pkg, tr.recipe)
+		p, cleanup := atp.Setup(tr.pkg, tr.recipe)
 		f := flags.Testing(p)
 		c := Init(f)
 		bs := c.Bundles[0]
 		zs := bs.Zones
 		rs := atp.Resulter(tr.recipe)
 
-		defer clean()
+		defer cleanup()
 
 		for i := range rs {
 

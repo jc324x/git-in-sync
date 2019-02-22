@@ -5,7 +5,7 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
-	// "log"
+	"log"
 	"os"
 	"os/exec"
 	"path"
@@ -167,7 +167,7 @@ func (r *Repo) Error(dsc string, em string) {
 	case strings.Contains(r.ErrorMessage, "warning"):
 		r.Verified = true
 	case strings.Contains(r.ErrorMessage, "fatal"):
-		r.Verified = true
+		r.Verified = false
 	case strings.Contains(r.ErrorMessage, "Not a git repository"):
 		r.Verified = false
 	}
@@ -180,7 +180,7 @@ func (r *Repo) VerifyWorkspace(f flags.Flags, st *stat.Stat) {
 
 	if _, err := os.Stat(r.WorkspacePath); os.IsNotExist(err) {
 		flags.Printv(f, "%v creating %v", emoji.Get("Folder"), r.WorkspacePath)
-		os.MkdirAll(r.WorkspacePath, 0664)
+		os.MkdirAll(r.WorkspacePath, 0766)
 		st.CreatedWorkspaces = append(st.CreatedWorkspaces, r.Workspace)
 	}
 
@@ -237,7 +237,8 @@ func (r *Repo) GitClone(f flags.Flags) {
 	flags.Printv(f, "%v cloning %v {%v}", emoji.Get("Box"), r.Name, r.Workspace)
 
 	args := []string{"clone", r.URL, r.RepoPath}
-	if out, _ := r.git(args); out != "" {
+	if out, err := r.git(args); out != "" {
+		log.Println(err)
 		r.Error(dsc, out)
 	} else {
 		r.Cloned = true
@@ -535,6 +536,12 @@ func (r *Repo) SetStatus(f flags.Flags) {
 	case r.UpstreamSHA == r.MergeSHA:
 		r.Status = "Ahead"
 	}
+
+	// log.Printf("Name: %v", r.Name)
+	// log.Printf("Status: %v", r.Status)
+	// log.Printf("Merge: %v", r.MergeSHA)
+	// log.Printf("Local: %v", r.LocalSHA)
+	// log.Printf("Upstream: %v", r.UpstreamSHA)
 
 	switch {
 	case (r.Clean == true && r.Untracked == false && r.Status == "Ahead"):

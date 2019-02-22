@@ -46,7 +46,7 @@ func TestInit(t *testing.T) {
 	bp = tilde.Abs(bp)
 
 	if r.BundlePath != bp {
-		t.Errorf("Init: BundlePath %v != %v", r.BundlePath, bp)
+		t.Errorf("Init: BundlePath got %v != want %v", r.BundlePath, bp)
 	}
 
 	if r.Workspace != zw {
@@ -102,7 +102,7 @@ func TestInit(t *testing.T) {
 	turl = strings.Join([]string{"https://", turl}, "")
 
 	if r.URL != turl {
-		t.Errorf("Init: %v != %v", r.URL, turl)
+		t.Errorf("Init: got %v != want %v", r.URL, turl)
 	}
 }
 

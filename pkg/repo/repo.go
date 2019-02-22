@@ -91,7 +91,6 @@ type Repo struct {
 	Verified         bool     // true if Repo continues to pass verification
 	ErrorMessage     string   // the last error message
 	ErrorName        string   // name of the last error
-	ErrorFirst       string   // first line of the last error message
 	ErrorShort       string   // message in matched short form
 	Cloned           bool     // true if Repo was cloned
 	OriginURL        string   // "https://github.com/jychri/git-in-sync"
@@ -119,105 +118,42 @@ type Repo struct {
 	Message          string   // Commit message
 }
 
-// func Init(workspace string, user string, remote string, bundle string, name string) *Repo {
-
-// 	bundle = tilde.Abs(bundle)
-
-// 	r := new(Repo)
-// 	r.BundlePath = bundle   // "~/tmpgis" (bundle path)
-// 	r.Workspace = workspace // "'main', 'go', 'bash' etc." (zone workspace)
-// 	r.User = user           // "jychri" (zone user)
-// 	r.Remote = remote       // "'github', 'gitlab'" (zone remote)
-// 	r.Name = name           // "git-in-sync" (repo name)
-
-// 	// "/Users/jychri/tmpgis/go-lang/src/github.com/jychri"
-// 	if workspace != "main" {
-// 		r.WorkspacePath = path.Join(bundle, workspace)
-// 	} else {
-// 		r.WorkspacePath = bundle
-// 	}
-
-// 	// "/Users/jychri/tmpgis/go-lang/src/github.com/jychri/git-in-sync"
-// 	r.RepoPath = path.Join(r.WorkspacePath, name)
-
-// 	// "/Users/jychri/tmpgis/go-lang/src/github.com/jychri/git-in-sync/.git"
-// 	r.GitPath = path.Join(r.RepoPath, ".git")
-
-// 	// "--git-dir=/Users/jychri/tmpgis/go-lang/src/github.com/jychri/git-in-sync/.git"
-// 	r.GitDir = strings.Join([]string{"--git-dir", r.GitPath}, "")
-
-// 	// "--work-tree=/Users/jychri/tmpgis/go-lang/src/github.com/jychri/git-in-sync"
-// 	r.GitDir = strings.Join([]string{"--work-tree=", r.RepoPath}, "")
-
-// 	// "https://github.com/jychri/git-in-sync"
-// 	switch r.Remote {
-// 	case "github":
-// 		r.URL = path.Join("https://github.com", r.User, r.Name)
-// 	case "gitlab":
-// 		r.URL = path.Join("https://gitlab.com", r.User, r.Name)
-// 	}
-
-// 	return r
-// }
-
 // Init returns an initialized *Repo.
-func Init(zw string, zu string, zr string, bp string, rn string) *Repo {
+func Init(workspace string, user string, remote string, bundle string, name string) *Repo {
 
-	r := new(Repo)
+	bundle = tilde.Abs(bundle) // set bundle to absolute path
+	r := new(Repo)             // new Repo
+	r.BundlePath = bundle      // ~/tmpgis etc.
+	r.Workspace = workspace    // main, go, bash etc.
+	r.User = user              // jychri
+	r.Remote = remote          // github, gitlab etc.
+	r.Name = name              // git-in-sync
 
-	r.BundlePath = tilde.Abs(bp) // "~/tmpgis" (bundle path)
-	r.Workspace = zw             // "'main', 'go', 'bash' etc." (zone workspace)
-	r.User = zu                  // "jychri" (zone user)
-	r.Remote = zr                // "'github', 'gitlab'" (zone remote)
-	r.Name = rn                  // "git-in-sync" (repo name)
-
-	var b bytes.Buffer
-
-	b.WriteString(r.BundlePath)
-	if r.Workspace != "main" {
-		b.WriteString("/")
-		b.WriteString(r.Workspace)
+	// /Users/jychri/tmpgis/golang or /Users/jychri/tmpgis (main)
+	if workspace != "main" {
+		r.WorkspacePath = path.Join(bundle, workspace)
+	} else {
+		r.WorkspacePath = bundle
 	}
-	r.WorkspacePath = b.String()
-	// "/Users/jychri/tmpgis/go-lang/src/github.com/jychri"
 
-	b.Reset()
-	b.WriteString(r.WorkspacePath)
-	b.WriteString("/")
-	b.WriteString(r.Name)
-	r.RepoPath = b.String()
-	// "/Users/jychri/tmpgis/go-lang/src/github.com/jychri/git-in-sync"
+	// /Users/jychri/tmpgis/golang/src/github.com/jychri/git-in-sync
+	r.RepoPath = path.Join(r.WorkspacePath, name)
 
-	b.Reset()
-	b.WriteString(r.RepoPath)
-	b.WriteString("/.git")
-	r.GitPath = b.String()
-	// "/Users/jychri/tmpgis/go-lang/src/github.com/jychri/git-in-sync/.git"
+	// /Users/jychri/tmpgis/go-lang/src/github.com/jychri/git-in-sync/.git
+	r.GitPath = path.Join(r.RepoPath, ".git")
 
-	b.Reset()
-	b.WriteString("--git-dir=")
-	b.WriteString(r.GitPath)
-	r.GitDir = b.String()
-	// "--git-dir=/Users/jychri/tmpgis/go-lang/src/github.com/jychri/git-in-sync/.git"
+	// --git-dir=/Users/jychri/tmpgis/go-lang/src/github.com/jychri/git-in-sync/.git
+	r.GitDir = strings.Join([]string{"--git-dir=", r.GitPath}, "")
 
-	b.Reset()
-	b.WriteString("--work-tree=")
-	b.WriteString(r.RepoPath)
-	r.WorkTree = b.String()
-	// "--work-tree=/Users/jychri/tmpgis/go-lang/src/github.com/jychri/git-in-sync"
+	// --work-tree=/Users/jychri/tmpgis/go-lang/src/github.com/jychri/git-in-sync
+	r.WorkTree = strings.Join([]string{"--work-tree=", r.RepoPath}, "")
 
-	b.Reset()
 	switch r.Remote {
 	case "github":
-		b.WriteString("https://github.com/")
+		r.URL = strings.Join([]string{"https://github.com", r.User, r.Name}, "/")
 	case "gitlab":
-		b.WriteString("https://gitlab.com/")
+		r.URL = strings.Join([]string{"https://gitlab.com", r.User, r.Name}, "/")
 	}
-	b.WriteString(r.User)
-	b.WriteString("/")
-	b.WriteString(r.Name)
-	r.URL = b.String()
-	// "https://github.com/jychri/git-in-sync"
 
 	return r
 }
@@ -227,18 +163,14 @@ func (r *Repo) Error(dsc string, em string) {
 	r.ErrorMessage = em
 	r.ErrorName = dsc
 
-	if strings.Contains(r.ErrorFirst, "warning") {
+	switch {
+	case strings.Contains(r.ErrorMessage, "warning"):
 		r.Verified = true
-	}
-
-	if strings.Contains(r.ErrorFirst, "fatal") {
+	case strings.Contains(r.ErrorMessage, "fatal"):
+		r.Verified = true
+	case strings.Contains(r.ErrorMessage, "Not a git repository"):
 		r.Verified = false
 	}
-
-	if strings.Contains(r.ErrorFirst, "Not a git repository") {
-		r.Verified = false
-	}
-
 }
 
 // VerifyWorkspace verifies that the r.WorkspacePath is present and accessible.
@@ -248,7 +180,7 @@ func (r *Repo) VerifyWorkspace(f flags.Flags, st *stat.Stat) {
 
 	if _, err := os.Stat(r.WorkspacePath); os.IsNotExist(err) {
 		flags.Printv(f, "%v creating %v", emoji.Get("Folder"), r.WorkspacePath)
-		os.MkdirAll(r.WorkspacePath, 0777)
+		os.MkdirAll(r.WorkspacePath, 0664)
 		st.CreatedWorkspaces = append(st.CreatedWorkspaces, r.Workspace)
 	}
 
@@ -293,8 +225,7 @@ func (r *Repo) GitSchedule(f flags.Flags, st *stat.Stat) {
 	}
 }
 
-// GitClone clones a Git repository from r.URL if
-// r.PendingClone is true.
+// GitClone clones a Git repository from r.URL.
 func (r *Repo) GitClone(f flags.Flags) {
 	const dsc = "GitClone"
 

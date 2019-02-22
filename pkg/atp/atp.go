@@ -445,15 +445,13 @@ func Direct(pkg string, k string) (string, func()) {
 		log.Fatalf("%v not found in jmap", k)
 	}
 
-	tg := tilde.Abs("~/.gisrc.json")
+	tg := tilde.Abs("~/.gisrc.json") // test gisrc
+	tb := tilde.Abs("~/tmpgis")      // test base
+	td := path.Join(tb, pkg)         // test directory
 
 	if _, err := os.Stat(tg); err == nil {
-		return "", nil // .gisrc.json exists; get out
+		return "", func() {} // .gisrc.json exists; get out
 	}
-
-	tb := tilde.Abs("~/tmpgis")
-
-	td := path.Join(tb, pkg)
 
 	j = bytes.Replace(j, []byte("SETPATH"), []byte(td), -1)
 
@@ -465,7 +463,10 @@ func Direct(pkg string, k string) (string, func()) {
 		log.Fatalf("Unable to create %v", td)
 	}
 
-	return tg, func() { os.Remove(tg) }
+	return tg, func() {
+		os.Remove(tg)
+		os.RemoveAll(tb)
+	}
 }
 
 // Result holds the expected values for a zone.

@@ -321,47 +321,28 @@ func (rs Repos) changesAsync(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
 			switch r.Action {
 			case "Pull":
 				r.GitPull(f)
+				r.GitClear()
 			case "Push":
 				r.GitPush(f)
+				r.GitClear()
 			case "Add-Commit-Push":
 				r.GitAdd(f)
 				r.GitCommit(f)
 				r.GitPush(f)
+				r.GitClear()
 			case "Stash-Pull-Pop-Commit-Push":
 				r.GitAdd(f)
 				r.GitStash(f)
 				r.GitPull(f)
 				r.GitPop(f)
+				r.GitAdd(f)
 				r.GitCommit(f)
 				r.GitPush(f)
+				r.GitClear()
 			}
 		}(rs[i])
 	}
 	wg.Wait()
-}
-
-func (rs Repos) changesSummary(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
-	rs.infoAsync(f, ti)
-	rs.statCategory(st)
-
-	if st.AllComplete() {
-		flags.Printv(f, "OK")
-	}
-
-	// switch {
-	// case len(srs) == len(vc) && len(skrs) == 0:
-	// 	fmt.Println("all good. nothing skipped, everything completed")
-	// // case len(srs) == len(vc) && len(skrs) >= 1:
-	// // 	fmt.Println("all pending actions complete - did skip this though (as planned)")
-	// case len(srs) != len(vc) && len(skrs) >= 1:
-	// 	fmt.Println("all changes not submitted correctly, also skipped")
-	// }
-
-	// if len(srs) == len(vc) {
-	// 	fmt.Println("All changes submitted for pending repos")
-	// } else {
-	// 	fmt.Println("Hmm...schedule didn't complete")
-	// }
 }
 
 // Public
@@ -391,13 +372,13 @@ func (rs Repos) VerifyRepos(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
 	rs.cloneAsync(f, st, ti)   // clone missing repos (async)
 	rs.cloneSummary(f, st, ti) // print summary
 	rs.infoPrint(f, st)        // print startup
-	rs.infoAsync(f, ti)        // get info for all repos (async)
+	rs.infoAsync(f, ti)        // update info (async)
 	rs.infoSummary(f, st, ti)  // print summary
 }
 
 // VerifyChanges ...
 func (rs Repos) VerifyChanges(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
-	rs.promptUser(f)
-	rs.changesAsync(f, st, ti)
-	rs.changesSummary(f, st, ti)
+	rs.promptUser(f)           // prompt user
+	rs.changesAsync(f, st, ti) // submit changes (async)
+	rs.infoAsync(f, ti)        // update info (async)
 }

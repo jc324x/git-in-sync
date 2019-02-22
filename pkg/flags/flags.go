@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/jychri/git-in-sync/pkg/tilde"
+	"os"
 )
 
 // Flags records values for Mode and Config.
@@ -18,8 +19,8 @@ func Init() (f Flags) {
 
 	var c, m string
 
-	flag.StringVar(&m, "m", "verify", "mode")
-	flag.StringVar(&c, "c", "~/.gisrc.json", "configuration")
+	flag.StringVar(&m, "mode", "verify", "mode")
+	flag.StringVar(&c, "config", "~/.gisrc.json", "configuration")
 	flag.Parse()
 
 	switch m {
@@ -28,14 +29,17 @@ func Init() (f Flags) {
 		m = "verify"
 	}
 
+	if env := os.Getenv("MODE"); env == "TESTING" {
+		m = "testing"
+	}
+
+	if env := os.Getenv("GISRC"); env != "" {
+		c = env
+	}
+
 	c = tilde.Abs(c)
 
 	return Flags{Mode: m, Config: c}
-}
-
-// Testing returns a Flags instance with Mode == "testing".
-func Testing(c string) Flags {
-	return Flags{Mode: "testing", Config: c}
 }
 
 // Login returns true if f.Mode == "login".
@@ -52,15 +56,16 @@ func (f Flags) Logout() bool {
 		return true
 	}
 	return false
-
 }
 
 // Printv calls prints to standard output if not running in 'oneline' or 'testing' mode.
-func Printv(f Flags, s string, z ...interface{}) {
+func Printv(f Flags, s string, z ...interface{}) string {
+	out := fmt.Sprintf(s, z...)
 	switch f.Mode {
 	case "oneline":
 	case "testing":
 	default:
-		fmt.Println(fmt.Sprintf(s, z...))
+		fmt.Println(out)
 	}
+	return out
 }

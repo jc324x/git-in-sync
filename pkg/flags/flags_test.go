@@ -1,42 +1,45 @@
 package flags
 
 import (
+	"os"
 	"testing"
 
-	"github.com/jychri/git-in-sync/pkg/atp"
 	"github.com/jychri/git-in-sync/pkg/tilde"
 )
 
-func TestInit(t *testing.T) {
+func TestAll(t *testing.T) {
+
+	os.Setenv("MODE", "TESTING")
+	os.Setenv("GISRC", "~/.gisrc.json")
 
 	f := Init()
 	gj := tilde.Abs("~/.gisrc.json")
 
 	switch {
 	case f.Config != gj:
-		t.Errorf("Init: want: ~/.gisrc.json, got %v\n", f.Config)
-	case f.Mode != "verify":
-		t.Errorf("Init: want: verify, got %v\n", f.Mode)
+		t.Errorf("Flags: want: ~/.gisrc.json, got %v\n", f.Config)
+	case f.Mode != "testing":
+		t.Errorf("Flags: want: testing, got %v\n", f.Mode)
 	}
-}
 
-func TestTesting(t *testing.T) {
+	f.Mode = "login"
 
-	for _, tr := range []struct {
-		pkg, k string
-	}{
-		{"flags", "recipes"},
-	} {
+	if b := f.Login(); b != true {
+		t.Errorf("Flags: want: true, got %v\n", b)
+	}
 
-		p, cleanup := atp.Setup(tr.pkg, tr.k)
-		defer cleanup()
+	f.Mode = "logout"
 
-		// p, _ := atp.Setup(tr.pkg, tr.k)
+	if b := f.Logout(); b != true {
+		t.Errorf("Flags: want: true, got %v\n", b)
+	}
 
-		f := Testing(p)
+	f.Mode = "testing"
 
-		if p != f.Config {
-			t.Errorf("Init: (want: %v, got: %v\n", p, f.Config)
-		}
+	want := "This is a test."
+	got := Printv(f, "This is a %v.", "test")
+
+	if got != want {
+		t.Errorf("Flags: want: %v, got %v\n", got, want)
 	}
 }

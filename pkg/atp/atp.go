@@ -271,15 +271,12 @@ func startup(dir string, user string, tmp string) string {
 	cmd.Run()
 
 	// git commit -m "Initial commit"
-
-	// committer("Initial commit)
 	cmd = exec.Command("git", "commit", "-m", "Initial commit")
 	cmd.Dir = local
 	cmd.Run()
 
 	// git commit -- set-upstream origin master
 	cmd = exec.Command("git", "push", "--set-upstream", "origin", "master")
-	// cmd := exec.Command("git", "push", "-u", "origin", "master")
 	cmd.Dir = local
 	cmd.Run()
 

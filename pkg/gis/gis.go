@@ -12,9 +12,9 @@ import (
 
 // Init initializes Flags, Repos, Stat and Timer.
 func Init() (f flags.Flags, rs repos.Repos, st *stat.Stat, ti *timer.Timer) {
-	emoji.ClearScreen()                                                  // clear screen
 	ti = timer.Init()                                                    // init Timer
 	f = flags.Init()                                                     // init Flags
+	emoji.ClearScreen()                                                  // clear screen
 	ti.Mark("init-flags")                                                // mark init flags
 	st = stat.Init()                                                     // init Stat
 	ec := emoji.Get("Clapper")                                           // print start

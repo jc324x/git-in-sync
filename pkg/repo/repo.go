@@ -5,6 +5,7 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
+	// "log"
 	"os"
 	"os/exec"
 	"path"
@@ -314,8 +315,6 @@ func (r *Repo) GitRemoteUpdate() {
 	case strings.Contains(em, "warning: redirecting") && strings.Contains(em, wgit):
 	case strings.Contains(em, "fatal"):
 		r.Error(dsc, em)
-		// case em != "":
-		// 	r.Error(dsc, em)
 	}
 }
 
@@ -434,8 +433,10 @@ func (r *Repo) GitShortstat() {
 	args := []string{r.GitDir, r.WorkTree, "diff", "--shortstat"}
 	if out, em := r.git(args); em != "" {
 		r.Error(dsc, em)
+		// log.Printf("%v: Shortstat ERR: %v | %v", r.Name, out, em)
 	} else {
 		r.ShortStat = out
+		// log.Printf("%v: Shortstat OUT: %v", r.Name, out)
 	}
 
 	// scrape with regular expressions
@@ -600,6 +601,7 @@ func (r *Repo) SetStatus(f flags.Flags) {
 	case (r.Clean == true && r.Untracked == true && r.Status == "Behind"):
 		r.Category = "Pending"
 		r.Status = "UntrackedBehind"
+		r.Action = "Stash-Pull-Pop-Commit-Push"
 	case (r.Clean == true && r.Untracked == false && r.Status == "Complete"):
 		r.Category = "Complete"
 		r.Status = "Complete"
@@ -853,4 +855,27 @@ func (r *Repo) GitPush(f flags.Flags) {
 	flags.Printv(f, "%v %v pushing changes to %v @ %v", er, rn, ub, rr) // print
 	args := []string{"-C", r.RepoPath, "push"}                          // arguments
 	r.gitP(args, dsc)                                                   // command
+}
+
+// GitClear ...
+func (r *Repo) GitClear() {
+	const dsc = "GitClean"
+	r.OriginURL = ""
+	r.LocalBranch = ""
+	r.LocalSHA = ""
+	r.UpstreamBranch = ""
+	r.MergeSHA = ""
+	r.UpstreamSHA = ""
+	r.DiffsNameOnly = nil
+	r.DiffsSummary = ""
+	r.ShortStat = ""
+	r.Changed = 0
+	r.Insertions = 0
+	r.Deletions = 0
+	r.Clean = true
+	r.ShortStatSummary = ""
+	r.UntrackedFiles = nil
+	r.UntrackedSummary = ""
+	r.Untracked = false
+	r.Status = ""
 }

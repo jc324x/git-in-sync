@@ -102,22 +102,11 @@ func TestVerifyChanges(t *testing.T) {
 		}
 
 		rs.changesAsync(f, st, ti)
-		rs.changesSummary(f, st, ti)
-
-		// if st.AllComplete() == false {
-		// 	t.Errorf("NOT COMPLETE")
-		// }
+		rs.infoAsync(f, ti)
 
 		for _, r := range rs {
 			if r.Status != "Complete" {
-				t.Errorf("N: %v, V: %v)", r.Name, r.Verified)
-				t.Errorf("C:%v, I:%v, D%v", r.Changed, r.Insertions, r.Deletions)
-				t.Errorf("Di: %v, Un %v", len(r.DiffsNameOnly), len(r.UntrackedFiles))
-				t.Errorf("Clean(%v) Untracked (%v) Status (%v)", r.Clean, r.Untracked, r.Status)
-				t.Errorf("Error(%v) Error Message (%v)", r.ErrorName, r.ErrorMessage)
-
-				// case (r.Clean == true && r.Untracked == false && r.Status == "Ahead"):
-				// t.Errorf("VerifyChanges: %v not complete? %v != %v", r.Name, r.Status, "Complete")
+				t.Errorf("VerifyChanges: %v %v != Complete", r.Name, r.Status)
 			}
 		}
 	}

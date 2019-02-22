@@ -213,6 +213,8 @@ func fox() []byte {
 }
 
 // gisrcer writes a gisrc to file, data from jmap matching key k.
+// add second return of function (can be nil) that will cleanup created gisrc
+// if it didn't exist already
 func gisrcer(dir string, k string) string {
 	var j []byte
 	var ok bool
@@ -310,7 +312,6 @@ func remove(remotes []string) {
 }
 
 // clone all remotes from GitHub with hub
-
 func clone(dir string, remotes []string) {
 	for _, remote := range remotes {
 		cmd := exec.Command("hub", "clone", remote)
@@ -415,15 +416,25 @@ func simulate(dir string, remotes []string) {
 // and a cleanup function that removes ~/tmpgis/$pkg/.
 // Note: Look at spec doc for os.MkdirAll and pull in.
 func Setup(pkg string, k string) (string, func()) {
-	base, dir := paths(pkg)
-	gisrc := gisrcer(dir, k)
+	base, dir := paths(pkg)  // base and directory paths
+	gisrc := gisrcer(dir, k) // write temporary gisrc
 	return gisrc, func() { os.RemoveAll(base) }
 }
 
-// Base returns the base testing directory
-func Base(pkg string) string {
-	base, _ := paths(pkg)
-	return base
+// Hub uses hub to do stuff...
+// this needs to return a string path to a .gisrc just like Setup
+// should be ~/tmpgis/tmp/
+func Hub(pkg string, k string) (string, func()) {
+	base, dir := paths(pkg)          // base and directory paths
+	gisrc := gisrcer(dir, k)         // write temporary gisrc
+	user := read()                   // read user ~/.config/hub
+	remotes := hubs(tmps, dir, user) // hubs creates repos and remotes on GitHub
+	simulate(dir, remotes)           // create conditions
+
+	return gisrc, func() {
+		os.RemoveAll(base) // rm -rf base
+		remove(remotes)    // delete all remotes on GitHub
+	}
 }
 
 // Direct verifies the existence of a gisrc.json at ~/.gisrc.json;
@@ -488,20 +499,4 @@ func Resulter(k string) Results {
 	}
 
 	return rmap[k]
-}
-
-// Hub uses hub to do stuff...
-// this needs to return a string path to a .gisrc just like Setup
-// should be ~/tmpgis/tmp/
-func Hub(pkg string, k string) (string, func()) {
-	base, dir := paths(pkg)          // base and directory paths
-	gisrc := gisrcer(dir, k)         // write gisrc
-	user := read()                   // read user ~/.config/hub
-	remotes := hubs(tmps, dir, user) // hubs creates repos and remotes on GitHub
-	simulate(dir, remotes)           // create conditions
-
-	return gisrc, func() {
-		os.RemoveAll(base) // rm -rf base
-		remove(remotes)    // delete all remotes on GitHub
-	}
 }

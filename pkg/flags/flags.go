@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/jychri/git-in-sync/pkg/tilde"
 	"os"
+	"os/exec"
 )
 
 // Flags records values for Mode and Config.
@@ -42,6 +43,36 @@ func Init() (f Flags) {
 	return Flags{Mode: m, Config: c}
 }
 
+// Testing returns a Flags instance with Mode == "testing".
+func Testing(c string) Flags {
+	return Flags{Mode: "testing", Config: c}
+}
+
+// ClearScreen clears the screen.
+func (f Flags) ClearScreen() {
+	switch f.Mode {
+	case "oneline":
+	case "testing":
+	default:
+		cmd := exec.Command("clear")
+		cmd.Stdout = os.Stdout
+		cmd.Run()
+	}
+}
+
+// Printv calls prints to standard output if not running in 'oneline' or 'testing' mode.
+func Printv(f Flags, s string, z ...interface{}) string {
+	out := fmt.Sprintf(s, z...)
+
+	switch f.Mode {
+	case "oneline":
+	case "testing":
+	default:
+		fmt.Println(out)
+	}
+	return out
+}
+
 // Login returns true if f.Mode == "login".
 func (f Flags) Login() bool {
 	if f.Mode == "login" {
@@ -56,21 +87,4 @@ func (f Flags) Logout() bool {
 		return true
 	}
 	return false
-}
-
-// Printv calls prints to standard output if not running in 'oneline' or 'testing' mode.
-func Printv(f Flags, s string, z ...interface{}) string {
-	out := fmt.Sprintf(s, z...)
-	switch f.Mode {
-	case "oneline":
-	case "testing":
-	default:
-		fmt.Println(out)
-	}
-	return out
-}
-
-// Testing returns a Flags instance with Mode == "testing".
-func Testing(c string) Flags {
-	return Flags{Mode: "testing", Config: c}
 }

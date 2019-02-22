@@ -4,8 +4,6 @@ package emoji
 import (
 	"fmt"
 	"html"
-	"os"
-	"os/exec"
 	"strconv"
 )
 
@@ -83,13 +81,6 @@ func Get(s string) string {
 // Count returns the number of emoji in the map.
 func Count() int {
 	return len(em)
-}
-
-// ClearScreen clears the screen.
-func ClearScreen() {
-	cmd := exec.Command("clear")
-	cmd.Stdout = os.Stdout
-	cmd.Run()
 }
 
 // printAll prints values in map em.

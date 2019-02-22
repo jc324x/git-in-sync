@@ -1,6 +1,7 @@
 package main
 
 import (
+	"os"
 	"testing"
 
 	"github.com/jychri/git-in-sync/pkg/atp"
@@ -8,6 +9,7 @@ import (
 
 func TestInit(t *testing.T) {
 
+	os.Setenv("MODE", "TESTING")
 	_, cleanup := atp.Direct("gis", "recipes")
 
 	defer cleanup()

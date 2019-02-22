@@ -120,6 +120,7 @@ var tmps = []string{
 	"gis-Complete",
 }
 
+// repo conditions to set in simulate
 var behinds = []string{
 	"gis-Behind",
 	"gis-UntrackedBehind",
@@ -378,34 +379,29 @@ func simulate(dir string, remotes []string) {
 
 	for _, r := range behinds {
 		p := path.Join(sdir, r) // path of repo
-		// log.Printf("set behind: %v", p)
-		m := create(p) // create file on mirror and push = behind
-		add(p)         // add
-		commit(p, m)   // commit
-		push(p)        // push it
+		m := create(p)          // create file on mirror and push = behind
+		add(p)                  // add
+		commit(p, m)            // commit
+		push(p)                 // push it
 	}
 
 	dir = path.Join(dir, "tmp")
 
 	for _, r := range aheads {
 		p := path.Join(dir, r) // path of repo
-		// log.Printf("set ahead: %v", p)
-		m := create(p) // create file, don't push = ahead
-		add(p)         // add
-		commit(p, m)   // commit
+		m := create(p)         // create file, don't push = ahead
+		add(p)                 // add
+		commit(p, m)           // commit
 	}
 
 	for _, r := range untrackeds {
 		p := path.Join(dir, r) // path of repo
-		// log.Printf("set untracked: %v", p)
-		create(p) // create file, no commit = untracked
+		create(p)              // create file, no commit = untracked
 	}
 
 	for _, r := range dirties {
-		p := path.Join(dir, r, "README.md")
-		// log.Printf("set dirty: %v", p)
-		// readme := path.Join(p) // path of repo
-		overwrite(p) // overwrite README.md = dirty
+		p := path.Join(dir, r, "README.md") // path of README in repo
+		overwrite(p)                        // overwrite README.md = dirty
 	}
 }
 
@@ -433,9 +429,9 @@ func Base(pkg string) string {
 // Direct verifies the existence of a gisrc.json at ~/.gisrc.json;
 // the files contents are not validated. If the path is empty,
 // Direct creates a ~/.gisrc.json and returns its absolute path
-// with a clean up function that removes it. If ~/.gisrc.json
-// is present, the absolute path of ~/.gisrc.json
-// is returned with a mute cleanup function.
+// with a clean up function that will remove it. If ~/.gisrc.json
+// is already present, the absolute path of ~/.gisrc.json
+// is returned with a nil cleanup function.
 func Direct(pkg string, k string) (string, func()) {
 
 	var j []byte
@@ -452,7 +448,7 @@ func Direct(pkg string, k string) (string, func()) {
 	tg := tilde.Abs("~/.gisrc.json")
 
 	if _, err := os.Stat(tg); err == nil {
-		return "", func() {} // .gisrc.json exists; get out
+		return "", nil // .gisrc.json exists; get out
 	}
 
 	tb := tilde.Abs("~/tmpgis")

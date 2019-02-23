@@ -149,6 +149,8 @@ var untrackeds = []string{
 
 func read() string {
 
+	// also check to be sure that hub is installed...
+
 	path := tilde.Abs("~/.config/hub")
 	file, err := os.Open(path)
 
@@ -363,7 +365,6 @@ func push(dir string) {
 }
 
 func overwrite(filename string) {
-	// log.Printf("overwriting: %v", filename)
 	ioutil.WriteFile(filename, fox(), 0777)
 }
 

@@ -5,7 +5,7 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
-	"log"
+	// "log"
 	"os"
 	"os/exec"
 	"path"
@@ -238,11 +238,9 @@ func (r *Repo) GitClone(f flags.Flags) {
 	flags.Printv(f, "%v cloning %v {%v}", emoji.Get("Box"), r.Name, r.Workspace)
 
 	args := []string{"clone", r.URL, r.RepoPath}
-	if out, err := r.git(args); out != "" {
-		log.Printf("out: '%v' | err: '%v'", out, err)
+	if out, _ := r.git(args); out != "" {
 		r.Error(dsc, out)
 	} else {
-		log.Printf("out: '%v' | err: '%v'", out, err)
 		r.Cloned = true
 	}
 }

@@ -245,6 +245,7 @@ func gisrcer(dir string, k string) string {
 func startup(dir string, user string, tmp string) string {
 
 	remote := path.Join(user, tmp)
+	log.Printf("The remote is...? %v", remote)
 	cmd := exec.Command("hub", "delete", "-y", remote)
 	cmd.Run()
 
@@ -281,7 +282,7 @@ func startup(dir string, user string, tmp string) string {
 	cmd.Run()
 
 	// git commit -- set-upstream origin master
-	cmd = exec.Command("git", "push", "--set-upstream", "origin", "master")
+	cmd = exec.Command("git", "push", "-u", "origin", "master")
 	cmd.Dir = local
 	cmd.Run()
 
@@ -313,13 +314,55 @@ func remove(remotes []string) {
 	}
 }
 
+func removeAll() {
+
+}
+
 // clone all remotes from GitHub with hub
-func clone(dir string, remotes []string) {
-	for _, remote := range remotes {
-		cmd := exec.Command("hub", "clone", remote)
-		cmd.Dir = dir
-		cmd.Run()
+func clone(dir string, remote string) {
+	cmd := exec.Command("hub", "clone", remote)
+	cmd.Dir = dir
+	cmd.Run()
+}
+
+func cloneAll(dir string, remotes []string) {
+
+	dir = path.Join(dir, "set")
+
+	if err := os.MkdirAll(dir, 0777); err != nil {
+		log.Fatal(err)
 	}
+
+	var wg sync.WaitGroup
+
+	for i := range remotes {
+		wg.Add(1)
+		go func(remote string) {
+			defer wg.Done()
+			clone(dir, remote)
+		}(remotes[i])
+	}
+	wg.Wait()
+}
+
+func setBehind(dir string, behinds []string) {
+
+	dir = path.Join(dir, "set")
+
+	var wg sync.WaitGroup
+
+	for i := range behinds {
+		wg.Add(1)
+		go func(behind string) {
+			defer wg.Done()
+			p := path.Join(dir, behind) // path of repo
+			m := create(p)              // create file on mirror and push = behind
+			add(p)                      // add
+			commit(p, m)                // commit
+			push(p)                     // push it
+		}(behinds[i])
+	}
+	wg.Wait()
 }
 
 // rando returns a random string, 8 characters long
@@ -371,21 +414,8 @@ func overwrite(filename string) {
 // condition sets up testing conditions
 func simulate(dir string, remotes []string) {
 
-	sdir := path.Join(dir, "set")
-
-	if err := os.MkdirAll(sdir, 0777); err != nil {
-		log.Fatal(err)
-	}
-
-	clone(sdir, remotes)
-
-	for _, r := range behinds {
-		p := path.Join(sdir, r) // path of repo
-		m := create(p)          // create file on mirror and push = behind
-		add(p)                  // add
-		commit(p, m)            // commit
-		push(p)                 // push it
-	}
+	cloneAll(dir, remotes)
+	// setBehind()
 
 	dir = path.Join(dir, "tmp")
 

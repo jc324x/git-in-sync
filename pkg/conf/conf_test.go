@@ -14,7 +14,7 @@ func TestInit(t *testing.T) {
 		pkg, recipe string
 	}{
 		{"conf", "recipes"},
-		{"conf", "tmp"},
+		{"conf", "tmpgis"},
 	} {
 		p, cleanup := atp.Setup(tr.pkg, tr.recipe)
 		f := flags.Testing(p)

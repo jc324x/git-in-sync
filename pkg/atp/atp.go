@@ -56,14 +56,14 @@ var jmap = map[string][]byte{
 			}]
 		}
 `),
-	"tmp": []byte(`
+	"tmpgis": []byte(`
 	{
 		"bundles": [{
 			"path": "SETPATH",
 			"zones": [{
 					"user": "jychri",
 					"remote": "github",
-					"workspace": "tmp",
+					"workspace": "tmpgis",
 					"repositories": [
 						"gis-Ahead",
 						"gis-Behind",
@@ -90,8 +90,8 @@ var rmap = map[string]Results{
 		{"rochacbruno", "github", "recipes", []string{"vegan_recipes"}},
 		{"niw", "github", "recipes", []string{"ramen"}},
 	},
-	"tmp": {
-		{"jychri", "github", "tmp", []string{
+	"tmpgis": {
+		{"jychri", "github", "tmpgis", []string{
 			"gis-Ahead",
 			"gis-Behind",
 			"gis-Dirty",
@@ -107,7 +107,7 @@ var rmap = map[string]Results{
 
 // tmp repo names. Hub creates these repos on disk and remotes on GitHub...
 // tmps are matched to Results and JSON config in rmap and jmap...
-var tmps = []string{
+var tmpgis = []string{
 	"gis-Ahead",
 	"gis-Behind",
 	"gis-Dirty",
@@ -118,6 +118,16 @@ var tmps = []string{
 	"gis-UntrackedAhead",
 	"gis-UntrackedBehind",
 	"gis-Complete",
+}
+
+// Stage is a temp repository created locally with a
+// matched remote on GitHub. Conditions are set in the repo
+// before pushing to GitHub to put the "true" mirror repos
+// behind origin master for testing.
+type Stage struct {
+	Name   string // gis-Ahead
+	Remote string // jychri/gis-Ahead
+	Path   string // /Users/jychri/tmpgis/pkg/set/gis-Ahead
 }
 
 // repo conditions to set in simulate
@@ -147,7 +157,67 @@ var untrackeds = []string{
 	"gis-UntrackedBehind",
 }
 
-func read() string {
+// NewHubSetup ...
+func NewHubSetup(pkg string, k string) {
+	// base, dir := paths(pkg)  // base and directory paths
+	// gisrc := gisrcer(dir, k) // write temporary gisrc
+}
+
+// Staging ...
+func Staging(tmps []string, dir string) {
+	// user := user() // read user ~/.config/hub
+
+	// remotes := hubs(tmps, dir, user) // hubs creates repos and remotes on GitHub
+	// wg
+	// remote := startup(dir, user, tmp)
+	// remotes = append(remotes, remote)
+
+	// remote := path.Join(user, tmp)
+	// log.Printf("The remote is...? %v", remote)
+	// cmd := exec.Command("hub", "delete", "-y", remote)
+	// cmd.Run()
+
+	// local := path.Join(dir, "tmp", tmp)
+
+	// os.RemoveAll(local)      // remove
+	// os.MkdirAll(local, 0777) // create
+
+	// git init
+	// cmd = exec.Command("git", "init")
+	// cmd.Dir = local
+	// cmd.Run()
+
+	// hub create
+	// cmd = exec.Command("hub", "create")
+	// cmd.Dir = local
+	// cmd.Run()
+
+	// README.md with some Lorem Ipsum
+	// readme := path.Join(local, "README.md")
+
+	// if err := ioutil.WriteFile(readme, lorem(), 0777); err != nil {
+	// 	log.Fatal(err)
+	// }
+
+	// git add *
+	// cmd = exec.Command("git", "add", "*")
+	// cmd.Dir = local
+	// cmd.Run()
+
+	// git commit -m "Initial commit"
+	// cmd = exec.Command("git", "commit", "-m", "Initial commit")
+	// cmd.Dir = local
+	// cmd.Run()
+
+	// git commit -- set-upstream origin master
+	// cmd = exec.Command("git", "push", "-u", "origin", "master")
+	// cmd.Dir = local
+	// cmd.Run()
+
+	// return path.Join(user, tmp)
+}
+
+func user() string {
 
 	// also check to be sure that hub is installed...
 
@@ -453,14 +523,12 @@ func Setup(pkg string, k string) (string, func()) {
 }
 
 // Hub uses hub to do stuff...
-// this needs to return a string path to a .gisrc just like Setup
-// should be ~/tmpgis/tmp/
 func Hub(pkg string, k string) (string, func()) {
-	base, dir := paths(pkg)          // base and directory paths
-	gisrc := gisrcer(dir, k)         // write temporary gisrc
-	user := read()                   // read user ~/.config/hub
-	remotes := hubs(tmps, dir, user) // hubs creates repos and remotes on GitHub
-	simulate(dir, remotes)           // create conditions
+	base, dir := paths(pkg)            // base and directory paths
+	gisrc := gisrcer(dir, k)           // write temporary gisrc
+	user := user()                     // read user ~/.config/hub
+	remotes := hubs(tmpgis, dir, user) // hubs creates repos and remotes on GitHub
+	simulate(dir, remotes)             // create conditions
 
 	return gisrc, func() {
 		os.RemoveAll(base) // rm -rf base

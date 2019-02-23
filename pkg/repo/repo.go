@@ -176,10 +176,11 @@ func (r *Repo) Error(dsc string, em string) {
 // VerifyWorkspace verifies that the r.WorkspacePath is present and accessible.
 func (r *Repo) VerifyWorkspace(f flags.Flags, st *stat.Stat) {
 
-	const dsc = "verify-workspace"
+	const dsc = "VerifyWorkspace"
 
 	if _, err := os.Stat(r.WorkspacePath); os.IsNotExist(err) {
 		flags.Printv(f, "%v creating %v", emoji.Get("Folder"), r.WorkspacePath)
+		// os.MkdirAll(r.WorkspacePath, 0444) // this breaks things, good for testing
 		os.MkdirAll(r.WorkspacePath, 0766)
 		st.CreatedWorkspaces = append(st.CreatedWorkspaces, r.Workspace)
 	}
@@ -238,9 +239,10 @@ func (r *Repo) GitClone(f flags.Flags) {
 
 	args := []string{"clone", r.URL, r.RepoPath}
 	if out, err := r.git(args); out != "" {
-		log.Println(err)
+		log.Printf("out: '%v' | err: '%v'", out, err)
 		r.Error(dsc, out)
 	} else {
+		log.Printf("out: '%v' | err: '%v'", out, err)
 		r.Cloned = true
 	}
 }

@@ -3,7 +3,9 @@ package fchk
 
 import (
 	"io"
+	"io/ioutil"
 	"os"
+	"path"
 )
 
 // NoPermission returns true if the target can't be read,
@@ -13,31 +15,36 @@ func NoPermission(p string) bool {
 	var f *os.File
 	var err error
 
+	defer f.Close()
+
 	if f, err = os.Open(p); err != nil {
 		return true
 	}
 
-	defer f.Close()
-
-	if _, err = os.Stat(p); err != nil {
+	if _, err := os.Stat(p); err != nil {
 		return true
 	}
 
-	if f, err = os.OpenFile(p, os.O_WRONLY, 0666); err != nil {
+	if f, err = os.OpenFile(p, os.O_WRONLY, 0766); err != nil {
+		if os.IsPermission(err) {
+			defer f.Close()
+			return true
+		}
+	}
+
+	if f, err = os.OpenFile(p, os.O_RDONLY, 0766); err != nil {
 		if os.IsPermission(err) {
 			return true
 		}
 	}
 
-	defer f.Close()
+	filename := path.Join(p, "tmp")
 
-	if f, err = os.OpenFile(p, os.O_RDONLY, 0666); err != nil {
-		if os.IsPermission(err) {
-			return true
-		}
+	defer os.Remove(filename)
+
+	if err = ioutil.WriteFile(filename, []byte{}, 0777); err != nil {
+		return true
 	}
-
-	defer f.Close()
 
 	return false
 }

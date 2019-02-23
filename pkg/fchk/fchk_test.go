@@ -97,13 +97,13 @@ func TestNoPermission(t *testing.T) {
 		{tmp, false},
 		{tda, false},
 		{tde, false},
-		{tf, false},
+		{tf, true},
 	} {
 
 		got := NoPermission(tr.in)
 
 		if got != tr.want {
-			t.Errorf("NoPermission: (got: %v,  want: %v)", got, tr.want)
+			t.Errorf("NoPermission (%v) got: %v !=  want: %v", tr.in, got, tr.want)
 		}
 	}
 }
@@ -168,7 +168,6 @@ func TestIsFile(t *testing.T) {
 			t.Errorf("IsFile: (got: %v, want: %v) {%v}\n", got, c.want, c.in)
 		}
 	}
-
 }
 
 // Removes the temporary directory and files created for these tests.

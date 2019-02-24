@@ -107,7 +107,7 @@ var rmap = map[string]Results{
 
 // tmp repo names. Hub creates these repos on disk and remotes on GitHub...
 // tmps are matched to Results and JSON config in rmap and jmap...
-var tmpgis = []string{
+var tmps = []string{
 	"gis-Ahead",
 	"gis-Behind",
 	"gis-Dirty",
@@ -118,16 +118,6 @@ var tmpgis = []string{
 	"gis-UntrackedAhead",
 	"gis-UntrackedBehind",
 	"gis-Complete",
-}
-
-// Stage is a temp repository created locally with a
-// matched remote on GitHub. Conditions are set in the repo
-// before pushing to GitHub to put the "true" mirror repos
-// behind origin master for testing.
-type Stage struct {
-	Name   string // gis-Ahead
-	Remote string // jychri/gis-Ahead
-	Path   string // /Users/jychri/tmpgis/pkg/set/gis-Ahead
 }
 
 // repo conditions to set in simulate
@@ -157,18 +147,38 @@ var untrackeds = []string{
 	"gis-UntrackedBehind",
 }
 
-// NewHubSetup ...
-func NewHubSetup(pkg string, k string) {
-	// base, dir := paths(pkg)  // base and directory paths
-	// gisrc := gisrcer(dir, k) // write temporary gisrc
+// Seed is a temp repository created locally with a
+// matched remote on GitHub. Conditions are set in the repo
+// before pushing to GitHub to put the "true" mirror repos
+// behind origin master for testing.
+type Seed struct {
+	Name   string // gis-Ahead
+	Remote string // jychri/gis-Ahead
+	Dir    string // /Users/jychri/tmpgis/atp/staging
+	Path   string // /Users/jychri/tmpgis/atp/staging/gis-Ahead
+}
+
+// Seeds ...
+type Seeds []Seed
+
+// rename to startup after startup is removed
+func build() (sds Seeds) {
+	return sds
 }
 
 // Staging ...
-func Staging(tmps []string, dir string) {
-	// user := user() // read user ~/.config/hub
+func Staging(tmps []string, dir string, pkg string, k string) {
+	user := user()           // read user ~/.config/hub
+	base, dir := paths(pkg)  // base and directory paths
+	gisrc := gisrcer(dir, k) // write temporary gisrc
+	seeds := build()
 
-	// remotes := hubs(tmps, dir, user) // hubs creates repos and remotes on GitHub
-	// wg
+	// seed.clear()
+	// seed.local()
+	// seed.init()
+	// seed.create()
+	// seed.populate()
+
 	// remote := startup(dir, user, tmp)
 	// remotes = append(remotes, remote)
 
@@ -524,11 +534,11 @@ func Setup(pkg string, k string) (string, func()) {
 
 // Hub uses hub to do stuff...
 func Hub(pkg string, k string) (string, func()) {
-	base, dir := paths(pkg)            // base and directory paths
-	gisrc := gisrcer(dir, k)           // write temporary gisrc
-	user := user()                     // read user ~/.config/hub
-	remotes := hubs(tmpgis, dir, user) // hubs creates repos and remotes on GitHub
-	simulate(dir, remotes)             // create conditions
+	base, dir := paths(pkg)          // base and directory paths
+	gisrc := gisrcer(dir, k)         // write temporary gisrc
+	user := user()                   // read user ~/.config/hub
+	remotes := hubs(tmps, dir, user) // hubs creates repos and remotes on GitHub
+	simulate(dir, remotes)           // create conditions
 
 	return gisrc, func() {
 		os.RemoveAll(base) // rm -rf base

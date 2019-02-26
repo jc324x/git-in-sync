@@ -125,7 +125,8 @@ func (m *model) set(dir string) {
 	m.dir = path.Join(dir, m.name) // set m.dir
 }
 
-func (m *model) sdir() {
+func (m *model) mkdir() {
+	log.Println(m.dir)
 	os.RemoveAll(m.dir)      // verify rm -rf m.dir
 	os.MkdirAll(m.dir, 0766) // mkdir m.dir
 }
@@ -136,7 +137,7 @@ func (m *model) init() {
 	cmd.Run()                          // run
 }
 
-// create name.md at m.dir with lorem ipsum
+// create file with lorem ipsum
 func (m *model) create(name string) {
 	lorem := "Lorem ipsum dolor sit amet, consectetur adipiscing elit."
 	data := []byte(lorem)
@@ -148,46 +149,30 @@ func (m *model) create(name string) {
 	}
 }
 
-func (m *model) readme() {
-	lorem := "Lorem ipsum dolor sit amet, consectetur adipiscing elit"
-	data := []byte(lorem)
-	file := path.Join(m.dir, "README.md")
-	// ioutil.WriteFile(file, data, 0777)
-	if err := ioutil.WriteFile(file, data, 0777); err != nil {
-		log.Fatal(err)
-	}
-}
-
 // ovewrite README.md with fox stuff
 func (m *model) overwrite() {
 	fox := "The sly brown fox jumped over the lazy dog."
 	data := []byte(fox)
 	file := path.Join(m.dir, "README.md")
-	// ioutil.WriteFile(file, data, 0777)
+
 	if err := ioutil.WriteFile(file, data, 0777); err != nil {
 		ioutil.WriteFile(file, data, 0777)
 	}
 }
 
 func (m *model) add() {
-	// log.Printf("add - dir is %v", m.dir)
-
 	cmd := exec.Command("git", "add", "*") // git add
 	cmd.Dir = m.dir                        // set dir
 	cmd.Run()                              // run
 }
 
 func (m *model) commit(message string) {
-	// log.Printf("commit - dir is %v", m.dir)
-
 	cmd := exec.Command("git", "commit", "-m", message) // git commit
 	cmd.Dir = m.dir                                     // set dir
 	cmd.Run()                                           // run
 }
 
 func (m *model) push() {
-	// log.Printf("push - dir is %v", m.dir)
-
 	cmd := exec.Command("git", "push", "-u", "origin", "master") // push -u origin master
 	cmd.Dir = m.dir                                              // set dir
 	cmd.Run()                                                    // run
@@ -195,10 +180,8 @@ func (m *model) push() {
 
 func (m *model) clone() {
 	cmd := exec.Command("hub", "clone", m.remote) // hub clone
-	log.Printf(m.remote)
-	log.Printf(m.dir)
-	cmd.Dir = m.dir // set dir
-	cmd.Run()       // run
+	cmd.Dir = m.dir                               // set dir
+	cmd.Run()                                     // run
 }
 
 func (m *model) behind() {
@@ -257,10 +240,10 @@ func (ms models) startup(mdir string, tdir string) {
 		go func(m *model) {
 			defer wg.Done()
 			m.set(mdir)                // set models dir
-			m.sdir()                   // verify fresh subdirectory m.dir
+			m.mkdir()                  // verify fresh directory
 			m.init()                   // git init
 			m.hub()                    // verify fresh repo on GitHub
-			m.readme()                 // create readme
+			m.create("README")         // create readme
 			m.add()                    // add *
 			m.commit("Initial commit") // commit -m "Initial commit"
 			m.push()                   // push -u origin master
@@ -310,7 +293,6 @@ func modeler(user string) (ms models) {
 		m.name = name
 		m.remote = remote
 		ms = append(ms, m)
-		// log.Println(m.name)
 	}
 	return ms
 }
@@ -370,7 +352,7 @@ func paths(pkg string) (string, string) {
 	return base, dir
 }
 
-// models, tmps := subdirs(dir) // create sub dirs
+// create subdirectories
 func subdirs(dir string) (mdir string, tdir string) {
 	mdir = path.Join(dir, "models")
 	tdir = path.Join(dir, "tmpgis")

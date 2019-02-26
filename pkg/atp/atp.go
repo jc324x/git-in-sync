@@ -4,23 +4,20 @@ package atp
 import (
 	"bufio"
 	"bytes"
-	"fmt"
 	"io/ioutil"
 	"log"
-	"math/rand"
 	"os"
 	"os/exec"
 	"path"
+	"strings"
 	"sync"
-	"time"
 
 	"github.com/jychri/git-in-sync/pkg/brf"
 	"github.com/jychri/git-in-sync/pkg/tilde"
 )
 
 // private
-
-const abc = "abcdefghijklmnopqrstuvwxzyABCDEFGHIJKLMNOPQRSTUVWXYZ"
+const base = "~/tmpgis"
 
 // JSON map
 var jmap = map[string][]byte{
@@ -105,126 +102,197 @@ var rmap = map[string]Results{
 		}}},
 }
 
-// tmp repo names. Hub creates these repos on disk and remotes on GitHub...
-// tmps are matched to Results and JSON config in rmap and jmap...
-var tmps = []string{
-	"gis-Ahead",
-	"gis-Behind",
-	"gis-Dirty",
-	"gis-DirtyUntracked",
-	"gis-DirtyAhead",
-	"gis-DirtyBehind",
-	"gis-Untracked",
-	"gis-UntrackedAhead",
-	"gis-UntrackedBehind",
-	"gis-Complete",
+type model struct {
+	name   string // gis-Ahead
+	remote string // jychri/gis-Ahead
+	dir    string // /Users/jychri/tmpgis/atp/staging
 }
 
-// repo conditions to set in simulate
-var behinds = []string{
-	"gis-Behind",
-	"gis-UntrackedBehind",
-	"gis-DirtyBehind",
+func (m *model) hub() {
+	cmd := exec.Command("hub", "delete", "-y", m.remote) // verify hub delete
+	cmd.Run()                                            //
+	cmd = exec.Command("hub", "create")                  // hub create
+	cmd.Run()                                            //
 }
 
-var aheads = []string{
-	"gis-Ahead",
-	"gis-UntrackedAhead",
-	"gis-DirtyAhead",
+func (m *model) set(dir string) {
+	m.dir = path.Join(dir, m.name) // set m.dir
 }
 
-var dirties = []string{
-	"gis-Dirty",
-	"gis-DirtyAhead",
-	"gis-DirtyBehind",
-	"gis-DirtyUntracked",
+func (m *model) sdir() {
+	os.RemoveAll(m.dir)      // verify rm -rf m.dir
+	os.MkdirAll(m.dir, 0766) // mkdir m.dir
 }
 
-var untrackeds = []string{
-	"gis-DirtyUntracked",
-	"gis-Untracked",
-	"gis-UntrackedAhead",
-	"gis-UntrackedBehind",
+func (m *model) init() {
+	cmd := exec.Command("git", "init") // git init
+	cmd.Dir = m.dir                    // set dir
+	cmd.Run()                          // run
 }
 
-// Seed is a temp repository created locally with a
-// matched remote on GitHub. Conditions are set in the repo
-// before pushing to GitHub to put the "true" mirror repos
-// behind origin master for testing.
-type Seed struct {
-	Name   string // gis-Ahead
-	Remote string // jychri/gis-Ahead
-	Dir    string // /Users/jychri/tmpgis/atp/staging
-	Path   string // /Users/jychri/tmpgis/atp/staging/gis-Ahead
+// create name.md at m.dir with lorem ipsum
+func (m *model) create(name string) {
+
+	lorem := `Lorem ipsum dolor sit amet, consectetur adipiscing elit. \n 
+	Morbi ac vulputate mi, sit amet euismod nibh. Donec at interdum sapien, 
+	non pretium tortor. Duis et dapibus eros. Sed tempus non dui vel maximus. 
+	\n Vivamus faucibus tellus in scelerisque ultrices. 
+	Duis ac libero a leo gravida convallis. Aliquam viverra lacinia arcu, 
+	ac metus pharetra sit amet. `
+
+	data := []byte(lorem)
+
+	name = strings.Join([]string{name, ".md"}, "")
+	file := path.Join(m.dir, name)
+
+	if err := ioutil.WriteFile(file, data, 0777); err != nil {
+		log.Fatal(err)
+	}
 }
 
-// Seeds ...
-type Seeds []Seed
+// ovewrite README.md with fox stuff
+func (m *model) overwrite() {
+	fox := "The sly brown fox jumped over the lazy dog."
 
-// rename to startup after startup is removed
-func build() (sds Seeds) {
-	return sds
+	data := []byte(fox)
+
+	file := path.Join(m.dir, "README.md")
+	ioutil.WriteFile(file, data, 0777)
 }
 
-// Staging ...
-func Staging(tmps []string, dir string, pkg string, k string) {
-	user := user()           // read user ~/.config/hub
-	base, dir := paths(pkg)  // base and directory paths
-	gisrc := gisrcer(dir, k) // write temporary gisrc
-	seeds := build()
+func (m *model) add() {
+	cmd := exec.Command("git", "add", "*") // git add
+	cmd.Dir = m.dir                        // set dir
+	cmd.Run()                              // run
+}
 
-	// seed.clear()
-	// seed.local()
-	// seed.init()
-	// seed.create()
-	// seed.populate()
+func (m *model) commit(message string) {
+	cmd := exec.Command("git", "commit", "-m", message) // git commit
+	cmd.Dir = m.dir                                     // set dir
+	cmd.Run()                                           // run
+}
 
-	// remote := startup(dir, user, tmp)
-	// remotes = append(remotes, remote)
+func (m *model) push() {
+	cmd := exec.Command("git", "push", "-u", "origin", "master") // push -u origin master
+	cmd.Dir = m.dir                                              // set dir
+	cmd.Run()                                                    // run
+}
 
-	// remote := path.Join(user, tmp)
-	// log.Printf("The remote is...? %v", remote)
-	// cmd := exec.Command("hub", "delete", "-y", remote)
-	// cmd.Run()
+func (m *model) clone() {
+	cmd := exec.Command("hub", "clone", m.remote) // hub clone
+	cmd.Dir = m.dir                               // set dir
+	cmd.Run()                                     // run
+}
 
-	// local := path.Join(dir, "tmp", tmp)
+func (m *model) behind() {
 
-	// os.RemoveAll(local)      // remove
-	// os.MkdirAll(local, 0777) // create
+	if !strings.Contains(m.name, "Behind") {
+		return
+	}
 
-	// git init
-	// cmd = exec.Command("git", "init")
-	// cmd.Dir = local
-	// cmd.Run()
+	m.create("BEHIND")
+	m.add()
+	m.commit("'BEHIND' commit")
+	m.push()
+}
 
-	// hub create
-	// cmd = exec.Command("hub", "create")
-	// cmd.Dir = local
-	// cmd.Run()
+func (m *model) ahead() {
 
-	// README.md with some Lorem Ipsum
-	// readme := path.Join(local, "README.md")
+	if !strings.Contains(m.name, "Ahead") {
+		return
+	}
 
-	// if err := ioutil.WriteFile(readme, lorem(), 0777); err != nil {
-	// 	log.Fatal(err)
-	// }
+	m.create("AHEAD")
+	m.add()
+	m.commit("'AHEAD' commit")
+}
 
-	// git add *
-	// cmd = exec.Command("git", "add", "*")
-	// cmd.Dir = local
-	// cmd.Run()
+func (m *model) dirty() {
 
-	// git commit -m "Initial commit"
-	// cmd = exec.Command("git", "commit", "-m", "Initial commit")
-	// cmd.Dir = local
-	// cmd.Run()
+	if !strings.Contains(m.name, "Dirty") {
+		return
+	}
 
-	// git commit -- set-upstream origin master
-	// cmd = exec.Command("git", "push", "-u", "origin", "master")
-	// cmd.Dir = local
-	// cmd.Run()
+	m.overwrite()
+}
 
-	// return path.Join(user, tmp)
+func (m *model) untracked() {
+
+	if !strings.Contains(m.name, "Untracked") {
+		return
+	}
+
+	m.create("UNTRACKED")
+}
+
+func (m *model) remove() {
+	cmd := exec.Command("hub", "delete", "-y", m.remote) // hub delete
+	cmd.Run()                                            // run
+}
+
+// Models ...
+type models []*model
+
+func (ms models) startup(mdir string, tdir string) {
+	var wg sync.WaitGroup
+	for i := range ms {
+		wg.Add(1)
+		go func(m *model) {
+			defer wg.Done()
+			m.hub()                    // verify fresh repo on GitHub
+			m.set(mdir)                // switch to model directory
+			m.sdir()                   // verify fresh subdirectory m.dir
+			m.init()                   // git init
+			m.create("README")         // touch readme
+			m.add()                    // add *
+			m.commit("Initial commit") // commit -m "Initial commit"
+			m.push()                   // push -u origin master
+			m.behind()                 // set *Behind* models behind origin master
+			// m.set(tdir)                // switch to tmp directory
+			// m.ahead()                  // set *Ahead* models behind origin master
+			// m.dirty()                  // make *Dirty* models dirty
+			// m.untracked()              // make *Untracked* models untracked
+		}(ms[i])
+	}
+	wg.Wait()
+}
+
+func (ms models) cleanup() {
+	var wg sync.WaitGroup
+	for i := range ms {
+		wg.Add(1)
+		go func(m *model) {
+			defer wg.Done()
+			m.remove() // remove remote origin on GitHub
+		}(ms[i])
+	}
+	wg.Wait()
+}
+
+func modeler(user string) (ms models) {
+
+	var tmps = []string{
+		"gis-Ahead",
+		"gis-Behind",
+		"gis-Dirty",
+		"gis-DirtyUntracked",
+		"gis-DirtyAhead",
+		"gis-DirtyBehind",
+		"gis-Untracked",
+		"gis-UntrackedAhead",
+		"gis-UntrackedBehind",
+		"gis-Complete",
+	}
+
+	for _, name := range tmps {
+		remote := path.Join(user, name)
+		m := new(model)
+		m.name = name
+		m.remote = remote
+		ms = append(ms, m)
+		// log.Println(m.name)
+	}
+	return ms
 }
 
 func user() string {
@@ -270,7 +338,7 @@ func paths(pkg string) (string, string) {
 		log.Fatalf("pkg is empty")
 	}
 
-	base := tilde.Abs("~/tmpgis")
+	base := tilde.Abs(base)
 	dir := path.Join(base, pkg)
 
 	os.RemoveAll(dir)
@@ -282,10 +350,20 @@ func paths(pkg string) (string, string) {
 	return base, dir
 }
 
-func lorem() []byte {
-	ls := "Lorem ipsum dolor sit amet, consectetur adipiscing elit. \n Morbi ac vulputate mi, sit amet euismod nibh. Donec at interdum sapien, non pretium tortor. Duis et dapibus eros. Sed tempus non dui vel maximus. \n Vivamus faucibus tellus in scelerisque ultrices. Duis ac libero a leo gravida convallis. Aliquam viverra lacinia arcu, ac molestie metus pharetra sit amet. "
+// models, tmps := subdirs(dir) // create sub dirs
+func subdirs(dir string) (mdir string, tdir string) {
+	mdir = path.Join(dir, "models")
+	tdir = path.Join(dir, "tmpgis")
 
-	return []byte(ls)
+	if err := os.MkdirAll(mdir, 0777); err != nil {
+		log.Fatalf("Unable to create %v", mdir)
+	}
+
+	if err := os.MkdirAll(tdir, 0777); err != nil {
+		log.Fatalf("Unable to create %v", tdir)
+	}
+
+	return mdir, tdir
 }
 
 func fox() []byte {
@@ -297,7 +375,7 @@ func fox() []byte {
 // gisrcer writes a gisrc to file, data from jmap matching key k.
 // add second return of function (can be nil) that will cleanup created gisrc
 // if it didn't exist already
-func gisrcer(dir string, k string) string {
+func gisrc(dir string, k string) string {
 	var j []byte
 	var ok bool
 
@@ -316,207 +394,6 @@ func gisrcer(dir string, k string) string {
 	return gisrc
 }
 
-// startup creates a new temporary repo in the local test directory
-// 'tmp'. The repo is initialized with a blank README.md file, a first
-// commit with a message of 'Initial commit' and a upstream master branch
-// available at github.com/$user/$tmp. startup is called by Hub, which returns
-// a cleanup function that deletes the remote branch and deletes all temp
-// repos and directories.
-func startup(dir string, user string, tmp string) string {
-
-	remote := path.Join(user, tmp)
-	log.Printf("The remote is...? %v", remote)
-	cmd := exec.Command("hub", "delete", "-y", remote)
-	cmd.Run()
-
-	local := path.Join(dir, "tmp", tmp)
-
-	os.RemoveAll(local)      // remove
-	os.MkdirAll(local, 0777) // create
-
-	// git init
-	cmd = exec.Command("git", "init")
-	cmd.Dir = local
-	cmd.Run()
-
-	// hub create
-	cmd = exec.Command("hub", "create")
-	cmd.Dir = local
-	cmd.Run()
-
-	// README.md with some Lorem Ipsum
-	readme := path.Join(local, "README.md")
-
-	if err := ioutil.WriteFile(readme, lorem(), 0777); err != nil {
-		log.Fatal(err)
-	}
-
-	// git add *
-	cmd = exec.Command("git", "add", "*")
-	cmd.Dir = local
-	cmd.Run()
-
-	// git commit -m "Initial commit"
-	cmd = exec.Command("git", "commit", "-m", "Initial commit")
-	cmd.Dir = local
-	cmd.Run()
-
-	// git commit -- set-upstream origin master
-	cmd = exec.Command("git", "push", "-u", "origin", "master")
-	cmd.Dir = local
-	cmd.Run()
-
-	return path.Join(user, tmp)
-}
-
-// create all remotes on GitHub
-func hubs(tmps []string, dir string, user string) (remotes []string) {
-	var wg sync.WaitGroup
-
-	for i := range tmps {
-		wg.Add(1)
-		go func(tmp string) {
-			defer wg.Done()
-			remote := startup(dir, user, tmp)
-			remotes = append(remotes, remote)
-		}(tmps[i])
-	}
-	wg.Wait()
-
-	return remotes
-}
-
-// remove (delete) all remotes on GitHub
-func remove(remotes []string) {
-	for _, remote := range remotes {
-		cmd := exec.Command("hub", "delete", "-y", remote)
-		cmd.Run()
-	}
-}
-
-func removeAll() {
-
-}
-
-// clone all remotes from GitHub with hub
-func clone(dir string, remote string) {
-	cmd := exec.Command("hub", "clone", remote)
-	cmd.Dir = dir
-	cmd.Run()
-}
-
-func cloneAll(dir string, remotes []string) {
-
-	dir = path.Join(dir, "set")
-
-	if err := os.MkdirAll(dir, 0777); err != nil {
-		log.Fatal(err)
-	}
-
-	var wg sync.WaitGroup
-
-	for i := range remotes {
-		wg.Add(1)
-		go func(remote string) {
-			defer wg.Done()
-			clone(dir, remote)
-		}(remotes[i])
-	}
-	wg.Wait()
-}
-
-func setBehind(dir string, behinds []string) {
-
-	dir = path.Join(dir, "set")
-
-	var wg sync.WaitGroup
-
-	for i := range behinds {
-		wg.Add(1)
-		go func(behind string) {
-			defer wg.Done()
-			p := path.Join(dir, behind) // path of repo
-			m := create(p)              // create file on mirror and push = behind
-			add(p)                      // add
-			commit(p, m)                // commit
-			push(p)                     // push it
-		}(behinds[i])
-	}
-	wg.Wait()
-}
-
-// rando returns a random string, 8 characters long
-func rando() string {
-	var b bytes.Buffer
-
-	for i := 0; i <= 6; i++ {
-		rand.Seed(time.Now().UnixNano())
-		min := 0
-		max := len(abc)
-		r := rand.Intn(max-min) + min
-		char := abc[r]
-		b.WriteByte(char)
-	}
-
-	return b.String()
-}
-
-// add adds a file to a directory, random name and all that...
-func create(dir string) string {
-	rnd := rando()
-	filename := path.Join(dir, rnd)
-	ioutil.WriteFile(filename, lorem(), 0777)
-	return fmt.Sprintf("Added %v, status += BEHIND", rnd)
-}
-
-func add(dir string) {
-	cmd := exec.Command("git", "add", "*")
-	cmd.Dir = dir
-	cmd.Run()
-}
-
-func commit(dir string, m string) {
-	cmd := exec.Command("git", "commit", "-m", m)
-	cmd.Dir = dir
-	cmd.Run()
-}
-
-func push(dir string) {
-	cmd := exec.Command("git", "push", "-u", "origin", "master")
-	cmd.Dir = dir
-	cmd.Run()
-}
-
-func overwrite(filename string) {
-	ioutil.WriteFile(filename, fox(), 0777)
-}
-
-// condition sets up testing conditions
-func simulate(dir string, remotes []string) {
-
-	cloneAll(dir, remotes)
-	// setBehind()
-
-	dir = path.Join(dir, "tmp")
-
-	for _, r := range aheads {
-		p := path.Join(dir, r) // path of repo
-		m := create(p)         // create file, don't push = ahead
-		add(p)                 // add
-		commit(p, m)           // commit
-	}
-
-	for _, r := range untrackeds {
-		p := path.Join(dir, r) // path of repo
-		create(p)              // create file, no commit = untracked
-	}
-
-	for _, r := range dirties {
-		p := path.Join(dir, r, "README.md") // path of README in repo
-		overwrite(p)                        // overwrite README.md = dirty
-	}
-}
-
 // Public
 
 // Setup creates a test environment at ~/tmpgis/$pkg/.
@@ -526,23 +403,24 @@ func simulate(dir string, remotes []string) {
 // Setup returns the absolute path of ~/tmpgis/$pkg/gisrc.json
 // and a cleanup function that removes ~/tmpgis/$pkg/.
 // Note: Look at spec doc for os.MkdirAll and pull in.
-func Setup(pkg string, k string) (string, func()) {
-	base, dir := paths(pkg)  // base and directory paths
-	gisrc := gisrcer(dir, k) // write temporary gisrc
+func Setup(scope string, k string) (string, func()) {
+	base, dir := paths(scope) // base and directory paths
+	gisrc := gisrc(dir, k)    // write temporary gisrc
 	return gisrc, func() { os.RemoveAll(base) }
 }
 
-// Hub uses hub to do stuff...
-func Hub(pkg string, k string) (string, func()) {
-	base, dir := paths(pkg)          // base and directory paths
-	gisrc := gisrcer(dir, k)         // write temporary gisrc
-	user := user()                   // read user ~/.config/hub
-	remotes := hubs(tmps, dir, user) // hubs creates repos and remotes on GitHub
-	simulate(dir, remotes)           // create conditions
+// Hub ...
+func Hub(scope string, k string) (string, func()) {
+	user := user()             // read user ~/.config/hub
+	base, dir := paths(scope)  // base and directory paths (return base for cleanup...)
+	gisrc := gisrc(dir, k)     // create gisrc, return it's path
+	mdir, tdir := subdirs(dir) // create subdirectories models and tmp
+	ms := modeler(user)        // create basic models, collect as models
+	ms.startup(mdir, tdir)     // async startup
 
 	return gisrc, func() {
 		os.RemoveAll(base) // rm -rf base
-		remove(remotes)    // delete all remotes on GitHub
+		ms.cleanup()       // async remove all remotes
 	}
 }
 

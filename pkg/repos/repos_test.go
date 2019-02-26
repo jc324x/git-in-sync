@@ -75,12 +75,12 @@ func TestVerifyRepos(t *testing.T) {
 func TestVerifyChanges(t *testing.T) {
 
 	for _, tr := range []struct {
-		pkg, k string
+		scope, k string
 	}{
 		{"repos-changes", "tmpgis"},
 	} {
 		// p, cleanup := atp.Hub(tr.pkg, tr.k)
-		p, _ := atp.Hub(tr.pkg, tr.k)
+		p, _ := atp.Hub(tr.scope, tr.k)
 		ti := timer.Init()
 		f := flags.Testing(p)
 		c := conf.Init(f)

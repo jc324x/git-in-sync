@@ -80,17 +80,18 @@ func TestVerifyChanges(t *testing.T) {
 		{"repos-changes", "tmpgis"},
 	} {
 		// p, cleanup := atp.Hub(tr.pkg, tr.k)
-		p, _ := atp.Hub(tr.scope, tr.k)
-		ti := timer.Init()
-		f := flags.Testing(p)
-		c := conf.Init(f)
-		st := stat.Init()
-		rs := Init(c, f, st, ti)
+		// p, _ := atp.Hub(tr.scope, tr.k)
+		atp.Hub(tr.scope, tr.k)
+		// ti := timer.Init()
+		// f := flags.Testing(p)
+		// c := conf.Init(f)
+		// st := stat.Init()
+		// rs := Init(c, f, st, ti)
 
 		// defer cleanup()
 
-		rs.VerifyWorkspaces(f, st, ti)
-		rs.VerifyRepos(f, st, ti)
+		// rs.VerifyWorkspaces(f, st, ti)
+		// rs.VerifyRepos(f, st, ti)
 
 		// setup
 		// for _, r := range rs {

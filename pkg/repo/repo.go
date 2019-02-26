@@ -30,7 +30,6 @@ import (
 func (r *Repo) git(args []string) (out string, em string) {
 
 	if r.Verified == false {
-		// log.Println("Not running git command A")
 		return
 	}
 

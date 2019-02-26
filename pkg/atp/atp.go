@@ -110,8 +110,10 @@ type model struct {
 
 func (m *model) hub() {
 	cmd := exec.Command("hub", "delete", "-y", m.remote) // verify hub delete
+	cmd.Dir = m.dir                                      //
 	cmd.Run()                                            //
 	cmd = exec.Command("hub", "create")                  // hub create
+	cmd.Dir = m.dir                                      //
 	cmd.Run()                                            //
 }
 
@@ -120,8 +122,10 @@ func (m *model) set(dir string) {
 }
 
 func (m *model) sdir() {
-	os.RemoveAll(m.dir)      // verify rm -rf m.dir
+	os.RemoveAll(m.dir) // verify rm -rf m.dir
+	// log.Printf("remove %v", m.dir)
 	os.MkdirAll(m.dir, 0766) // mkdir m.dir
+	// log.Printf("make %v", m.dir)
 }
 
 func (m *model) init() {
@@ -179,9 +183,22 @@ func (m *model) push() {
 }
 
 func (m *model) clone() {
+	var outb, errb bytes.Buffer
+
 	cmd := exec.Command("hub", "clone", m.remote) // hub clone
 	cmd.Dir = m.dir                               // set dir
 	cmd.Run()                                     // run
+	cmd.Stderr = &errb
+	cmd.Stdout = &outb
+	cmd.Run()
+
+	out := outb.String()
+	em := errb.String()
+	log.Printf("%v | %v", out, em)
+
+	// out = strings.TrimSuffix(out, "\n")
+	// em = strings.TrimSuffix(em, "\n")
+
 }
 
 func (m *model) behind() {
@@ -239,15 +256,18 @@ func (ms models) startup(mdir string, tdir string) {
 		wg.Add(1)
 		go func(m *model) {
 			defer wg.Done()
-			m.hub()                    // verify fresh repo on GitHub
 			m.set(mdir)                // switch to model directory
 			m.sdir()                   // verify fresh subdirectory m.dir
 			m.init()                   // git init
+			m.hub()                    // verify fresh repo on GitHub
 			m.create("README")         // touch readme
 			m.add()                    // add *
 			m.commit("Initial commit") // commit -m "Initial commit"
 			m.push()                   // push -u origin master
-			m.behind()                 // set *Behind* models behind origin master
+			m.set(tdir)
+			m.clone()
+			// m.set(mdir)
+			// m.behind() // set *Behind* models behind origin master
 			// m.set(tdir)                // switch to tmp directory
 			// m.ahead()                  // set *Ahead* models behind origin master
 			// m.dirty()                  // make *Dirty* models dirty

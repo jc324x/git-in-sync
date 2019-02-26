@@ -365,15 +365,7 @@ func subdirs(dir string) (mdir string, tdir string) {
 	return mdir, tdir
 }
 
-func fox() []byte {
-	fox := "The sly brown fox jumped over the lazy dog."
-
-	return []byte(fox)
-}
-
-// gisrcer writes a gisrc to file, data from jmap matching key k.
-// add second return of function (can be nil) that will cleanup created gisrc
-// if it didn't exist already
+// gisrc writes a gisrc to file, with data from jmap matching key k.
 func gisrc(dir string, k string) string {
 	var j []byte
 	var ok bool
@@ -395,20 +387,37 @@ func gisrc(dir string, k string) string {
 
 // Public
 
-// Setup creates a test environment at ~/tmpgis/$pkg/.
-// ~/tmpgis/$pkg/ and ~/tmpgis/$pkg/gisrc.json are created,
-// key k is matched to Jmap, returning j ([]byte) if valid,
-// $td replaces 'SETPATH' in j, which is written to gisrc.json.
-// Setup returns the absolute path of ~/tmpgis/$pkg/gisrc.json
-// and a cleanup function that removes ~/tmpgis/$pkg/.
-// Note: Look at spec doc for os.MkdirAll and pull in.
+// Result is the expected value for a zone.
+type Result struct {
+	User, Remote, Workspace string
+	Repos                   []string
+}
+
+// Results collects Result structs.
+type Results []Result
+
+// Resulter returns Results from map rmap.
+func Resulter(k string) Results {
+
+	if _, ok := rmap[k]; ok != true {
+		log.Fatalf("%v not found in rmap", k)
+	}
+
+	return rmap[k]
+}
+
+// Setup creates a test environment at ~/tmpgis/$scope/, returning
+// the absolute path of ~/tmpgis/$scope/gisrc.json and a cleanup function.
 func Setup(scope string, k string) (string, func()) {
 	base, dir := paths(scope) // base and directory paths
 	gisrc := gisrc(dir, k)    // write temporary gisrc
 	return gisrc, func() { os.RemoveAll(base) }
 }
 
-// Hub ...
+// Hub creates a test environment at ~/tmpgis/$scope, returning
+// the path of ~/tmpgis/$scope/gisrc.json and a cleanup function.
+// Unlike Setup, Hub creates matching remotes on GitHub and sets repos
+// ahead, behind, dirty, untracked or complete depending according to their names.
 func Hub(scope string, k string) (string, func()) {
 	user := user()             // read user ~/.config/hub
 	base, dir := paths(scope)  // base and directory paths (return base for cleanup...)
@@ -427,55 +436,39 @@ func Hub(scope string, k string) (string, func()) {
 // If ~/.gisrc.json is empty, Direct creates a gisrc.json and returns
 // its absolute path with a cleanup function. If ~/.gisrc.json exists,
 // Direct returns its absolute path with a nil cleanup function
-// func Direct(pkg string, k string) (string, func()) {
+func Direct(pkg string, k string) (string, func()) {
 
-// 	var json []byte
-// 	var ok bool
+	var j []byte
+	var ok bool
 
-// 	if pkg == "" {
-// 		log.Fatalf("pkg is empty")
-// 	}
-
-// 	if json, ok := jmap[k]; ok != true {
-// 		log.Fatalf("%v not found in jmap", k)
-// 	}
-
-// 	tg := tilde.Abs("~/.gisrc.json") // test gisrc
-
-// 	if _, err := os.Stat(tg); err == nil {
-// 		return "", func() {} // .gisrc.json exists; get out
-// 	}
-
-// 	json = bytes.Replace(json, []byte("SETPATH"), []byte(td), -1)
-
-// 	if err := ioutil.WriteFile(tg, j, 0777); err != nil {
-// 		log.Fatalf("Unable to write to %v (%v)", tg, err.Error())
-// 	}
-
-// 	// if err := os.MkdirAll(td, 0777); err != nil {
-// 	// 	log.Fatalf("Unable to create %v", td)
-// 	// }
-
-// 	return tg, func() {
-// 		os.Remove(tg)
-// 	}
-// }
-
-// Result is the expected value for a zone.
-type Result struct {
-	User, Remote, Workspace string
-	Repos                   []string
-}
-
-// Results collects Result(s)
-type Results []Result
-
-// Resulter returns Results from map rmap.
-func Resulter(k string) Results {
-
-	if _, ok := rmap[k]; ok != true {
-		log.Fatalf("%v not found in rmap", k)
+	if pkg == "" {
+		log.Fatalf("pkg is empty")
 	}
 
-	return rmap[k]
+	if j, ok = jmap[k]; ok != true {
+		log.Fatalf("%v not found in jmap", k)
+	}
+
+	tg := tilde.Abs("~/.gisrc.json") // test gisrc
+	tb := tilde.Abs("~/tmpgis")      // test base
+	td := path.Join(tb, pkg)         // test directory
+
+	if _, err := os.Stat(tg); err == nil {
+		return "", func() {} // .gisrc.json exists; get out
+	}
+
+	j = bytes.Replace(j, []byte("SETPATH"), []byte(td), -1)
+
+	if err := ioutil.WriteFile(tg, j, 0777); err != nil {
+		log.Fatalf("Unable to write to %v (%v)", tg, err.Error())
+	}
+
+	if err := os.MkdirAll(td, 0777); err != nil {
+		log.Fatalf("Unable to create %v", td)
+	}
+
+	return tg, func() {
+		os.Remove(tg)
+		os.RemoveAll(tb)
+	}
 }

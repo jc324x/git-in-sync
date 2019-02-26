@@ -108,25 +108,11 @@ type model struct {
 	dir    string // /Users/jychri/tmpgis/atp/staging
 }
 
-func (m *model) hub() {
-	cmd := exec.Command("hub", "delete", "-y", m.remote) // verify hub delete
-	cmd.Dir = m.dir                                      //
-	cmd.Run()                                            //
-	cmd = exec.Command("hub", "create")                  // hub create
-	cmd.Dir = m.dir                                      //
-	cmd.Run()                                            //
-}
-
-func (m *model) direct(dir string) {
-	m.dir = path.Join(dir)
-}
-
 func (m *model) set(dir string) {
 	m.dir = path.Join(dir, m.name) // set m.dir
 }
 
 func (m *model) mkdir() {
-	log.Println(m.dir)
 	os.RemoveAll(m.dir)      // verify rm -rf m.dir
 	os.MkdirAll(m.dir, 0766) // mkdir m.dir
 }
@@ -135,6 +121,15 @@ func (m *model) init() {
 	cmd := exec.Command("git", "init") // git init
 	cmd.Dir = m.dir                    // set dir
 	cmd.Run()                          // run
+}
+
+func (m *model) hub() {
+	cmd := exec.Command("hub", "delete", "-y", m.remote) // verify hub delete
+	cmd.Dir = m.dir                                      //
+	cmd.Run()                                            //
+	cmd = exec.Command("hub", "create")                  // hub create
+	cmd.Dir = m.dir                                      //
+	cmd.Run()                                            //
 }
 
 // create file with lorem ipsum
@@ -146,17 +141,6 @@ func (m *model) create(name string) {
 
 	if err := ioutil.WriteFile(file, data, 0777); err != nil {
 		log.Fatal(err)
-	}
-}
-
-// ovewrite README.md with fox stuff
-func (m *model) overwrite() {
-	fox := "The sly brown fox jumped over the lazy dog."
-	data := []byte(fox)
-	file := path.Join(m.dir, "README.md")
-
-	if err := ioutil.WriteFile(file, data, 0777); err != nil {
-		ioutil.WriteFile(file, data, 0777)
 	}
 }
 
@@ -176,6 +160,10 @@ func (m *model) push() {
 	cmd := exec.Command("git", "push", "-u", "origin", "master") // push -u origin master
 	cmd.Dir = m.dir                                              // set dir
 	cmd.Run()                                                    // run
+}
+
+func (m *model) direct(dir string) {
+	m.dir = dir
 }
 
 func (m *model) clone() {
@@ -207,15 +195,6 @@ func (m *model) ahead() {
 	m.commit("'AHEAD' commit")
 }
 
-func (m *model) dirty() {
-
-	if !strings.Contains(m.name, "Dirty") {
-		return
-	}
-
-	m.overwrite()
-}
-
 func (m *model) untracked() {
 
 	if !strings.Contains(m.name, "Untracked") {
@@ -225,12 +204,30 @@ func (m *model) untracked() {
 	m.create("UNTRACKED")
 }
 
+func (m *model) overwrite() {
+	fox := "The sly brown fox jumped over the lazy dog."
+	data := []byte(fox)
+	file := path.Join(m.dir, "README.md")
+
+	if err := ioutil.WriteFile(file, data, 0777); err != nil {
+		log.Fatal(err)
+	}
+}
+
+func (m *model) dirty() {
+
+	if !strings.Contains(m.name, "Dirty") {
+		return
+	}
+
+	m.overwrite()
+}
+
 func (m *model) remove() {
 	cmd := exec.Command("hub", "delete", "-y", m.remote) // hub delete
 	cmd.Run()                                            // run
 }
 
-// Models ...
 type models []*model
 
 func (ms models) startup(mdir string, tdir string) {
@@ -253,8 +250,8 @@ func (ms models) startup(mdir string, tdir string) {
 			m.behind()                 // set *Behind* models behind origin master
 			m.set(tdir)                // switch to tmpgis directory
 			m.ahead()                  // set *Ahead* models behind origin master
-			m.dirty()                  // make *Dirty* models dirty
 			m.untracked()              // make *Untracked* models untracked
+			m.dirty()                  // make *Dirty* models dirty
 		}(ms[i])
 	}
 	wg.Wait()
@@ -266,7 +263,7 @@ func (ms models) cleanup() {
 		wg.Add(1)
 		go func(m *model) {
 			defer wg.Done()
-			m.remove() // remove remote origin on GitHub
+			m.remove() // remove GitHub remote
 		}(ms[i])
 	}
 	wg.Wait()
@@ -426,61 +423,54 @@ func Hub(scope string, k string) (string, func()) {
 	}
 }
 
-// Direct verifies the existence of a gisrc.json at ~/.gisrc.json;
-// the files contents are not validated. If the path is empty,
-// Direct creates a ~/.gisrc.json and returns its absolute path
-// with a clean up function that will remove it. If ~/.gisrc.json
-// is already present, the absolute path of ~/.gisrc.json
-// is returned with a nil cleanup function.
-func Direct(pkg string, k string) (string, func()) {
+// Direct verifies ~/.gisrc.json, but does not validate its content.
+// If ~/.gisrc.json is empty, Direct creates a gisrc.json and returns
+// its absolute path with a cleanup function. If ~/.gisrc.json exists,
+// Direct returns its absolute path with a nil cleanup function
+// func Direct(pkg string, k string) (string, func()) {
 
-	var j []byte
-	var ok bool
+// 	var json []byte
+// 	var ok bool
 
-	if pkg == "" {
-		log.Fatalf("pkg is empty")
-	}
+// 	if pkg == "" {
+// 		log.Fatalf("pkg is empty")
+// 	}
 
-	if j, ok = jmap[k]; ok != true {
-		log.Fatalf("%v not found in jmap", k)
-	}
+// 	if json, ok := jmap[k]; ok != true {
+// 		log.Fatalf("%v not found in jmap", k)
+// 	}
 
-	tg := tilde.Abs("~/.gisrc.json") // test gisrc
-	tb := tilde.Abs("~/tmpgis")      // test base
-	td := path.Join(tb, pkg)         // test directory
+// 	tg := tilde.Abs("~/.gisrc.json") // test gisrc
 
-	if _, err := os.Stat(tg); err == nil {
-		return "", func() {} // .gisrc.json exists; get out
-	}
+// 	if _, err := os.Stat(tg); err == nil {
+// 		return "", func() {} // .gisrc.json exists; get out
+// 	}
 
-	j = bytes.Replace(j, []byte("SETPATH"), []byte(td), -1)
+// 	json = bytes.Replace(json, []byte("SETPATH"), []byte(td), -1)
 
-	if err := ioutil.WriteFile(tg, j, 0777); err != nil {
-		log.Fatalf("Unable to write to %v (%v)", tg, err.Error())
-	}
+// 	if err := ioutil.WriteFile(tg, j, 0777); err != nil {
+// 		log.Fatalf("Unable to write to %v (%v)", tg, err.Error())
+// 	}
 
-	if err := os.MkdirAll(td, 0777); err != nil {
-		log.Fatalf("Unable to create %v", td)
-	}
+// 	// if err := os.MkdirAll(td, 0777); err != nil {
+// 	// 	log.Fatalf("Unable to create %v", td)
+// 	// }
 
-	return tg, func() {
-		os.Remove(tg)
-		os.RemoveAll(tb)
-	}
-}
+// 	return tg, func() {
+// 		os.Remove(tg)
+// 	}
+// }
 
-// Result holds the expected values for a zone.
+// Result is the expected value for a zone.
 type Result struct {
 	User, Remote, Workspace string
 	Repos                   []string
 }
 
-// Results collects Result structs.
+// Results collects Result(s)
 type Results []Result
 
-// Resulter returns expected results as Results
-// from map rmap. Given an unrecognized key,
-// execution is stopped with log.Fatalf().
+// Resulter returns Results from map rmap.
 func Resulter(k string) Results {
 
 	if _, ok := rmap[k]; ok != true {

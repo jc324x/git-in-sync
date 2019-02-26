@@ -117,15 +117,17 @@ func (m *model) hub() {
 	cmd.Run()                                            //
 }
 
+func (m *model) direct(dir string) {
+	m.dir = path.Join(dir)
+}
+
 func (m *model) set(dir string) {
 	m.dir = path.Join(dir, m.name) // set m.dir
 }
 
 func (m *model) sdir() {
-	os.RemoveAll(m.dir) // verify rm -rf m.dir
-	// log.Printf("remove %v", m.dir)
+	os.RemoveAll(m.dir)      // verify rm -rf m.dir
 	os.MkdirAll(m.dir, 0766) // mkdir m.dir
-	// log.Printf("make %v", m.dir)
 }
 
 func (m *model) init() {
@@ -136,16 +138,8 @@ func (m *model) init() {
 
 // create name.md at m.dir with lorem ipsum
 func (m *model) create(name string) {
-
-	lorem := `Lorem ipsum dolor sit amet, consectetur adipiscing elit. \n 
-	Morbi ac vulputate mi, sit amet euismod nibh. Donec at interdum sapien, 
-	non pretium tortor. Duis et dapibus eros. Sed tempus non dui vel maximus. 
-	\n Vivamus faucibus tellus in scelerisque ultrices. 
-	Duis ac libero a leo gravida convallis. Aliquam viverra lacinia arcu, 
-	ac metus pharetra sit amet. `
-
+	lorem := "Lorem ipsum dolor sit amet, consectetur adipiscing elit."
 	data := []byte(lorem)
-
 	name = strings.Join([]string{name, ".md"}, "")
 	file := path.Join(m.dir, name)
 
@@ -154,51 +148,57 @@ func (m *model) create(name string) {
 	}
 }
 
+func (m *model) readme() {
+	lorem := "Lorem ipsum dolor sit amet, consectetur adipiscing elit"
+	data := []byte(lorem)
+	file := path.Join(m.dir, "README.md")
+	// ioutil.WriteFile(file, data, 0777)
+	if err := ioutil.WriteFile(file, data, 0777); err != nil {
+		log.Fatal(err)
+	}
+}
+
 // ovewrite README.md with fox stuff
 func (m *model) overwrite() {
 	fox := "The sly brown fox jumped over the lazy dog."
-
 	data := []byte(fox)
-
 	file := path.Join(m.dir, "README.md")
-	ioutil.WriteFile(file, data, 0777)
+	// ioutil.WriteFile(file, data, 0777)
+	if err := ioutil.WriteFile(file, data, 0777); err != nil {
+		ioutil.WriteFile(file, data, 0777)
+	}
 }
 
 func (m *model) add() {
+	// log.Printf("add - dir is %v", m.dir)
+
 	cmd := exec.Command("git", "add", "*") // git add
 	cmd.Dir = m.dir                        // set dir
 	cmd.Run()                              // run
 }
 
 func (m *model) commit(message string) {
+	// log.Printf("commit - dir is %v", m.dir)
+
 	cmd := exec.Command("git", "commit", "-m", message) // git commit
 	cmd.Dir = m.dir                                     // set dir
 	cmd.Run()                                           // run
 }
 
 func (m *model) push() {
+	// log.Printf("push - dir is %v", m.dir)
+
 	cmd := exec.Command("git", "push", "-u", "origin", "master") // push -u origin master
 	cmd.Dir = m.dir                                              // set dir
 	cmd.Run()                                                    // run
 }
 
 func (m *model) clone() {
-	var outb, errb bytes.Buffer
-
 	cmd := exec.Command("hub", "clone", m.remote) // hub clone
-	cmd.Dir = m.dir                               // set dir
-	cmd.Run()                                     // run
-	cmd.Stderr = &errb
-	cmd.Stdout = &outb
-	cmd.Run()
-
-	out := outb.String()
-	em := errb.String()
-	log.Printf("%v | %v", out, em)
-
-	// out = strings.TrimSuffix(out, "\n")
-	// em = strings.TrimSuffix(em, "\n")
-
+	log.Printf(m.remote)
+	log.Printf(m.dir)
+	cmd.Dir = m.dir // set dir
+	cmd.Run()       // run
 }
 
 func (m *model) behind() {
@@ -256,22 +256,22 @@ func (ms models) startup(mdir string, tdir string) {
 		wg.Add(1)
 		go func(m *model) {
 			defer wg.Done()
-			m.set(mdir)                // switch to model directory
+			m.set(mdir)                // set models dir
 			m.sdir()                   // verify fresh subdirectory m.dir
 			m.init()                   // git init
 			m.hub()                    // verify fresh repo on GitHub
-			m.create("README")         // touch readme
+			m.readme()                 // create readme
 			m.add()                    // add *
 			m.commit("Initial commit") // commit -m "Initial commit"
 			m.push()                   // push -u origin master
-			m.set(tdir)
-			m.clone()
-			// m.set(mdir)
-			// m.behind() // set *Behind* models behind origin master
-			// m.set(tdir)                // switch to tmp directory
-			// m.ahead()                  // set *Ahead* models behind origin master
-			// m.dirty()                  // make *Dirty* models dirty
-			// m.untracked()              // make *Untracked* models untracked
+			m.direct(tdir)             // set tmpgis dir
+			m.clone()                  // clone to tmpgis dir
+			m.set(mdir)                // set models dir
+			m.behind()                 // set *Behind* models behind origin master
+			m.set(tdir)                // switch to tmpgis directory
+			m.ahead()                  // set *Ahead* models behind origin master
+			m.dirty()                  // make *Dirty* models dirty
+			m.untracked()              // make *Untracked* models untracked
 		}(ms[i])
 	}
 	wg.Wait()

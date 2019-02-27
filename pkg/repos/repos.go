@@ -272,6 +272,7 @@ func (rs Repos) infoSummary(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
 	ts := ti.Split()             // last split
 	tt := ti.Time()              // elapsed time
 
+	// Do I even need the buffer here? Just use fmt.Sprintf + Printv?
 	var b bytes.Buffer // buffer
 
 	// Checkmark for complete, Warning for incomplete, Stop for skipped only
@@ -304,9 +305,11 @@ func (rs Repos) promptUser(f flags.Flags) {
 }
 
 func (rs Repos) changesAsync(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
-	if st.Continue() == false {
-		return
-	}
+	// if st.Continue() == false {
+	// 	return
+	// }
+
+	// fmt.Println("running async")
 
 	var wg sync.WaitGroup
 	for i := range rs {

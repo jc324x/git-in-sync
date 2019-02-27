@@ -597,11 +597,15 @@ func (r *Repo) SetStatus(f flags.Flags) {
 	}
 
 	// auto move to scheduled for matching login/logout
+
 	switch {
 	case f.Login() && r.Category == "Pending" && r.Status == "Behind":
 		r.Category = "Scheduled"
+		r.Action = "Pull"
 	case f.Logout() && r.Category == "Pending" && r.Status == "Ahead":
+		// flags.Printv(f, "%v", r.Name)
 		r.Category = "Scheduled"
+		r.Action = "Push"
 	}
 
 	var b bytes.Buffer

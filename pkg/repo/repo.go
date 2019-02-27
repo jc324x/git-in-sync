@@ -5,7 +5,6 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
-	// "log"
 	"os"
 	"os/exec"
 	"path"

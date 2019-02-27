@@ -19,27 +19,33 @@ import (
 // private
 const base = "~/tmpgis"
 
+// model is an example repository
 type model struct {
 	name   string // gis-Ahead
 	remote string // jychri/gis-Ahead
 	dir    string // /Users/jychri/tmpgis/atp/staging
 }
 
+// set m.dir to tdir + m.name or mdir + m.name.
+// m.dir is used with cmd.Dir.
 func (m *model) set(dir string) {
 	m.dir = path.Join(dir, m.name) // set m.dir
 }
 
-func (m *model) mkdir() {
+// make directory fresh
+func (m *model) mkdirf() {
 	os.RemoveAll(m.dir)      // verify rm -rf m.dir
 	os.MkdirAll(m.dir, 0766) // mkdir m.dir
 }
 
+// git init
 func (m *model) init() {
 	cmd := exec.Command("git", "init") // git init
 	cmd.Dir = m.dir                    // set dir
 	cmd.Run()                          // run
 }
 
+// hub delete -y m.remote followed by hub create
 func (m *model) hub() {
 	cmd := exec.Command("hub", "delete", "-y", m.remote) // verify hub delete
 	cmd.Dir = m.dir                                      //
@@ -166,7 +172,7 @@ func (ms models) startup(mdir string, tdir string) {
 		go func(m *model) {
 			defer wg.Done()
 			m.set(mdir)                // set models dir
-			m.mkdir()                  // verify fresh directory
+			m.mkdirf()                 // make directory fresh
 			m.init()                   // git init
 			m.hub()                    // verify fresh repo on GitHub
 			m.create("README")         // create readme

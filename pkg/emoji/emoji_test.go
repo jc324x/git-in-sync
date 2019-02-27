@@ -60,9 +60,9 @@ var tm = map[int]string{
 	128678: "🚦",
 }
 
-func TestPrint(t *testing.T) {
-	printAll()
-}
+// func TestPrint(t *testing.T) {
+// 	all()
+// }
 
 func TestGet(t *testing.T) {
 	for key, value := range em {

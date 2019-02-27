@@ -7,6 +7,8 @@ import (
 	"strconv"
 )
 
+// private
+
 var em = map[string]int{
 	"AlarmClock":           9200,
 	"Airplane":             128745,
@@ -68,6 +70,15 @@ func convert(n int) string {
 	return html.UnescapeString("&#" + strconv.Itoa(n) + ";")
 }
 
+// all prints all emoji values
+func all() {
+	for _, val := range em {
+		fmt.Printf("%v: \"%v\"\n", val, convert(val))
+	}
+}
+
+// Public
+
 // Get returns an emoji character as a string.
 func Get(s string) string {
 
@@ -76,16 +87,4 @@ func Get(s string) string {
 	}
 
 	return "#"
-}
-
-// Count returns the number of emoji in the map.
-func Count() int {
-	return len(em)
-}
-
-// printAll prints values in map em.
-func printAll() {
-	for _, val := range em {
-		fmt.Printf("%v: \"%v\"\n", val, convert(val))
-	}
 }

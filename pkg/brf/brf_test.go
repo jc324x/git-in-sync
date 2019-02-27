@@ -13,6 +13,7 @@ func TestReduce(t *testing.T) {
 		{[]string{"a", "b", "b", "c", "c", "c", "c"}, []string{"a", "b", "c"}},
 		{[]string{"x", "y", "z", "z", "z", "z"}, []string{"x", "y", "z"}},
 	} {
+
 		got := Reduce(tr.in)
 
 		if !reflect.DeepEqual(got, tr.want) {
@@ -63,6 +64,7 @@ func TestFirst(t *testing.T) {
 		{s2, "Only one line."},
 		{s3, ""},
 	} {
+
 		got := First(tr.in)
 
 		if got != tr.want {
@@ -81,16 +83,13 @@ func TestMatchLine(t *testing.T) {
 	}{
 		{s1, "- user:", "jychri"},
 		{s1, " - user:", "jychri"},
-		// {s1, "user:", "jychri"},
-		// {s1, ":", "jychri"},
 		{s2, "oath_token:", "324"},
 	} {
+
 		got := MatchLine(tr.in, tr.pfx)
 
 		if got != tr.want {
 			t.Errorf("MatchLine: ('%v' != '%v')", got, tr.want)
 		}
-
 	}
-
 }

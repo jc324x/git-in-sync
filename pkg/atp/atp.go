@@ -302,18 +302,18 @@ func subdirs(dir string) (mdir string, tdir string) {
 
 // gisrc writes a gisrc to file, with data from jmap matching key k.
 func gisrc(dir string, k string) string {
-	var j []byte
+	var json []byte
 	var ok bool
 
-	if j, ok = Jmap[k]; ok != true {
+	if json, ok = Jmap[k]; ok != true {
 		log.Fatalf("%v not found in jmap", k)
 	}
 
 	gisrc := path.Join(dir, "gisrc.json")
 
-	j = bytes.Replace(j, []byte("SETPATH"), []byte(dir), -1)
+	json = bytes.Replace(json, []byte("SETPATH"), []byte(dir), -1)
 
-	if err := ioutil.WriteFile(gisrc, j, 0777); err != nil {
+	if err := ioutil.WriteFile(gisrc, json, 0777); err != nil {
 		log.Fatalf("Unable to write to %v (%v)", gisrc, err.Error())
 	}
 
@@ -457,30 +457,30 @@ func Hub(scope string, key string) (string, func()) {
 // If no ~/.gisrc.json, Direct creates one and returns its absolute
 // path with a cleanup function. If present, Direct returns its
 // absolute path with a nil cleanup function.
-func Direct(pkg string, key string) (string, func()) {
+func Direct(scope string, key string) (string, func()) {
 
-	var j []byte
+	var json []byte
 	var ok bool
 
-	if pkg == "" {
+	if scope == "" {
 		log.Fatalf("pkg is empty")
 	}
 
-	if j, ok = Jmap[key]; ok != true {
+	if json, ok = Jmap[key]; ok != true {
 		log.Fatalf("%v not found in jmap", key)
 	}
 
 	tg := tilde.Abs("~/.gisrc.json") // test gisrc
 	tb := tilde.Abs("~/tmpgis")      // test base
-	td := path.Join(tb, pkg)         // test directory
+	td := path.Join(tb, scope)       // test directory
 
 	if _, err := os.Stat(tg); err == nil {
-		return "", func() {} // .gisrc.json exists; get out
+		return "", func() {} // .gisrc.json exists, return
 	}
 
-	j = bytes.Replace(j, []byte("SETPATH"), []byte(td), -1)
+	json = bytes.Replace(json, []byte("SETPATH"), []byte(td), -1)
 
-	if err := ioutil.WriteFile(tg, j, 0777); err != nil {
+	if err := ioutil.WriteFile(tg, json, 0777); err != nil {
 		log.Fatalf("Unable to write to %v (%v)", tg, err.Error())
 	}
 

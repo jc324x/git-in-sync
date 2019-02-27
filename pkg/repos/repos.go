@@ -262,40 +262,40 @@ func (rs Repos) statCategory(st *stat.Stat) {
 
 // infoSummary ...
 func (rs Repos) infoSummary(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
-	rs.statCategory(st)          // set current category stats
-	tr := len(st.Repos)          // number of repos
-	cr := len(st.CompleteRepos)  // number of complete repos
-	ec := emoji.Get("Checkmark") // Checkmark emoji
-	es := emoji.Get("Fire")      // Fire emoji (replace with stop sign)
-	ew := emoji.Get("Warning")   // Warning emoji
-	ti.Mark("repo-summary")      // mark repo-summary
-	ts := ti.Split()             // last split
-	tt := ti.Time()              // elapsed time
+	// rs.statCategory(st)          // set current category stats
+	// tr := len(st.Repos)          // number of repos
+	// cr := len(st.CompleteRepos)  // number of complete repos
+	// ec := emoji.Get("Checkmark") // Checkmark emoji
+	// es := emoji.Get("Fire")      // Fire emoji (replace with stop sign)
+	// ew := emoji.Get("Warning")   // Warning emoji
+	// ti.Mark("repo-summary")      // mark repo-summary
+	// ts := ti.Split()             // last split
+	// tt := ti.Time()              // elapsed time
 
 	// Do I even need the buffer here? Just use fmt.Sprintf + Printv?
-	var b bytes.Buffer // buffer
+	// var b bytes.Buffer // buffer
 
 	// Checkmark for complete, Warning for incomplete, Stop for skipped only
-	switch {
-	case st.AllComplete():
-		b.WriteString(ec)
-	case st.OnlySkipped():
-		b.WriteString(es)
-	default:
-		b.WriteString(ew)
-	}
+	// switch {
+	// case st.AllComplete():
+	// 	b.WriteString(ec)
+	// case st.OnlySkipped():
+	// 	b.WriteString(es)
+	// default:
+	// 	b.WriteString(ew)
+	// }
 
-	b.WriteString(fmt.Sprintf(" [%v/%v] repos complete {%v / %v}", cr, tr, ts, tt))
-	flags.Printv(f, b.String())
+	// b.WriteString(fmt.Sprintf(" [%v/%v] repos complete {%v / %v}", cr, tr, ts, tt))
+	// flags.Printv(f, b.String())
 
-	switch {
-	case st.AllComplete():
-		return
-	case st.OnlySkipped():
-		st.SkippedSummary()
-	case st.OnlyScheduled():
-		st.ScheduledSummary()
-	}
+	// switch {
+	// case st.AllComplete():
+	// 	return
+	// case st.OnlySkipped():
+	// 	st.SkippedSummary()
+	// case st.OnlyScheduled():
+	// 	st.ScheduledSummary()
+	// }
 }
 
 func (rs Repos) promptUser(f flags.Flags) {

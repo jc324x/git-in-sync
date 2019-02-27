@@ -36,71 +36,6 @@ func (st *Stat) Reduce() {
 	st.InaccessibleWorkspaces = brf.Reduce(st.InaccessibleWorkspaces)
 }
 
-// Continue ...
-func (st *Stat) Continue() bool {
-	switch {
-	case st.AllComplete():
-		return false
-	case st.OnlySkipped():
-		return false
-	case len(st.ScheduledRepos) >= 1:
-		return true
-	default:
-		return true
-	}
-}
-
-// AllComplete ...
-func (st *Stat) AllComplete() bool {
-	if len(st.Repos) == len(st.CompleteRepos) {
-		return true
-	}
-
-	return false
-}
-
-// OnlyPending ...
-func (st *Stat) OnlyPending() bool {
-
-	if len(st.SkippedRepos) >= 1 {
-		return false
-	}
-
-	if len(st.ScheduledRepos) >= 1 {
-		return false
-	}
-
-	return true
-}
-
-// OnlySkipped ...
-func (st *Stat) OnlySkipped() bool {
-
-	if len(st.PendingRepos) >= 1 {
-		return false
-	}
-
-	if len(st.ScheduledRepos) >= 1 {
-		return false
-	}
-
-	return true
-}
-
-// OnlyScheduled ...
-func (st *Stat) OnlyScheduled() bool {
-
-	if len(st.PendingRepos) >= 1 {
-		return false
-	}
-
-	if len(st.SkippedRepos) >= 1 {
-		return false
-	}
-
-	return true
-}
-
 // Clear clears out slice based stats
 func (st *Stat) Clear() {
 	st.Workspaces = nil
@@ -116,19 +51,4 @@ func (st *Stat) Clear() {
 	st.CompleteRepos = nil
 	st.ScheduledPull = nil
 	st.ScheduledPush = nil
-}
-
-// SkippedSummary ...
-func (st *Stat) SkippedSummary() {
-
-}
-
-// PendingSummary ...
-func (st *Stat) PendingSummary() {
-
-}
-
-// ScheduledSummary ...
-func (st *Stat) ScheduledSummary() {
-
 }

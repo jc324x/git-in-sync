@@ -3,48 +3,54 @@ package fchk
 
 import (
 	"io"
-	"io/ioutil"
+	// "io/ioutil"
 	"os"
-	"path"
+	// "path"
+	"syscall"
 )
 
 // NoPermission returns true if the target can't be read,
 // can't be written to or doesn't exist.
-func NoPermission(p string) bool {
+func NoPermission(path string) bool {
 
 	var f *os.File
 	var err error
+	var stat syscall.Stat_t
 
 	defer f.Close()
 
-	if f, err = os.Open(p); err != nil {
+	if f, err = os.Open(path); err != nil {
 		return true
 	}
 
-	if _, err := os.Stat(p); err != nil {
+	if _, err := os.Stat(path); err != nil {
 		return true
 	}
 
-	if f, err = os.OpenFile(p, os.O_WRONLY, 0766); err != nil {
+	if f, err = os.OpenFile(path, os.O_WRONLY, 0766); err != nil {
 		if os.IsPermission(err) {
 			defer f.Close()
 			return true
 		}
 	}
 
-	if f, err = os.OpenFile(p, os.O_RDONLY, 0766); err != nil {
+	if f, err = os.OpenFile(path, os.O_RDONLY, 0766); err != nil {
 		if os.IsPermission(err) {
 			return true
 		}
 	}
 
-	filename := path.Join(p, "tmp")
-
-	defer os.Remove(filename)
-
-	if err = ioutil.WriteFile(filename, []byte{}, 0777); err != nil {
+	if err = syscall.Stat(path, &stat); err != nil {
 		return true
 	}
+
+	// filename := path.Join(p, "tmp")
+
+	// defer os.Remove(filename)
+
+	// if err = ioutil.WriteFile(filename, []byte{}, 0777); err != nil {
+	// 	return true
+	// }
 
 	return false
 }

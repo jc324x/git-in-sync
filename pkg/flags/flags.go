@@ -21,8 +21,8 @@ func Init() (f Flags) {
 
 	var c, m string
 
-	flag.StringVar(&m, "mode", "verify", "mode")
-	flag.StringVar(&c, "config", "~/.gisrc.json", "configuration")
+	flag.StringVar(&m, "m", "verify", "mode")
+	flag.StringVar(&c, "c", "~/.gisrc.json", "configuration")
 	flag.Parse()
 
 	switch m {

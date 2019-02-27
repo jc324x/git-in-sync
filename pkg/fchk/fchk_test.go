@@ -15,6 +15,7 @@ const (
 	itf  string = "file"
 )
 
+// make ./tmp directory
 func makeTmp() string {
 	var abs, p string
 	var err error
@@ -32,6 +33,7 @@ func makeTmp() string {
 	return p
 }
 
+// make ./tmp/empty
 func makeTmpDE() string {
 	var abs, p string
 	var err error
@@ -49,6 +51,7 @@ func makeTmpDE() string {
 	return p
 }
 
+// make ./tmp/active
 func makeTmpDA() string {
 	var abs, p string
 	var err error
@@ -66,6 +69,7 @@ func makeTmpDA() string {
 	return p
 }
 
+// make ./tmp/active/file
 func makeTmpF() string {
 	var p string
 	var err error
@@ -76,7 +80,7 @@ func makeTmpF() string {
 
 	p = path.Join(p, itmp, itda, itf)
 
-	if _, err = os.OpenFile(p, os.O_RDONLY|os.O_CREATE, 0755); err != nil {
+	if _, err = os.OpenFile(p, os.O_RDONLY|os.O_CREATE, 0766); err != nil {
 		log.Fatalf("makeTmpF (%v)", err.Error())
 	}
 
@@ -97,7 +101,7 @@ func TestNoPermission(t *testing.T) {
 		{tmp, false},
 		{tda, false},
 		{tde, false},
-		{tf, true},
+		{tf, false},
 	} {
 
 		got := NoPermission(tr.in)
@@ -140,10 +144,6 @@ func TestIsEmpty(t *testing.T) {
 	} {
 
 		got := IsEmpty(c.in)
-
-		// if err != nil {
-		// 	t.Errorf("IsEmpty: err = %v\n", err.Error())
-		// }
 
 		if got != c.want {
 			t.Errorf("IsEmpty: (got: %v, want: %v) {%v}\n", got, c.want, c.in)

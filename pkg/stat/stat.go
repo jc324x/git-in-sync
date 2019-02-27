@@ -52,3 +52,43 @@ func (st *Stat) Clear() {
 	st.ScheduledPull = nil
 	st.ScheduledPush = nil
 }
+
+// CheckComplete ...
+func (st *Stat) CheckComplete() bool {
+	switch {
+	case len(st.Repos) == len(st.CompleteRepos):
+		return true
+	default:
+		return false
+	}
+}
+
+// CheckPending ...
+func (st *Stat) CheckPending() bool {
+	switch {
+	case len(st.PendingRepos) >= 1:
+		return true
+	default:
+		return false
+	}
+}
+
+// CheckSkipped ...
+func (st *Stat) CheckSkipped() bool {
+	switch {
+	case len(st.SkippedRepos) >= 1:
+		return true
+	default:
+		return false
+	}
+}
+
+// CheckScheduled ...
+func (st *Stat) CheckScheduled() bool {
+	switch {
+	case len(st.SkippedRepos) >= 1:
+		return true
+	default:
+		return false
+	}
+}

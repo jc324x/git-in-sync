@@ -458,7 +458,7 @@ func (r *Repo) GitShortstat() {
 		r.ShortStatSummary = ""
 	case r.Changed >= 1 && r.Insertions == 0 && r.Deletions == 0:
 		r.Clean = false
-		r.ShortStatSummary = ("D")
+		r.ShortStatSummary = "D"
 	default:
 		r.Clean = false
 
@@ -749,18 +749,20 @@ func (r *Repo) UserConfirm(f flags.Flags) {
 
 // GitAdd ...
 func (r *Repo) GitAdd(f flags.Flags) {
-	const dsc = "GitAdd"        // description
-	eo := emoji.Get("Outbox")   // Outbox emoji
-	rn := r.Name                // repo name
-	dfc := len(r.DiffsNameOnly) // count: diff files
-	ds := r.DiffsSummary        // summary: diffs
-	sss := r.ShortStatSummary   // summary: (+/-)
+	const dsc = "GitAdd"         // description
+	eo := emoji.Get("Outbox")    // Outbox emoji
+	rn := r.Name                 // repo name
+	dfc := len(r.DiffsNameOnly)  // count: diff files
+	ufc := len(r.UntrackedFiles) // count: untracked files
+	ds := r.DiffsSummary         // summary: diffs
+	us := r.UntrackedSummary     // summary: untracked
+	sss := r.ShortStatSummary    // summary: (+/-)
 
 	switch r.Status {
 	case "Dirty", "DirtyUntracked", "DirtyAhead", "DirtyBehind":
 		flags.Printv(f, "%v %v adding changes [%v]{%v}(%v)", eo, rn, dfc, ds, sss)
 	case "Untracked", "UntrackedAhead", "UntrackedBehind":
-		flags.Printv(f, "%v %v adding new files [%v]{%v}(%v)", eo, rn, dfc, ds, sss)
+		flags.Printv(f, "%v %v adding new files [%v]{%v}", eo, rn, ufc, us)
 	}
 
 	args := []string{"-C", r.RepoPath, "add", "-A"}

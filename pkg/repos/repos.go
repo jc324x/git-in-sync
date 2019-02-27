@@ -243,79 +243,53 @@ func (rs Repos) infoAsync(f flags.Flags, ti *timer.Timer) {
 	ti.Mark("info-async") // mark info-async
 }
 
-func (rs Repos) statCategory(st *stat.Stat) {
-	for _, r := range rs {
-		switch {
-		case r.Category == "Pending":
-			st.PendingRepos = append(st.PendingRepos, r.Name)
-		case r.Category == "Skipped":
-			st.SkippedRepos = append(st.SkippedRepos, r.Name)
-		case r.Category == "Scheduled" && r.Action == "Push":
-			st.ScheduledPush = append(st.ScheduledRepos, r.Name)
-		case r.Category == "Scheduled" && r.Action == "Pull":
-			st.ScheduledPull = append(st.ScheduledRepos, r.Name)
-		case r.Category == "Complete":
-			st.CompleteRepos = append(st.CompleteRepos, r.Name)
-		}
+// infoSummary ...
+func (rs Repos) infoSummary(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
+	rs.category(st)              // set current category stats
+	tr := len(st.Repos)          // number of repos
+	cr := len(st.CompleteRepos)  // number of complete repos
+	ec := emoji.Get("Checkmark") // Checkmark emoji
+	es := emoji.Get("Fire")      // Fire emoji (replace with stop sign)
+	ew := emoji.Get("Warning")   // Warning emoji
+	ti.Mark("repo-summary")      // mark repo-summary
+	ts := ti.Split()             // last split
+	tt := ti.Time()              // elapsed time
+
+	switch {
+	case st.CheckComplete():
+		flags.Printv(f, "%v [%v/%v] repos complete {%v / %v}", ec, cr, tr, ts, tt)
+	case st.CheckPending():
+		flags.Printv(f, "%v [%v/%v] repos complete {%v / %v}", ew, cr, tr, ts, tt)
+	case st.CheckSkipped():
+		flags.Printv(f, "%v [%v/%v] repos complete {%v / %v}", es, cr, tr, ts, tt)
 	}
 }
 
-// infoSummary ...
-func (rs Repos) infoSummary(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
-	// rs.statCategory(st)          // set current category stats
-	// tr := len(st.Repos)          // number of repos
-	// cr := len(st.CompleteRepos)  // number of complete repos
-	// ec := emoji.Get("Checkmark") // Checkmark emoji
-	// es := emoji.Get("Fire")      // Fire emoji (replace with stop sign)
-	// ew := emoji.Get("Warning")   // Warning emoji
-	// ti.Mark("repo-summary")      // mark repo-summary
-	// ts := ti.Split()             // last split
-	// tt := ti.Time()              // elapsed time
+func (rs Repos) promptUser(f flags.Flags, st *stat.Stat) {
+	if st.CheckComplete() {
+		return
+	}
 
-	// Do I even need the buffer here? Just use fmt.Sprintf + Printv?
-	// var b bytes.Buffer // buffer
-
-	// Checkmark for complete, Warning for incomplete, Stop for skipped only
-	// switch {
-	// case st.AllComplete():
-	// 	b.WriteString(ec)
-	// case st.OnlySkipped():
-	// 	b.WriteString(es)
-	// default:
-	// 	b.WriteString(ew)
-	// }
-
-	// b.WriteString(fmt.Sprintf(" [%v/%v] repos complete {%v / %v}", cr, tr, ts, tt))
-	// flags.Printv(f, b.String())
-
-	// switch {
-	// case st.AllComplete():
-	// 	return
-	// case st.OnlySkipped():
-	// 	st.SkippedSummary()
-	// case st.OnlyScheduled():
-	// 	st.ScheduledSummary()
-	// }
-}
-
-func (rs Repos) promptUser(f flags.Flags) {
 	for _, r := range rs {
 		r.UserConfirm(f)
 	}
 }
 
 func (rs Repos) changesAsync(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
-	// if st.Continue() == false {
-	// 	return
-	// }
-
-	// fmt.Println("running async")
+	if st.CheckComplete() {
+		return
+	}
 
 	var wg sync.WaitGroup
 	for i := range rs {
 		wg.Add(1)
 		go func(r *repo.Repo) {
 			defer wg.Done()
+
+			if r.Category != "Scheduled" {
+				return
+			}
+
 			switch r.Action {
 			case "Pull":
 				r.GitPull(f)
@@ -342,6 +316,24 @@ func (rs Repos) changesAsync(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
 	}
 	wg.Wait()
 	st.Clear()
+}
+
+// update stat.Stat, collect Repos by category
+func (rs Repos) category(st *stat.Stat) {
+	for _, r := range rs {
+		switch {
+		case r.Category == "Pending":
+			st.PendingRepos = append(st.PendingRepos, r.Name)
+		case r.Category == "Skipped":
+			st.SkippedRepos = append(st.SkippedRepos, r.Name)
+		case r.Category == "Scheduled" && r.Action == "Push":
+			st.ScheduledPush = append(st.ScheduledRepos, r.Name)
+		case r.Category == "Scheduled" && r.Action == "Pull":
+			st.ScheduledPull = append(st.ScheduledRepos, r.Name)
+		case r.Category == "Complete":
+			st.CompleteRepos = append(st.CompleteRepos, r.Name)
+		}
+	}
 }
 
 // Public
@@ -377,7 +369,7 @@ func (rs Repos) VerifyRepos(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
 
 // VerifyChanges ...
 func (rs Repos) VerifyChanges(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
-	rs.promptUser(f)           // prompt user
+	rs.promptUser(f, st)       // prompt user
 	rs.changesAsync(f, st, ti) // submit changes (async)
 	rs.infoAsync(f, ti)        // update info (async)
 }

@@ -536,12 +536,6 @@ func (r *Repo) SetStatus(f flags.Flags) {
 		r.Status = "Ahead"
 	}
 
-	// log.Printf("Name: %v", r.Name)
-	// log.Printf("Status: %v", r.Status)
-	// log.Printf("Merge: %v", r.MergeSHA)
-	// log.Printf("Local: %v", r.LocalSHA)
-	// log.Printf("Upstream: %v", r.UpstreamSHA)
-
 	switch {
 	case (r.Clean == true && r.Untracked == false && r.Status == "Ahead"):
 		r.Category = "Pending"

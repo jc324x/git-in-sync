@@ -19,89 +19,6 @@ import (
 // private
 const base = "~/tmpgis"
 
-// JSON map
-var jmap = map[string][]byte{
-	"recipes": []byte(`
-		{
-			"bundles": [{
-				"path": "SETPATH",
-				"zones": [{
-						"user": "hendricius",
-						"remote": "github",
-						"workspace": "recipes",
-						"repositories": [
-							"pizza-dough"
-						]
-					},
-					{
-						"user": "rochacbruno",
-						"remote": "github",
-						"workspace": "recipes",
-						"repositories": [
-							"vegan_recipes"
-						]
-					},
-					{
-						"user": "niw",
-						"remote": "github",
-						"workspace": "recipes",
-						"repositories": [
-							"ramen"
-						]
-					}
-				]
-			}]
-		}
-`),
-	"tmpgis": []byte(`
-	{
-		"bundles": [{
-			"path": "SETPATH",
-			"zones": [{
-					"user": "jychri",
-					"remote": "github",
-					"workspace": "tmpgis",
-					"repositories": [
-						"gis-Ahead",
-						"gis-Behind",
-						"gis-Dirty",
-						"gis-DirtyUntracked",
-						"gis-DirtyAhead",
-						"gis-DirtyBehind",
-						"gis-Untracked",
-						"gis-UntrackedAhead",
-						"gis-UntrackedBehind",
-						"gis-Complete"
-					]
-				}
-			]
-		}]
-	}
-	`),
-}
-
-// Result map
-var rmap = map[string]Results{
-	"recipes": {
-		{"hendricius", "github", "recipes", []string{"pizza-dough"}},
-		{"rochacbruno", "github", "recipes", []string{"vegan_recipes"}},
-		{"niw", "github", "recipes", []string{"ramen"}},
-	},
-	"tmpgis": {
-		{"jychri", "github", "tmpgis", []string{
-			"gis-Ahead",
-			"gis-Behind",
-			"gis-Dirty",
-			"gis-DirtyUntracked",
-			"gis-DirtyAhead",
-			"gis-DirtyBehind",
-			"gis-Untracked",
-			"gis-UntrackedAhead",
-			"gis-UntrackedBehind",
-			"gis-Complete",
-		}}},
-}
-
 type model struct {
 	name   string // gis-Ahead
 	remote string // jychri/gis-Ahead
@@ -144,34 +61,40 @@ func (m *model) create(name string) {
 	}
 }
 
+// git add *
 func (m *model) add() {
 	cmd := exec.Command("git", "add", "*") // git add
 	cmd.Dir = m.dir                        // set dir
 	cmd.Run()                              // run
 }
 
+// git commit -m $message
 func (m *model) commit(message string) {
 	cmd := exec.Command("git", "commit", "-m", message) // git commit
 	cmd.Dir = m.dir                                     // set dir
 	cmd.Run()                                           // run
 }
 
+// git push -u origin master
 func (m *model) push() {
 	cmd := exec.Command("git", "push", "-u", "origin", "master") // push -u origin master
 	cmd.Dir = m.dir                                              // set dir
 	cmd.Run()                                                    // run
 }
 
+// set m.dir directly
 func (m *model) direct(dir string) {
 	m.dir = dir
 }
 
+// hub clone $m.remote
 func (m *model) clone() {
 	cmd := exec.Command("hub", "clone", m.remote) // hub clone
 	cmd.Dir = m.dir                               // set dir
 	cmd.Run()                                     // run
 }
 
+// set model behind
 func (m *model) behind() {
 
 	if !strings.Contains(m.name, "Behind") {
@@ -184,6 +107,7 @@ func (m *model) behind() {
 	m.push()
 }
 
+// set model ahead
 func (m *model) ahead() {
 
 	if !strings.Contains(m.name, "Ahead") {
@@ -195,6 +119,7 @@ func (m *model) ahead() {
 	m.commit("'AHEAD' commit")
 }
 
+// make model untracked
 func (m *model) untracked() {
 
 	if !strings.Contains(m.name, "Untracked") {
@@ -204,6 +129,7 @@ func (m *model) untracked() {
 	m.create("UNTRACKED")
 }
 
+// overwrite README.md with fox text
 func (m *model) overwrite() {
 	fox := "The sly brown fox jumped over the lazy dog."
 	data := []byte(fox)
@@ -214,6 +140,7 @@ func (m *model) overwrite() {
 	}
 }
 
+// make model dirty
 func (m *model) dirty() {
 
 	if !strings.Contains(m.name, "Dirty") {
@@ -223,6 +150,7 @@ func (m *model) dirty() {
 	m.overwrite()
 }
 
+// hub delete -y $m.remote
 func (m *model) remove() {
 	cmd := exec.Command("hub", "delete", "-y", m.remote) // hub delete
 	cmd.Run()                                            // run
@@ -230,6 +158,7 @@ func (m *model) remove() {
 
 type models []*model
 
+// create model repos, configured to their names
 func (ms models) startup(mdir string, tdir string) {
 	var wg sync.WaitGroup
 	for i := range ms {
@@ -257,6 +186,7 @@ func (ms models) startup(mdir string, tdir string) {
 	wg.Wait()
 }
 
+// remove all remotes
 func (ms models) cleanup() {
 	var wg sync.WaitGroup
 	for i := range ms {
@@ -269,6 +199,7 @@ func (ms models) cleanup() {
 	wg.Wait()
 }
 
+// create models from set options
 func modeler(user string) (ms models) {
 
 	var tmps = []string{
@@ -295,8 +226,6 @@ func modeler(user string) (ms models) {
 }
 
 func user() string {
-
-	// also check to be sure that hub is installed...
 
 	path := tilde.Abs("~/.config/hub")
 	file, err := os.Open(path)
@@ -370,7 +299,7 @@ func gisrc(dir string, k string) string {
 	var j []byte
 	var ok bool
 
-	if j, ok = jmap[k]; ok != true {
+	if j, ok = Jmap[k]; ok != true {
 		log.Fatalf("%v not found in jmap", k)
 	}
 
@@ -387,6 +316,89 @@ func gisrc(dir string, k string) string {
 
 // Public
 
+// Jmap maps a string to JSON data as a byte slice.
+var Jmap = map[string][]byte{
+	"recipes": []byte(`
+		{
+			"bundles": [{
+				"path": "SETPATH",
+				"zones": [{
+						"user": "hendricius",
+						"remote": "github",
+						"workspace": "recipes",
+						"repositories": [
+							"pizza-dough"
+						]
+					},
+					{
+						"user": "rochacbruno",
+						"remote": "github",
+						"workspace": "recipes",
+						"repositories": [
+							"vegan_recipes"
+						]
+					},
+					{
+						"user": "niw",
+						"remote": "github",
+						"workspace": "recipes",
+						"repositories": [
+							"ramen"
+						]
+					}
+				]
+			}]
+		}
+`),
+	"tmpgis": []byte(`
+	{
+		"bundles": [{
+			"path": "SETPATH",
+			"zones": [{
+					"user": "jychri",
+					"remote": "github",
+					"workspace": "tmpgis",
+					"repositories": [
+						"gis-Ahead",
+						"gis-Behind",
+						"gis-Dirty",
+						"gis-DirtyUntracked",
+						"gis-DirtyAhead",
+						"gis-DirtyBehind",
+						"gis-Untracked",
+						"gis-UntrackedAhead",
+						"gis-UntrackedBehind",
+						"gis-Complete"
+					]
+				}
+			]
+		}]
+	}
+	`),
+}
+
+// Rmap maps a string to Results.
+var Rmap = map[string]Results{
+	"recipes": {
+		{"hendricius", "github", "recipes", []string{"pizza-dough"}},
+		{"rochacbruno", "github", "recipes", []string{"vegan_recipes"}},
+		{"niw", "github", "recipes", []string{"ramen"}},
+	},
+	"tmpgis": {
+		{"jychri", "github", "tmpgis", []string{
+			"gis-Ahead",
+			"gis-Behind",
+			"gis-Dirty",
+			"gis-DirtyUntracked",
+			"gis-DirtyAhead",
+			"gis-DirtyBehind",
+			"gis-Untracked",
+			"gis-UntrackedAhead",
+			"gis-UntrackedBehind",
+			"gis-Complete",
+		}}},
+}
+
 // Result is the expected value for a zone.
 type Result struct {
 	User, Remote, Workspace string
@@ -396,32 +408,35 @@ type Result struct {
 // Results collects Result structs.
 type Results []Result
 
-// Resulter returns Results from map rmap.
-func Resulter(k string) Results {
+// Resulter returns Results from map Rmap.
+func Resulter(key string) Results {
 
-	if _, ok := rmap[k]; ok != true {
-		log.Fatalf("%v not found in rmap", k)
+	if _, ok := Rmap[key]; ok != true {
+		log.Fatalf("%v not found in rmap", key)
 	}
 
-	return rmap[k]
+	return Rmap[key]
 }
 
 // Setup creates a test environment at ~/tmpgis/$scope/, returning
 // the absolute path of ~/tmpgis/$scope/gisrc.json and a cleanup function.
-func Setup(scope string, k string) (string, func()) {
+func Setup(scope string, key string) (string, func()) {
 	base, dir := paths(scope) // base and directory paths
-	gisrc := gisrc(dir, k)    // write temporary gisrc
-	return gisrc, func() { os.RemoveAll(base) }
+	gisrc := gisrc(dir, key)  // write temporary gisrc
+
+	return gisrc, func() {
+		os.RemoveAll(base) // rm -rf base
+	}
 }
 
 // Hub creates a test environment at ~/tmpgis/$scope, returning
 // the path of ~/tmpgis/$scope/gisrc.json and a cleanup function.
 // Unlike Setup, Hub creates matching remotes on GitHub and sets repos
 // ahead, behind, dirty, untracked or complete depending according to their names.
-func Hub(scope string, k string) (string, func()) {
+func Hub(scope string, key string) (string, func()) {
 	user := user()             // read user ~/.config/hub
 	base, dir := paths(scope)  // base and directory paths (return base for cleanup...)
-	gisrc := gisrc(dir, k)     // create gisrc, return it's path
+	gisrc := gisrc(dir, key)   // create gisrc, return it's path
 	mdir, tdir := subdirs(dir) // create subdirectories models and tmp
 	ms := modeler(user)        // create basic models, collect as models
 	ms.startup(mdir, tdir)     // async startup
@@ -433,10 +448,10 @@ func Hub(scope string, k string) (string, func()) {
 }
 
 // Direct verifies ~/.gisrc.json, but does not validate its content.
-// If ~/.gisrc.json is empty, Direct creates a gisrc.json and returns
-// its absolute path with a cleanup function. If ~/.gisrc.json exists,
-// Direct returns its absolute path with a nil cleanup function
-func Direct(pkg string, k string) (string, func()) {
+// If no ~/.gisrc.json, Direct creates one and returns its absolute
+// path with a cleanup function. If present, Direct returns its
+// absolute path with a nil cleanup function.
+func Direct(pkg string, key string) (string, func()) {
 
 	var j []byte
 	var ok bool
@@ -445,8 +460,8 @@ func Direct(pkg string, k string) (string, func()) {
 		log.Fatalf("pkg is empty")
 	}
 
-	if j, ok = jmap[k]; ok != true {
-		log.Fatalf("%v not found in jmap", k)
+	if j, ok = Jmap[key]; ok != true {
+		log.Fatalf("%v not found in jmap", key)
 	}
 
 	tg := tilde.Abs("~/.gisrc.json") // test gisrc

@@ -4,12 +4,12 @@ package tilde
 import (
 	"log"
 	"os/user"
-	"path"
+	p "path"
 	"strings"
 )
 
 // Abs replaces "~/" with "/User/$user/" and returns a clean path.
-func Abs(p string) string {
+func Abs(path string) string {
 
 	var u *user.User
 
@@ -19,9 +19,9 @@ func Abs(p string) string {
 		log.Fatalf("Unable to identify current user")
 	}
 
-	if !path.IsAbs(p) {
-		return path.Join(u.HomeDir, strings.TrimPrefix(p, "~/"))
+	if !p.IsAbs(path) {
+		return p.Join(u.HomeDir, strings.TrimPrefix(path, "~/"))
 	}
 
-	return path.Clean(p)
+	return p.Clean(path)
 }

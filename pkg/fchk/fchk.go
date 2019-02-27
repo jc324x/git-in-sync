@@ -3,9 +3,7 @@ package fchk
 
 import (
 	"io"
-	// "io/ioutil"
 	"os"
-	// "path"
 	"syscall"
 )
 

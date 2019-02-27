@@ -118,30 +118,6 @@ func (st *Stat) Clear() {
 	st.ScheduledPush = nil
 }
 
-// if scr := len(st.ScheduledPull); scr != 0 {
-// 	etr := emoji.Get("Arrival")
-// 	srs := brf.Summary(st.ScheduledPull, 12)
-// 	brf.Printv(f, "%v [%v](%v) pull scheduled", etr, scr, srs)
-// }
-
-// if scr := len(st.ScheduledPush); scr != 0 {
-// 	etr := emoji.Get("Departure")
-// 	srs := brf.Summary(st.ScheduledPush, 12)
-// 	brf.Printv(f, "%v [%v](%v) push scheduled", etr, scr, srs)
-// }
-
-// if pr := len(st.PendingRepos); pr != 0 {
-// 	etr := emoji.Get("Traffic")
-// 	srs := brf.Summary(st.PendingRepos, 12)
-// 	brf.Printv(f, "%v [%v](%v) pending", etr, pr, srs)
-// }
-
-// if skr := len(st.SkippedRepos); skr != 0 {
-// 	etr := emoji.Get("Stop")
-// 	srs := brf.Summary(st.SkippedRepos, 12)
-// 	brf.Printv(f, "%v [%v](%v) skipped", etr, skr, srs)
-// }
-
 // SkippedSummary ...
 func (st *Stat) SkippedSummary() {
 

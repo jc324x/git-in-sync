@@ -219,6 +219,7 @@ func (rs Repos) infoPrint(f flags.Flags, st *stat.Stat) {
 }
 
 func (rs Repos) infoAsync(f flags.Flags, ti *timer.Timer) {
+
 	var wg sync.WaitGroup
 
 	for i := range rs {
@@ -241,6 +242,28 @@ func (rs Repos) infoAsync(f flags.Flags, ti *timer.Timer) {
 	wg.Wait()
 
 	ti.Mark("info-async") // mark info-async
+}
+
+func (rs Repos) changesSummary(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
+	rs.category(st)              // set current category stats
+	tr := len(st.Repos)          // number of repos
+	cr := len(st.CompleteRepos)  // number of complete repos
+	ec := emoji.Get("Checkmark") // Checkmark emoji
+	es := emoji.Get("Fire")      // Fire emoji (replace with stop sign)
+	ew := emoji.Get("Warning")   // Warning emoji
+	ti.Mark("repo-summary")      // mark repo-summary
+	ts := ti.Split()             // last split
+	tt := ti.Time()              // elapsed time
+
+	switch {
+	case st.CheckComplete():
+		flags.Printv(f, "%v [%v/%v] repos complete {%v / %v}", ec, cr, tr, ts, tt)
+	case st.CheckPending():
+		flags.Printv(f, "%v [%v/%v] repos complete {%v / %v}", ew, cr, tr, ts, tt)
+	case st.CheckSkipped():
+		flags.Printv(f, "%v [%v/%v] repos complete {%v / %v}", es, cr, tr, ts, tt)
+	}
+
 }
 
 // infoSummary ...
@@ -315,6 +338,7 @@ func (rs Repos) changesAsync(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
 		}(rs[i])
 	}
 	wg.Wait()
+
 	st.Clear()
 }
 
@@ -369,7 +393,8 @@ func (rs Repos) VerifyRepos(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
 
 // VerifyChanges ...
 func (rs Repos) VerifyChanges(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
-	rs.promptUser(f, st)       // prompt user
-	rs.changesAsync(f, st, ti) // submit changes (async)
-	rs.infoAsync(f, ti)        // update info (async)
+	rs.promptUser(f, st)         // prompt user
+	rs.changesAsync(f, st, ti)   // submit changes (async)
+	rs.infoAsync(f, ti)          // update info (async)
+	rs.changesSummary(f, st, ti) // update info (async)
 }

@@ -43,7 +43,6 @@ func (st *Stat) Clear() {
 	st.VerifiedWorkspaces = nil
 	st.InaccessibleWorkspaces = nil
 	st.PendingClones = nil
-	st.Repos = nil
 	st.ClonedRepos = nil
 	st.PendingRepos = nil
 	st.ScheduledRepos = nil

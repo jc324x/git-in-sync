@@ -813,14 +813,14 @@ func (r *Repo) GitPop(f flags.Flags) {
 
 // GitPull ...
 func (r *Repo) GitPull(f flags.Flags) {
-	const dsc = "GitPull"                                                  // description
-	es := emoji.Get("Ship")                                                // Ship emoji
-	rn := r.Name                                                           // repo name
-	ub := r.UpstreamBranch                                                 // upstream branch
-	rr := r.Remote                                                         // remote
-	flags.Printv(f, "%v  %v pulling changes from %v @ %v", es, rn, ub, rr) // print
-	args := []string{"-C", r.RepoPath, "pull"}                             // arguments
-	r.gitP(args, dsc)                                                      // command
+	const dsc = "GitPull"                                                 // description
+	es := emoji.Get("Ship")                                               // Ship emoji
+	rn := r.Name                                                          // repo name
+	ub := r.UpstreamBranch                                                // upstream branch
+	rr := r.Remote                                                        // remote
+	flags.Printv(f, "%v %v pulling changes from %v @ %v", es, rn, ub, rr) // print
+	args := []string{"-C", r.RepoPath, "pull"}                            // arguments
+	r.gitP(args, dsc)                                                     // command
 }
 
 // GitPush ...

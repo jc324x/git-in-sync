@@ -15,23 +15,23 @@ import (
 func TestVerifyWorkspaces(t *testing.T) {
 
 	for _, tr := range []struct {
-		pkg, k string
+		scope, key string
 	}{
 		{"repos-workspaces", "recipes"},
 	} {
-		// p, cleanup := atp.Setup(tr.pkg, tr.k)
-		p, _ := atp.Setup(tr.pkg, tr.k)
+		p, cleanup := atp.Setup(tr.scope, tr.key)
 		ti := timer.Init()
 		f := flags.Testing(p)
 		c := conf.Init(f)
 		st := stat.Init()
 		rs := Init(c, f, st, ti)
 
-		// defer cleanup()
+		defer cleanup()
 
 		rs.VerifyWorkspaces(f, st, ti)
 
 		for _, r := range rs {
+
 			if _, err := os.Stat(r.WorkspacePath); os.IsNotExist(err) {
 				t.Errorf("VerifyWorkspaces: %v is missing", r.WorkspacePath)
 			}
@@ -42,24 +42,24 @@ func TestVerifyWorkspaces(t *testing.T) {
 func TestVerifyRepos(t *testing.T) {
 
 	for _, tr := range []struct {
-		pkg, k string
+		scope, key string
 	}{
 		{"repos-repos", "recipes"},
 	} {
-		// p, cleanup := atp.Setup(tr.pkg, tr.k)
-		p, _ := atp.Setup(tr.pkg, tr.k)
+		p, cleanup := atp.Setup(tr.scope, tr.key)
 		ti := timer.Init()
 		f := flags.Testing(p)
 		c := conf.Init(f)
 		st := stat.Init()
 		rs := Init(c, f, st, ti)
 
-		// defer cleanup()
+		defer cleanup()
 
 		rs.VerifyWorkspaces(f, st, ti)
 		rs.VerifyRepos(f, st, ti)
 
 		for _, r := range rs {
+
 			if _, err := os.Stat(r.GitPath); os.IsNotExist(err) {
 				t.Errorf("#VerifyRepos %v is missing", r.GitPath)
 			}
@@ -74,24 +74,22 @@ func TestVerifyRepos(t *testing.T) {
 func TestVerifyChanges(t *testing.T) {
 
 	for _, tr := range []struct {
-		scope, k string
+		scope, key string
 	}{
 		{"repos-changes", "tmpgis"},
 	} {
-		// p, cleanup := atp.Hub(tr.pkg, tr.k)
-		p, _ := atp.Hub(tr.scope, tr.k)
+		p, cleanup := atp.Hub(tr.scope, tr.key)
 		ti := timer.Init()
 		f := flags.Testing(p)
 		c := conf.Init(f)
 		st := stat.Init()
 		rs := Init(c, f, st, ti)
 
-		// defer cleanup()
+		defer cleanup()
 
 		rs.VerifyWorkspaces(f, st, ti)
 		rs.VerifyRepos(f, st, ti)
 
-		// setup
 		for _, r := range rs {
 
 			if trim := strings.TrimPrefix(r.Name, "gis-"); trim != r.Status {
@@ -111,12 +109,4 @@ func TestVerifyChanges(t *testing.T) {
 			}
 		}
 	}
-}
-
-func TestLogin(t *testing.T) {
-
-}
-
-func TestLogout(t *testing.T) {
-
 }

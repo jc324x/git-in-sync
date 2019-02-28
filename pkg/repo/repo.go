@@ -17,7 +17,7 @@ import (
 	"github.com/jychri/git-in-sync/pkg/fchk"
 	"github.com/jychri/git-in-sync/pkg/flags"
 	"github.com/jychri/git-in-sync/pkg/stat"
-	"github.com/jychri/git-in-sync/pkg/tilde"
+	"github.com/jychri/tilde"
 )
 
 // private

@@ -4,7 +4,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/jychri/git-in-sync/pkg/tilde"
+	"github.com/jychri/git-in-sync/tilde"
 )
 
 func TestAll(t *testing.T) {

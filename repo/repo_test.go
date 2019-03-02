@@ -5,8 +5,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/jychri/git-in-sync/pkg/flags"
-	"github.com/jychri/git-in-sync/pkg/tilde"
+	"github.com/jychri/git-in-sync/flags"
+	"github.com/jychri/git-in-sync/tilde"
 )
 
 // private

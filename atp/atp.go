@@ -12,8 +12,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/jychri/git-in-sync/pkg/brf"
-	"github.com/jychri/git-in-sync/pkg/tilde"
+	"github.com/jychri/git-in-sync/brf"
+	"github.com/jychri/git-in-sync/tilde"
 )
 
 // private

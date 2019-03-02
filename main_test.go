@@ -4,7 +4,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/jychri/git-in-sync/pkg/atp"
+	"github.com/jychri/git-in-sync/atp"
 )
 
 func TestInit(t *testing.T) {

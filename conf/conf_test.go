@@ -4,8 +4,8 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/jychri/git-in-sync/pkg/atp"
-	"github.com/jychri/git-in-sync/pkg/flags"
+	"github.com/jychri/git-in-sync/atp"
+	"github.com/jychri/git-in-sync/flags"
 )
 
 func TestInit(t *testing.T) {

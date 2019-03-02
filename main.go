@@ -2,12 +2,12 @@
 package main
 
 import (
-	"github.com/jychri/git-in-sync/pkg/conf"
-	"github.com/jychri/git-in-sync/pkg/emoji"
-	"github.com/jychri/git-in-sync/pkg/flags"
-	"github.com/jychri/git-in-sync/pkg/repos"
-	"github.com/jychri/git-in-sync/pkg/stat"
-	"github.com/jychri/git-in-sync/pkg/timer"
+	"github.com/jychri/git-in-sync/conf"
+	"github.com/jychri/git-in-sync/emoji"
+	"github.com/jychri/git-in-sync/flags"
+	"github.com/jychri/git-in-sync/repos"
+	"github.com/jychri/git-in-sync/stat"
+	"github.com/jychri/git-in-sync/timer"
 )
 
 // Init initializes Flags, Repos, Stat and Timer.

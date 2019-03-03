@@ -2,7 +2,7 @@
 package stat
 
 import (
-	"github.com/jychri/brf"
+	"github.com/jychri/goku/brf"
 )
 
 // Stat tracks stats for the current run.

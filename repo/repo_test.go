@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/jychri/tilde"
+	"github.com/jychri/goku/tilde"
 
 	"github.com/jychri/git-in-sync/flags"
 )

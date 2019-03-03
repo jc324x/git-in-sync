@@ -12,9 +12,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/jychri/brf"
-	"github.com/jychri/fchk"
-	"github.com/jychri/tilde"
+	"github.com/jychri/goku/brf"
+	"github.com/jychri/goku/fchk"
+	"github.com/jychri/goku/tilde"
 
 	"github.com/jychri/git-in-sync/emoji"
 	"github.com/jychri/git-in-sync/flags"

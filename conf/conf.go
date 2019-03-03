@@ -5,8 +5,9 @@ import (
 	"encoding/json"
 	"io/ioutil"
 
+	"github.com/jychri/goku/quitter"
+
 	"github.com/jychri/git-in-sync/flags"
-	"github.com/jychri/quitter"
 )
 
 // private

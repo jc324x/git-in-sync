@@ -12,8 +12,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/jychri/brf"
-	"github.com/jychri/tilde"
+	"github.com/jychri/goku/brf"
+	"github.com/jychri/goku/tilde"
 )
 
 // private

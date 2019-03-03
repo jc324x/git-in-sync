@@ -2,7 +2,7 @@
 package main
 
 import (
-	"github.com/jychri/timer"
+	"github.com/jychri/goku/timer"
 
 	"github.com/jychri/git-in-sync/conf"
 	"github.com/jychri/git-in-sync/emoji"

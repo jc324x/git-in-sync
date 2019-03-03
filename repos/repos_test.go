@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/jychri/timer"
+	"github.com/jychri/goku/timer"
 
 	"github.com/jychri/git-in-sync/atp"
 	"github.com/jychri/git-in-sync/conf"

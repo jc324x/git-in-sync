@@ -1,10 +1,4 @@
-github.com/jychri/brf v0.1.0 h1:DKIA4y5Bd3adAHzry9fJOMwhF1b2+bZ343cb8ZQSv9E=
-github.com/jychri/brf v0.1.0/go.mod h1:eJDtmqXsW+FkK/HWqehie5sv9vswOupDW28y1M0qaDg=
-github.com/jychri/fchk v0.1.0 h1:S3ONKtAOrE+3/X9iDvgjByMfFBSa9npqAUnM5SXtG8A=
-github.com/jychri/fchk v0.1.0/go.mod h1:/SiXn53MYR+ngHJBwAvjS1BViaV/fvbCIXOd3LjOrHE=
-github.com/jychri/quitter v0.1.0 h1:W2HF6HRFvHPcMUD9/hojheOom8xq/++y9puZO61qQio=
-github.com/jychri/quitter v0.1.0/go.mod h1:9Q2pzqRbR0oBzqHy43/pHeNmhcMV0rzsSlCMyWnKquo=
-github.com/jychri/tilde v0.1.0 h1:lyzsVsXqvVWRuB78BWnq7g9UUQWYKScLxh/SHv/6nNw=
-github.com/jychri/tilde v0.1.0/go.mod h1:mA2ROghOUG0O0S+AtuanqeACKX9GryWs70sYD3iOvo8=
-github.com/jychri/timer v0.1.0 h1:UnuG4OS/PBwYJ9ruPhZTNgbblwBXytf2PR5Q2eO6nBU=
-github.com/jychri/timer v0.1.0/go.mod h1:dWuyRYMZduZ+zpR9bZnQeyB1YpoNh1pWesBCCKdIpTs=
+github.com/jychri/goku v0.1.0 h1:3Uc2BHL159wlKz4RgM1ksLhz9349BiyLuWTNSvos5QI=
+github.com/jychri/goku v0.1.0/go.mod h1:uwOmQOuzmoF/ocZKP+cH6mEPPzeNBENLj9rIHtACgN8=
+github.com/jychri/goku v0.1.1 h1:2BltegBfTJTw02IFX2qlweJ2GEQ19+DNanvONk2pEB4=
+github.com/jychri/goku v0.1.1/go.mod h1:uwOmQOuzmoF/ocZKP+cH6mEPPzeNBENLj9rIHtACgN8=

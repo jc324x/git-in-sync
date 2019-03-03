@@ -4,7 +4,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/jychri/tilde"
+	"github.com/jychri/goku/tilde"
 )
 
 func TestAll(t *testing.T) {

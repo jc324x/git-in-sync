@@ -5,11 +5,12 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/jychri/timer"
+
 	"github.com/jychri/git-in-sync/atp"
 	"github.com/jychri/git-in-sync/conf"
 	"github.com/jychri/git-in-sync/flags"
 	"github.com/jychri/git-in-sync/stat"
-	"github.com/jychri/git-in-sync/timer"
 )
 
 func TestVerifyWorkspaces(t *testing.T) {

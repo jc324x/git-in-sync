@@ -12,8 +12,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/jychri/git-in-sync/brf"
-	"github.com/jychri/git-in-sync/tilde"
+	"github.com/jychri/brf"
+	"github.com/jychri/tilde"
 )
 
 // private
@@ -250,11 +250,11 @@ func user() string {
 	for scanner.Scan() {
 		l := scanner.Text()
 
-		if match := brf.MatchLine(l, "- user:"); match != "" {
+		if match := brf.Match(l, "- user:"); match != "" {
 			user = match
 		}
 
-		if match := brf.MatchLine(l, "oauth_token:"); match != "" {
+		if match := brf.Match(l, "oauth_token:"); match != "" {
 			token = true
 		}
 	}

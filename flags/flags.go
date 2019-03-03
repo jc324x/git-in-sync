@@ -7,7 +7,7 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/jychri/git-in-sync/tilde"
+	"github.com/jychri/tilde"
 )
 
 // Flags records values for Mode and Config.

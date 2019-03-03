@@ -2,7 +2,7 @@
 package stat
 
 import (
-	"github.com/jychri/git-in-sync/brf"
+	"github.com/jychri/brf"
 )
 
 // Stat tracks stats for the current run.

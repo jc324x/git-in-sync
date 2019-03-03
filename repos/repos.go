@@ -8,13 +8,14 @@ import (
 	"sort"
 	"sync"
 
-	"github.com/jychri/git-in-sync/brf"
+	"github.com/jychri/brf"
+	"github.com/jychri/timer"
+
 	"github.com/jychri/git-in-sync/conf"
 	"github.com/jychri/git-in-sync/emoji"
 	"github.com/jychri/git-in-sync/flags"
 	"github.com/jychri/git-in-sync/repo"
 	"github.com/jychri/git-in-sync/stat"
-	"github.com/jychri/git-in-sync/timer"
 )
 
 // private

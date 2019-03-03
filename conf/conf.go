@@ -6,7 +6,7 @@ import (
 	"io/ioutil"
 
 	"github.com/jychri/git-in-sync/flags"
-	"github.com/jychri/git-in-sync/quitter"
+	"github.com/jychri/quitter"
 )
 
 // private

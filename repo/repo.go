@@ -12,12 +12,13 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/jychri/git-in-sync/brf"
+	"github.com/jychri/brf"
+	"github.com/jychri/fchk"
+	"github.com/jychri/tilde"
+
 	"github.com/jychri/git-in-sync/emoji"
-	"github.com/jychri/git-in-sync/fchk"
 	"github.com/jychri/git-in-sync/flags"
 	"github.com/jychri/git-in-sync/stat"
-	"github.com/jychri/git-in-sync/tilde"
 )
 
 // private

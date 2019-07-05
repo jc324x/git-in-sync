@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 
+	// TODO: get rid of quitter...
 	"github.com/jychri/goku/quitter"
 
 	"github.com/jychri/git-in-sync/flags"

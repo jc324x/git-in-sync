@@ -8,8 +8,8 @@ import (
 	"sort"
 	"sync"
 
-	"github.com/jychri/goku/brf"
-	"github.com/jychri/goku/timer"
+	"github.com/jychri/brf"
+	"github.com/jychri/timer"
 
 	"github.com/jychri/git-in-sync/conf"
 	"github.com/jychri/git-in-sync/emoji"

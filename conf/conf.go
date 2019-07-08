@@ -5,8 +5,6 @@ import (
 	"encoding/json"
 	"io/ioutil"
 
-	"github.com/jychri/goku/quitter"
-
 	"github.com/jychri/git-in-sync/flags"
 )
 
@@ -17,16 +15,14 @@ import (
 // quit.Err will call log.Fatalf() if err != nil.
 // In a test run, quit.Err will record and return
 // the failure as quit.Out.
-func read(f flags.Flags) ([]byte, quit.Out) {
-	var bs []byte
+func read(f flags.Flags) (bs []byte) {
 	var err error
 
-	bs, err = ioutil.ReadFile(f.Config)
+	if bs, err = ioutil.ReadFile(f.Config); err != nil {
+		// handle error
+	}
 
-	fm := []string{"Can't read file at (%v)\n", "Read file at (%v)\n"}
-	qo := quit.Err(err, fm, f.Config)
-
-	return bs, qo
+	return bs
 }
 
 // unmarsmall unmarhalls the contents of a gisrc.json file,
@@ -34,16 +30,12 @@ func read(f flags.Flags) ([]byte, quit.Out) {
 // quit.Out. In a normal run quit.Err will call log.Fatalf()
 // if err != nil. In a test run, quit.Err will record and
 // return the failure as quit.Out.
-func unmarshal(bs []byte, f flags.Flags) (Config, quit.Out) {
-	var c Config
-	var err error
+func unmarshal(bs []byte, f flags.Flags) (c Config) {
+	if err := json.Unmarshal(bs, &c); err != nil {
+		// handle error
+	}
 
-	err = json.Unmarshal(bs, &c)
-
-	fm := []string{"Can't unmarshal JSON from (%v)\n", "Unmarshalled (%v)\n"}
-	qo := quit.Err(err, fm, f.Config)
-
-	return c, qo
+	return c
 }
 
 // Public
@@ -65,7 +57,7 @@ type Config struct {
 // The Flags' Mode and Config values are validated
 // prior to their use here.
 func Init(f flags.Flags) (c Config) {
-	bs, _ := read(f)        // read the file at path f.Config
-	c, _ = unmarshal(bs, f) // unmarshal the data from file at path f.Config
+	bs := read(f)        // read the file at path f.Config
+	c = unmarshal(bs, f) // unmarshal the data from file at path f.Config
 	return c
 }

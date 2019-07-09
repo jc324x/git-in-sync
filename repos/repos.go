@@ -1,4 +1,4 @@
-// Package repos collects Git repositories as Repo structs.
+// Package repos collects Repo(s) in a Repos struct.
 package repos
 
 import (
@@ -18,9 +18,7 @@ import (
 	"github.com/jychri/git-in-sync/stat"
 )
 
-// private
-
-// direct returns a *Repo from Repos with a matching name
+// direct returns a matching *Repo from Repos.
 func (rs Repos) direct(name string) *repo.Repo {
 	for _, r := range rs {
 		if name == r.Name {
@@ -44,7 +42,7 @@ func (rs Repos) names() (rss []string) {
 	return brf.Reduce(rss)
 }
 
-// names returns a string slice of all Repo workspaces.
+// workspaces returns a string slice of all Repo workspaces.
 func (rs Repos) workspaces() (wss []string) {
 
 	for _, r := range rs {
@@ -361,8 +359,6 @@ func (rs Repos) category(st *stat.Stat) {
 	}
 }
 
-// Public
-
 // Repos collects pointers to Repo structs.
 type Repos []*repo.Repo
 
@@ -392,7 +388,8 @@ func (rs Repos) VerifyRepos(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
 	rs.infoSummary(f, st, ti)  // print summary
 }
 
-// VerifyChanges ...
+// VerifyChanges verifies user changes, sends them asynchronously and prints
+// summary information.
 func (rs Repos) VerifyChanges(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
 	rs.promptUser(f, st)         // prompt user
 	rs.changesAsync(f, st, ti)   // submit changes (async)

@@ -1,44 +1,35 @@
-// Package conf implements access to gisrc.json files.
+// Package conf implements access to gisrc.json config files.
 package conf
 
 import (
 	"encoding/json"
 	"io/ioutil"
+	"log"
 
 	"github.com/jychri/git-in-sync/flags"
 )
 
-// private
-
-// read reads the file at f.Config. read returns
-// a byte slice and quit.Out. In a normal run,
-// quit.Err will call log.Fatalf() if err != nil.
-// In a test run, quit.Err will record and return
-// the failure as quit.Out.
+// read returns the contents of the file at path f.Config as []byte.
+// If something goes wrong, stop the run.
 func read(f flags.Flags) (bs []byte) {
 	var err error
 
 	if bs, err = ioutil.ReadFile(f.Config); err != nil {
-		// handle error
+		log.Fatalf("Unable to read file at %v \n (%v)", f.Config, err)
 	}
 
 	return bs
 }
 
-// unmarsmall unmarhalls the contents of a gisrc.json file,
-// read to a byte slice by read, and returns a Config and
-// quit.Out. In a normal run quit.Err will call log.Fatalf()
-// if err != nil. In a test run, quit.Err will record and
-// return the failure as quit.Out.
-func unmarshal(bs []byte, f flags.Flags) (c Config) {
+// unmarsmall unmarshalls []byte into Config
+// If something goes wrong, stop the run.
+func unmarshal(bs []byte) (c Config) {
 	if err := json.Unmarshal(bs, &c); err != nil {
-		// handle error
+		log.Fatalf("Unable to unmarshal data\n")
 	}
 
 	return c
 }
-
-// Public
 
 // Config holds unmrashalled JSON from a gisrc.json file.
 type Config struct {
@@ -54,10 +45,8 @@ type Config struct {
 }
 
 // Init returns unmarshalled data from gisrc.json.
-// The Flags' Mode and Config values are validated
-// prior to their use here.
 func Init(f flags.Flags) (c Config) {
-	bs := read(f)        // read the file at path f.Config
-	c = unmarshal(bs, f) // unmarshal the data from file at path f.Config
+	bs := read(f)     // read the file at path f.Config
+	c = unmarshal(bs) // unmarshal the data from file at path f.Config
 	return c
 }

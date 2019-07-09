@@ -12,11 +12,10 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/jychri/goku/brf"
-	"github.com/jychri/goku/tilde"
+	"github.com/jychri/brf"
+	"github.com/jychri/tilde"
 )
 
-// private
 const base = "~/tmpgis"
 
 // model is an example repository
@@ -319,8 +318,6 @@ func gisrc(dir string, k string) string {
 
 	return gisrc
 }
-
-// Public
 
 // Jmap maps a string to JSON data as a byte slice.
 var Jmap = map[string][]byte{

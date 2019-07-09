@@ -1,8 +1,16 @@
 package emoji
 
 import (
+	"fmt"
 	"testing"
 )
+
+// all prints all emoji values
+func all() {
+	for _, val := range em {
+		fmt.Printf("%v: \"%v\"\n", val, convert(val))
+	}
+}
 
 var tm = map[int]string{
 	128747: "🛫",
@@ -59,10 +67,6 @@ var tm = map[int]string{
 	128048: "🐰",
 	128678: "🚦",
 }
-
-// func TestPrint(t *testing.T) {
-// 	all()
-// }
 
 func TestGet(t *testing.T) {
 	for key, value := range em {

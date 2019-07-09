@@ -12,21 +12,18 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/jychri/goku/brf"
-	"github.com/jychri/goku/fchk"
-	"github.com/jychri/goku/tilde"
+	"github.com/jychri/brf"
+	"github.com/jychri/fchk"
+	"github.com/jychri/tilde"
 
 	"github.com/jychri/git-in-sync/emoji"
 	"github.com/jychri/git-in-sync/flags"
 	"github.com/jychri/git-in-sync/stat"
 )
 
-// private
-
-// git runs a Git command and returns standard out
-// and standard error messages as strings out and em.
-// em is used rather than err to indicate that the
-// value is as string rather than an error.
+// git runs a Git command and returns standard out and standard error
+// messages as strings out and em. em is used rather than err to
+// indicate that the value is as string rather than an error.
 func (r *Repo) git(args []string) (out string, em string) {
 
 	if r.Verified == false {

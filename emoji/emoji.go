@@ -2,12 +2,9 @@
 package emoji
 
 import (
-	"fmt"
 	"html"
 	"strconv"
 )
-
-// private
 
 var em = map[string]int{
 	"AlarmClock":           9200,
@@ -69,15 +66,6 @@ var em = map[string]int{
 func convert(n int) string {
 	return html.UnescapeString("&#" + strconv.Itoa(n) + ";")
 }
-
-// all prints all emoji values
-func all() {
-	for _, val := range em {
-		fmt.Printf("%v: \"%v\"\n", val, convert(val))
-	}
-}
-
-// Public
 
 // Get returns an emoji character as a string.
 func Get(s string) string {

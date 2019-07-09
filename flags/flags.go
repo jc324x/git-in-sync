@@ -49,7 +49,7 @@ func Testing(c string) Flags {
 	return Flags{Mode: "testing", Config: c}
 }
 
-// ClearScreen clears the screen.
+// ClearScreen clears the screen if needed.
 func (f Flags) ClearScreen() {
 	switch f.Mode {
 	case "oneline":

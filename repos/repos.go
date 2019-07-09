@@ -317,15 +317,15 @@ func (rs Repos) changesAsync(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
 			switch r.Action {
 			case "Pull":
 				r.GitPull(f)
-				r.GitClear()
+				r.GitClean()
 			case "Push":
 				r.GitPush(f)
-				r.GitClear()
+				r.GitClean()
 			case "Add-Commit-Push":
 				r.GitAdd(f)
 				r.GitCommit(f)
 				r.GitPush(f)
-				r.GitClear()
+				r.GitClean()
 			case "Stash-Pull-Pop-Commit-Push":
 				r.GitAdd(f)
 				r.GitStash(f)
@@ -334,7 +334,7 @@ func (rs Repos) changesAsync(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
 				r.GitAdd(f)
 				r.GitCommit(f)
 				r.GitPush(f)
-				r.GitClear()
+				r.GitClean()
 			}
 		}(rs[i])
 	}

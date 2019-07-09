@@ -46,8 +46,8 @@ func (r *Repo) git(args []string) (out string, em string) {
 	return out, em
 }
 
-// gitP runs a Git command and records the error
-// values in r.ErrorName and r.ErrorMessage.
+// gitP runs a Git command and records the error values in r.ErrorName
+// and r.ErrorMessage; it has no return value.
 func (r *Repo) gitP(args []string, dsc string) {
 
 	if r.Verified == false {
@@ -68,8 +68,6 @@ func (r *Repo) gitP(args []string, dsc string) {
 		r.ErrorMessage = em
 	}
 }
-
-// Public
 
 // Repo models a Git repository.
 type Repo struct {
@@ -177,7 +175,6 @@ func (r *Repo) VerifyWorkspace(f flags.Flags, st *stat.Stat) {
 
 	if _, err := os.Stat(r.WorkspacePath); os.IsNotExist(err) {
 		flags.Printv(f, "%v creating %v", emoji.Get("Folder"), r.WorkspacePath)
-		// os.MkdirAll(r.WorkspacePath, 0444) // this breaks things, good for testing
 		os.MkdirAll(r.WorkspacePath, 0766)
 		st.CreatedWorkspaces = append(st.CreatedWorkspaces, r.Workspace)
 	}
@@ -198,7 +195,7 @@ func (r *Repo) VerifyWorkspace(f flags.Flags, st *stat.Stat) {
 	}
 }
 
-// GitSchedule ...
+// GitSchedule is the gatekeeper function for pending Repos.
 func (r *Repo) GitSchedule(f flags.Flags, st *stat.Stat) {
 
 	const dsc = "GitSchedule"
@@ -266,7 +263,7 @@ func (r *Repo) GitConfigOriginURL() {
 	}
 }
 
-// GitRemoteUpdate ...
+// GitRemoteUpdate fetches origin.
 func (r *Repo) GitRemoteUpdate() {
 	const dsc = "GitRemoteUpdate"
 
@@ -287,7 +284,7 @@ func (r *Repo) GitRemoteUpdate() {
 	}
 }
 
-// GitAbbrevRef ...
+// GitAbbrevRef gets the name of the current branch.
 func (r *Repo) GitAbbrevRef() {
 	const dsc = "GitAbbrevRef"
 
@@ -303,7 +300,7 @@ func (r *Repo) GitAbbrevRef() {
 	}
 }
 
-// GitLocalSHA ...
+// GitLocalSHA gets the SHA of the last local commit.
 func (r *Repo) GitLocalSHA() {
 	const dsc = "GitLocalSHA"
 
@@ -319,7 +316,7 @@ func (r *Repo) GitLocalSHA() {
 	}
 }
 
-// GitUpstreamBranch ...
+// GitUpstreamBranch gets the name of the upstream branch.
 func (r *Repo) GitUpstreamBranch() {
 	const dsc = "GitUpstreamBranch"
 
@@ -335,7 +332,7 @@ func (r *Repo) GitUpstreamBranch() {
 	}
 }
 
-// GitMergeBaseSHA ...
+// GitMergeBaseSHA gets the merge-base SHA.
 func (r *Repo) GitMergeBaseSHA() {
 	const dsc = "GitMergeBaseSHA"
 
@@ -351,7 +348,7 @@ func (r *Repo) GitMergeBaseSHA() {
 	}
 }
 
-// GitRevParseUpstream ...
+// GitRevParseUpstream gets the upstream SHA.
 func (r *Repo) GitRevParseUpstream() {
 	const dsc = "GitRevParseUpstream"
 
@@ -367,7 +364,7 @@ func (r *Repo) GitRevParseUpstream() {
 	}
 }
 
-// GitDiffsNameOnly ...
+// GitDiffsNameOnly gets a list of diff files.
 func (r *Repo) GitDiffsNameOnly() {
 	var out, em string
 	const dsc = "GitDiffsNameOnly"
@@ -390,7 +387,7 @@ func (r *Repo) GitDiffsNameOnly() {
 	}
 }
 
-// GitShortstat ...
+// GitShortstat runs diff --shortstat and reduces its output.
 func (r *Repo) GitShortstat() {
 	const dsc = "GitShortstat"
 
@@ -402,13 +399,12 @@ func (r *Repo) GitShortstat() {
 	args := []string{r.GitDir, r.WorkTree, "diff", "--shortstat"}
 	if out, em := r.git(args); em != "" {
 		r.Error(dsc, em)
-		// log.Printf("%v: Shortstat ERR: %v | %v", r.Name, out, em)
 	} else {
 		r.ShortStat = out
-		// log.Printf("%v: Shortstat OUT: %v", r.Name, out)
 	}
 
 	// scrape with regular expressions
+
 	// Set Changed, Insertions, Deletions
 	rxc := regexp.MustCompile(`(.*)? file`)
 	rxs := rxc.FindStringSubmatch(r.ShortStat)
@@ -475,7 +471,7 @@ func (r *Repo) GitShortstat() {
 	}
 }
 
-// GitUntracked ...
+// GitUntracked gets a list of untracked files.
 func (r *Repo) GitUntracked() {
 
 	var out, em string
@@ -510,7 +506,7 @@ func (r *Repo) GitUntracked() {
 	r.Untracked = true
 }
 
-// SetStatus ...
+// SetStatus sets Repo Category, Status and Action.
 func (r *Repo) SetStatus(f flags.Flags) {
 
 	const dsc = "SetStatus"
@@ -745,7 +741,7 @@ func (r *Repo) UserConfirm(f flags.Flags) {
 	}
 }
 
-// GitAdd ...
+// GitAdd adds all files to the index.
 func (r *Repo) GitAdd(f flags.Flags) {
 	const dsc = "GitAdd"         // description
 	eo := emoji.Get("Outbox")    // Outbox emoji
@@ -767,7 +763,7 @@ func (r *Repo) GitAdd(f flags.Flags) {
 	r.gitP(args, dsc) // arguments and command
 }
 
-// GitCommit ...
+// GitCommit commits changes with a message of r.Message.
 func (r *Repo) GitCommit(f flags.Flags) {
 	const dsc = "GitCommit"      // description
 	ef := emoji.Get("Fire")      // Fire emoji
@@ -789,7 +785,7 @@ func (r *Repo) GitCommit(f flags.Flags) {
 	r.gitP(args, dsc) // arguments and command
 }
 
-// GitStash ...
+// GitStash stashes all changes.
 func (r *Repo) GitStash(f flags.Flags) {
 	const dsc = "GitStash"                             // description
 	es := emoji.Get("Squirrel")                        // Squirrel emoji
@@ -799,7 +795,7 @@ func (r *Repo) GitStash(f flags.Flags) {
 	r.gitP(args, dsc)                                  // command
 }
 
-// GitPop ...
+// GitPop pops the last stash.
 func (r *Repo) GitPop(f flags.Flags) {
 	const dsc = "GitPop"                               // description
 	ep := emoji.Get("Popcorn")                         // Popcorn emoji
@@ -809,7 +805,7 @@ func (r *Repo) GitPop(f flags.Flags) {
 	r.gitP(args, dsc)                                  // command
 }
 
-// GitPull ...
+// GitPull pulls changes from the upstream branch.
 func (r *Repo) GitPull(f flags.Flags) {
 	const dsc = "GitPull"                                                 // description
 	es := emoji.Get("Ship")                                               // Ship emoji
@@ -821,7 +817,7 @@ func (r *Repo) GitPull(f flags.Flags) {
 	r.gitP(args, dsc)                                                     // command
 }
 
-// GitPush ...
+// GitPush pushes changes to the upstream branch.
 func (r *Repo) GitPush(f flags.Flags) {
 	const dsc = "GitPush"                                               // description
 	er := emoji.Get("Rocket")                                           // Rocket emoji
@@ -833,8 +829,8 @@ func (r *Repo) GitPush(f flags.Flags) {
 	r.gitP(args, dsc)                                                   // command
 }
 
-// GitClear ...
-func (r *Repo) GitClear() {
+// GitClean sets Repo values to empty, nil or 0 values.
+func (r *Repo) GitClean() {
 	const dsc = "GitClean"
 	r.OriginURL = ""
 	r.LocalBranch = ""

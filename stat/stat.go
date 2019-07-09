@@ -1,4 +1,4 @@
-// Package stat tracks stats as the run progress.
+// Package stat tracks statistics as the run progress.
 package stat
 
 import (
@@ -52,7 +52,8 @@ func (st *Stat) Clear() {
 	st.ScheduledPush = nil
 }
 
-// CheckComplete ...
+// CheckComplete checks if the run is complete:
+// st.Repos == st.CompleteRepos?
 func (st *Stat) CheckComplete() bool {
 	switch {
 	case len(st.Repos) == len(st.CompleteRepos):
@@ -62,7 +63,7 @@ func (st *Stat) CheckComplete() bool {
 	}
 }
 
-// CheckPending ...
+// CheckPending checks for pending actions (st.PendingRepos)
 func (st *Stat) CheckPending() bool {
 	switch {
 	case len(st.PendingRepos) >= 1:
@@ -72,7 +73,7 @@ func (st *Stat) CheckPending() bool {
 	}
 }
 
-// CheckSkipped ...
+// CheckSkipped checks for skipped actions (st.SkippedRepos)
 func (st *Stat) CheckSkipped() bool {
 	switch {
 	case len(st.SkippedRepos) >= 1:
@@ -82,7 +83,7 @@ func (st *Stat) CheckSkipped() bool {
 	}
 }
 
-// CheckScheduled ...
+// CheckScheduled checks for scheduled actions (st.SkippedRepos)
 func (st *Stat) CheckScheduled() bool {
 	switch {
 	case len(st.SkippedRepos) >= 1:

@@ -97,7 +97,7 @@ func initSummary(f flags.Flags, st *stat.Stat, ti *timer.Timer, rs Repos) {
 	lw := len(st.Workspaces)       // number of workspaces
 	lr := len(rs)                  // number of repos
 	ts := ti.Split()               // last split
-	tt := ti.Time()                // elapsed time
+	tt := ti.Elapsed()             // elapsed time
 	flags.Printv(f, "%v [%v|%v] workspaces|repos {%v / %v}", efm, lw, lr, ts, tt)
 }
 
@@ -128,7 +128,7 @@ func (rs Repos) workspaceSummary(f flags.Flags, st *stat.Stat, ti *timer.Timer) 
 	eb := emoji.Get("Briefcase")     // Briefcase emoji
 	es := emoji.Get("Slash")         // Slash emoji
 	ts := ti.Split()                 // last split
-	tt := ti.Time()                  // elapsed time
+	tt := ti.Elapsed()               // elapsed time
 
 	var b bytes.Buffer // buffer
 
@@ -204,7 +204,7 @@ func (rs Repos) cloneSummary(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
 	lc := len(st.ClonedRepos)   // number of cloned repos
 	lp := len(st.PendingClones) // number of pending clones
 	ts := ti.Split()            // last split
-	tt := ti.Time()             // elapsed time
+	tt := ti.Elapsed()          // elapsed time
 	flags.Printv(f, "%v [%v/%v] repos cloned {%v / %v}", et, lc, lp, ts, tt)
 }
 
@@ -252,7 +252,7 @@ func (rs Repos) changesSummary(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
 	ew := emoji.Get("Warning")   // Warning emoji
 	ti.Mark("repo-summary")      // mark repo-summary
 	ts := ti.Split()             // last split
-	tt := ti.Time()              // elapsed time
+	tt := ti.Elapsed()           // elapsed time
 
 	switch {
 	case st.CheckComplete():
@@ -275,7 +275,7 @@ func (rs Repos) infoSummary(f flags.Flags, st *stat.Stat, ti *timer.Timer) {
 	ew := emoji.Get("Warning")   // Warning emoji
 	ti.Mark("repo-summary")      // mark repo-summary
 	ts := ti.Split()             // last split
-	tt := ti.Time()              // elapsed time
+	tt := ti.Elapsed()           // elapsed time
 
 	switch {
 	case st.CheckComplete():

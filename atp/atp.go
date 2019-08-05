@@ -1,4 +1,4 @@
-// Package atp manages test environments for git-in-sync packages.
+// Package atp (a test package) manages test conditions for git-in-sync
 package atp
 
 import (
@@ -16,9 +16,12 @@ import (
 	"github.com/jychri/tilde"
 )
 
+// base directory for all tests.
+// ?is this created anew each time?
 const base = "~/tmpgis"
 
-// model is an example repository
+// model is an example repository. a $model has a name, a Git remote
+// and a absolute path inside of the $base directory.
 type model struct {
 	name   string // gis-Ahead
 	remote string // jychri/gis-Ahead
@@ -31,7 +34,7 @@ func (m *model) set(dir string) {
 	m.dir = path.Join(dir, m.name) // set m.dir
 }
 
-// make directory fresh
+// `make directory fresh`
 func (m *model) mkdirf() {
 	os.RemoveAll(m.dir)      // verify rm -rf m.dir
 	os.MkdirAll(m.dir, 0766) // mkdir m.dir
@@ -249,11 +252,11 @@ func user() string {
 	for scanner.Scan() {
 		l := scanner.Text()
 
-		if match := brf.Match(l, "- user:"); match != "" {
+		if match := brf.After(l, "- user:"); match != "" {
 			user = match
 		}
 
-		if match := brf.Match(l, "oauth_token:"); match != "" {
+		if match := brf.After(l, "oauth_token:"); match != "" {
 			token = true
 		}
 	}

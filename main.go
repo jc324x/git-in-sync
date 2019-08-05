@@ -25,7 +25,7 @@ func Init() (f flags.Flags, rs repos.Repos, st *stat.Stat, ti *timer.Timer) {
 	ef := emoji.Get("Flag")                                              // Flag emoji
 	fm := f.Mode                                                         // short flag.Mode
 	ts := ti.Split()                                                     // short split
-	tt := ti.Time()                                                      // short time
+	tt := ti.Elapsed()                                                   // short time
 	flags.Printv(f, "%v running in '%v' mode {%v / %v}", ef, fm, ts, tt) // print "running in '%v' mode..."
 	eb := emoji.Get("Books")                                             // Books emoji
 	flags.Printv(f, "%v reading ~/.gisrc.json", eb)                      // print "reading config"
@@ -34,7 +34,7 @@ func Init() (f flags.Flags, rs repos.Repos, st *stat.Stat, ti *timer.Timer) {
 	ebs := emoji.Get("Book")                                             // Book emoji
 	fc := f.Config                                                       // flag.Config
 	ts = ti.Split()                                                      // last split
-	tt = ti.Time()                                                       // elapsed time
+	tt = ti.Elapsed()                                                    // elapsed time
 	flags.Printv(f, "%v read %v {%v / %v}", ebs, fc, ts, tt)             // print read config
 	rs = repos.Init(c, f, st, ti)                                        // init repos
 	return f, rs, st, ti                                                 // return

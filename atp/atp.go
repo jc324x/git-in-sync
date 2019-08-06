@@ -17,7 +17,7 @@ import (
 )
 
 // base directory for all tests.
-// ?is this created anew each time?
+// ?is this created each time?
 const base = "~/tmpgis"
 
 // model is an example repository. a $model has a name, a Git remote
@@ -325,7 +325,7 @@ func gisrc(dir string, k string) string {
 // Jmap maps a string to JSON data as a byte slice.
 var Jmap = map[string][]byte{
 	"recipes": []byte(`
-		{
+{
 			"bundles": [{
 				"path": "SETPATH",
 				"zones": [{
@@ -357,7 +357,7 @@ var Jmap = map[string][]byte{
 		}
 `),
 	"tmpgis": []byte(`
-	{
+{
 		"bundles": [{
 			"path": "SETPATH",
 			"zones": [{

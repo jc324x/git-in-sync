@@ -250,11 +250,11 @@ func user() string {
 	for scanner.Scan() {
 		l := scanner.Text()
 
-		if match := brf.Match(l, "- user:"); match != "" {
+		if match, err := brf.After(l, "- user:"); match != "" && err == nil {
 			user = match
 		}
 
-		if match := brf.Match(l, "oauth_token:"); match != "" {
+		if match, err := brf.After(l, "oauth_token:"); match != "" && err == nil {
 			token = true
 		}
 	}
